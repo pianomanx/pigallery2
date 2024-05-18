@@ -321,7 +321,7 @@ export class ClientSharingConfig {
         name: $localize`Sharing key length`,
         priority: ConfigPriority.underTheHood
       },
-    description: $localize`The longer the keys are, the more secure the share links will be.`,
+    description: $localize`The longer the keys are, the harder they are to guess.`,
   })
   sharingKeyLength: number = 32;
 }
