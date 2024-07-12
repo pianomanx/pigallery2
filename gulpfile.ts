@@ -167,6 +167,7 @@ gulp.task('copy-static', (): any =>
   gulp
     .src(
       [
+        'src/backend/model/diagnostics/image_formats/**',
         'src/backend/model/diagnostics/blank.jpg',
         'README.md',
         //  'package-lock.json', should not add, it keeps optional packages optional even with --force-opt-packages.

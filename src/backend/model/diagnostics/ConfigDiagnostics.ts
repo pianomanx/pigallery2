@@ -3,12 +3,14 @@ import {Logger} from '../../Logger';
 import {NotificationManager} from '../NotifocationManager';
 import {SQLConnection} from '../database/SQLConnection';
 import * as fs from 'fs';
+import * as path from 'path';
 import {FFmpegFactory} from '../FFmpegFactory';
 import {
   ClientAlbumConfig,
   ClientFacesConfig,
   ClientMapConfig,
   ClientMetaFileConfig,
+  ClientPhotoConfig,
   ClientRandomPhotoConfig,
   ClientSearchConfig,
   ClientSharingConfig,
@@ -28,7 +30,9 @@ import {SearchQueryTypes, TextSearch,} from '../../../common/entities/SearchQuer
 import {Utils} from '../../../common/Utils';
 import {JobRepository} from '../jobs/JobRepository';
 import {ConfigClassBuilder} from '../../../../node_modules/typeconfig/node';
-import { Config } from '../../../common/config/private/Config';
+import {Config} from '../../../common/config/private/Config';
+import {SupportedFormats} from '../../../common/SupportedFormats';
+import {MediaRendererInput, PhotoWorker, ThumbnailSourceType} from '../fileaccess/PhotoWorker';
 
 const LOG_TAG = '[ConfigDiagnostics]';
 
@@ -78,9 +82,9 @@ export class ConfigDiagnostics {
     jobsConfig: ServerJobConfig
   ): Promise<void> {
     Logger.debug(LOG_TAG, 'Testing jobs config');
-    for(let i = 0; i< jobsConfig.scheduled.length; ++i){
+    for (let i = 0; i < jobsConfig.scheduled.length; ++i) {
       const j = jobsConfig.scheduled[i];
-      if(!JobRepository.Instance.exists(j.name)){
+      if (!JobRepository.Instance.exists(j.name)) {
         throw new Error('Unknown Job :' + j.name);
       }
     }
@@ -292,6 +296,48 @@ export class ConfigDiagnostics {
     }
   }
 
+  /**
+   * Removes unsupported image formats.
+   * It is possible that some OS support one or the other image formats (like Mac os does with HEIC)
+   * , but others not.
+   * Those formats are added to the config, but dynamically removed.
+   * @param config
+   */
+  static async removeUnsupportedPhotoExtensions(config: ClientPhotoConfig): Promise<void> {
+    Logger.verbose(LOG_TAG, 'Checking for supported image formats');
+    let removedSome = false;
+    let i = config.supportedFormats.length;
+    while (i--) {
+      const ext = config.supportedFormats[i].toLowerCase();
+      const testImage = path.join(__dirname, 'image_formats', 'test.' + ext);
+      // Check if a test available for this image format.
+      // if not probably because it is trivial
+      if (!fs.existsSync(testImage)) {
+        Logger.silly(LOG_TAG, `No test for ${ext} image format. skipping.`);
+        continue;
+      }
+      Logger.silly(LOG_TAG, `Testing ${ext} image formats.`);
+      try {
+        await PhotoWorker.renderFromImage({
+            type: ThumbnailSourceType.Photo,
+            mediaPath: testImage,
+            size: 10,
+            useLanczos3: Config.Media.Photo.useLanczos3,
+            quality: Config.Media.Photo.quality,
+            smartSubsample: Config.Media.Photo.smartSubsample,
+          } as MediaRendererInput, true
+        );
+      } catch (e) {
+        Logger.verbose(LOG_TAG, 'The current OS does not support the following photo format:' + ext + ', removing it form config.');
+        config.supportedFormats.splice(i, 1);
+        removedSome = true;
+      }
+    }
+    if (removedSome) {
+      SupportedFormats.init();
+    }
+  }
+
   static async testConfig(config: PrivateConfigClass): Promise<void> {
 
     await ConfigDiagnostics.testDatabase(config.Database);
@@ -310,7 +356,6 @@ export class ConfigDiagnostics {
     await ConfigDiagnostics.testRandomPhotoConfig(config.Sharing, config);
     await ConfigDiagnostics.testMapConfig(config.Map);
     await ConfigDiagnostics.testJobsConfig(config.Jobs);
-
   }
 
 
@@ -562,7 +607,7 @@ export class ConfigDiagnostics {
       const err: Error = ex;
       NotificationManager.warning(
         'Jobs error.  Resetting to default for now to let the app start up. ' +
-      'Please adjust the config properly.',
+        'Please adjust the config properly.',
         err.toString()
       );
       Logger.warn(
@@ -574,6 +619,8 @@ export class ConfigDiagnostics {
       const pc = ConfigClassBuilder.attachPrivateInterface(new PrivateConfigClass());
       Config.Jobs.scheduled = pc.Jobs.scheduled;
     }
+
+    await this.removeUnsupportedPhotoExtensions(Config.Media.Photo);
 
   }
 

@@ -1387,7 +1387,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
 
-      query = ({value: 6, type: SearchQueryTypes.min_person_count} as MinPersonCountSearch);
+      query = ({value: 5, type: SearchQueryTypes.min_person_count} as MinPersonCountSearch);
       expect(Utils.clone(await sm.search(query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,

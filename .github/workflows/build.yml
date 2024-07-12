@@ -17,21 +17,13 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x]
-
-    services:
-       mariadb:
-          image: mariadb:lts
-          ports:
-            - 3306
-          env:
-            MYSQL_USER: user
-            MYSQL_PASSWORD: password
-            MYSQL_DATABASE: pigallery_test
-            MYSQL_ROOT_PASSWORD: password
-          options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
-
-
     steps:
+    - uses: getong/mariadb-action@v1.11
+      with:
+        mysql database: 'pigallery_test'
+        mysql root password: 'password'
+        mysql user: 'user'
+        mysql password: 'password'
     - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
@@ -108,11 +100,9 @@ jobs:
     needs: [ create-release ]
     strategy:
       matrix:
-        container: [alpine, debian-buster, debian-bullseye, debian-bookworm ]
+        container: [alpine,  debian-bullseye, debian-bookworm ]
         include:
           - container: alpine
-            platforms: linux/amd64,linux/arm64,linux/arm/v7
-          - container: debian-buster
             platforms: linux/amd64,linux/arm64,linux/arm/v7
           - container: debian-bullseye
             platforms: linux/amd64,linux/arm64,linux/arm/v7

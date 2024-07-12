@@ -365,7 +365,7 @@ export class SearchManager {
       switch (sort.method) {
         case SortByTypes.Date:
           if (Config.Gallery.ignoreTimestampOffset === true) {
-            query.addOrderBy('media.metadata.creationDate + (media.metadata.creationDateOffset * 60000)', sort.ascending ? 'ASC' : 'DESC');
+            query.addOrderBy('media.metadata.creationDate + (coalesce(media.metadata.creationDateOffset,0) * 60000)', sort.ascending ? 'ASC' : 'DESC');
           } else {
             query.addOrderBy('media.metadata.creationDate', sort.ascending ? 'ASC' : 'DESC'); 
           }
@@ -568,7 +568,7 @@ export class SearchManager {
           textParam['from' + queryId] = (query as FromDateSearch).value;
           if (Config.Gallery.ignoreTimestampOffset === true) {
             q.where(
-              `(media.metadata.creationDate + (media.metadata.creationDateOffset * 60000)) ${relation} :from${queryId}`,
+              `(media.metadata.creationDate + (coalesce(media.metadata.creationDateOffset,0) * 60000)) ${relation} :from${queryId}`,
               textParam
             );
           } else {
@@ -597,7 +597,7 @@ export class SearchManager {
           textParam['to' + queryId] = (query as ToDateSearch).value;
           if (Config.Gallery.ignoreTimestampOffset === true) {
             q.where(
-              `(media.metadata.creationDate + (media.metadata.creationDateOffset * 60000)) ${relation} :to${queryId}`,
+              `(media.metadata.creationDate + (coalesce(media.metadata.creationDateOffset,0) * 60000)) ${relation} :to${queryId}`,
               textParam 
             );
           } else {
@@ -809,9 +809,9 @@ export class SearchManager {
             if (tq.negate) {
               if (Config.Gallery.ignoreTimestampOffset === true) {
                 q.where(
-                  `(media.metadata.creationDate + (media.metadata.creationDateOffset * 60000)) >= :to${queryId}`,
+                  `(media.metadata.creationDate + (coalesce(media.metadata.creationDateOffset,0) * 60000)) >= :to${queryId}`,
                   textParam
-                ).orWhere(`(media.metadata.creationDate + (media.metadata.creationDateOffset * 60000)) < :from${queryId}`,
+                ).orWhere(`(media.metadata.creationDate + (coalesce(media.metadata.creationDateOffset,0) * 60000)) < :from${queryId}`,
                   textParam);
               } else {
                 q.where(
@@ -824,9 +824,9 @@ export class SearchManager {
             } else {
               if (Config.Gallery.ignoreTimestampOffset === true) {
                 q.where(
-                  `(media.metadata.creationDate + (media.metadata.creationDateOffset * 60000)) < :to${queryId}`,
+                  `(media.metadata.creationDate + (coalesce(media.metadata.creationDateOffset,0) * 60000)) < :to${queryId}`,
                   textParam
-                ).andWhere(`(media.metadata.creationDate + (media.metadata.creationDateOffset * 60000)) >= :from${queryId}`,
+                ).andWhere(`(media.metadata.creationDate + (coalesce(media.metadata.creationDateOffset,0) * 60000)) >= :from${queryId}`,
                   textParam);
               } else {
                 q.where(

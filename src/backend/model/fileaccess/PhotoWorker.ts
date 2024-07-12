@@ -23,8 +23,8 @@ export class PhotoWorker {
     throw new Error('Unsupported media type to render thumbnail:' + input.type);
   }
 
-  public static renderFromImage(input: SvgRendererInput | MediaRendererInput): Promise<void> {
-    return ImageRendererFactory.render(input);
+  public static renderFromImage(input: SvgRendererInput | MediaRendererInput, dryRun = false): Promise<void> {
+    return ImageRendererFactory.render(input, dryRun);
   }
 
   public static renderFromVideo(input: MediaRendererInput): Promise<void> {
@@ -43,8 +43,8 @@ export enum ThumbnailSourceType {
 interface RendererInput {
   type: ThumbnailSourceType;
   size: number;
-  makeSquare: boolean;
-  outPath: string;
+  makeSquare?: boolean;
+  outPath?: string;
   quality: number;
   useLanczos3: boolean;
   animate: boolean; // animates the output. Used for Gifs
@@ -80,14 +80,14 @@ export class VideoRendererFactory {
           let width = null;
           let height = null;
           for (const stream of data.streams) {
-            if (stream.width) {
+            if (stream.width && stream.height && !isNaN(stream.width) && !isNaN(stream.height)) {
               width = stream.width;
               height = stream.height;
               break;
             }
           }
-          if (!width || !height) {
-            return reject('[FFmpeg] Can not read video dimension');
+          if (!width || !height || isNaN(width) || isNaN(height)) {
+            return reject(`[FFmpeg] Can not read video dimension. Found: ${{width}}x${{height}}`);
           }
           const command: FfmpegCommand = ffmpeg(input.mediaPath);
           const fileName = path.basename(input.outPath);
@@ -132,7 +132,7 @@ export class VideoRendererFactory {
 export class ImageRendererFactory {
 
   @ExtensionDecorator(e => e.gallery.ImageRenderer.render)
-  public static async render(input: MediaRendererInput | SvgRendererInput): Promise<void> {
+  public static async render(input: MediaRendererInput | SvgRendererInput, dryRun = false): Promise<void> {
 
     let image: Sharp;
     if ((input as MediaRendererInput).mediaPath) {
@@ -174,17 +174,24 @@ export class ImageRendererFactory {
         fit: 'cover',
       });
     }
+    let processedImg: sharp.Sharp;
     if ((input as MediaRendererInput).mediaPath) {
-      await image.webp({
+      processedImg = image.webp({
         effort: 6,
         quality: input.quality,
         smartSubsample: (input as MediaRendererInput).smartSubsample
-      }).toFile(input.outPath);
+      });
     } else {
       if ((input as SvgRendererInput).svgString) {
-        await image.png({effort: 6, quality: input.quality}).toFile(input.outPath);
+        processedImg = image.png({effort: 6, quality: input.quality});
       }
     }
+    // do not save to file
+    if (dryRun) {
+      await processedImg.toBuffer();
+      return;
+    }
+    await processedImg.toFile(input.outPath);
 
   }
 }
