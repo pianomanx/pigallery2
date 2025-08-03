@@ -35,10 +35,11 @@ import {
 import {ThemeService} from '../../../../model/theme.service';
 import {Subscription} from 'rxjs';
 import {MarkerFactory} from '../MarkerFactory';
-import {ionImageOutline, ionWarningOutline} from '@ng-icons/ionicons';
+import {ionImageOutline, ionWarningOutline, ionSpeedometerOutline, ionTimeOutline, ionTrailSignOutline} from '@ng-icons/ionicons';
 import {LeafletModule, LeafletControlLayersConfig} from '@bluehalo/ngx-leaflet';
 import {NgIf} from '@angular/common';
 import {NgIconComponent} from '@ng-icons/core';
+import {DurationPipe} from '../../../../pipes/DurationPipe';
 
 
 @Component({
@@ -142,7 +143,8 @@ export class GalleryMapLightboxComponent implements OnChanges, OnDestroy {
     public fullScreenService: FullScreenService,
     private thumbnailService: ThumbnailManagerService,
     public mapService: MapService,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private durationPipe:DurationPipe
   ) {
     this.setUpPathLayers();
     this.mapOptions.layers = [this.mapLayersControlOption.overlays.Photos];
@@ -654,8 +656,24 @@ export class GalleryMapLightboxComponent implements OnChanges, OnDestroy {
         pathLayer.layer.addLayer(startMarker);
         startMarker.setIcon(pathLayer.icon);
 
-        // Setting popup info with improved formatting
-        const popupText = `${file.name}: ${parsedGPX.name}${parsedGPX.author ? '<br/>Author: ' + parsedGPX.author : ''}${parsedGPX.description ? '<br/>Description: ' + parsedGPX.description : ''}`;
+        // Setting popup info with improved formatting and stats
+        let statsHtml = '';
+        if (parsedGPX.stats) {
+          const stats = [];
+          if (parsedGPX.stats.distance > 0) {
+            stats.push(`<span title="Distance"><svg style="width: 16px; height: 16px; vertical-align: middle;" viewBox="0 0 512 512">${ionTrailSignOutline}</svg> ${this.formatDistance(parsedGPX.stats.distance)}</span>`);
+          }
+          if (parsedGPX.stats.duration > 0) {
+            stats.push(`<span title="Duration"><svg style="width: 16px; height: 16px; vertical-align: middle;" viewBox="0 0 512 512">${ionTimeOutline}</svg> ${this.durationPipe.transform(parsedGPX.stats.duration)}</span>`);
+          }
+          if (parsedGPX.stats.averageSpeed > 0) {
+            stats.push(`<span title="Average Speed"><svg style="width: 16px; height: 16px; vertical-align: middle;" viewBox="0 0 512 512">${ionSpeedometerOutline}</svg> ${parsedGPX.stats.averageSpeed.toFixed(1)} km/h</span>`);
+          }
+          if (stats.length > 0) {
+            statsHtml = `<div style="margin-top: 8px; display: flex; gap: 12px; align-items: center;">${stats.join('')}</div>`;
+          }
+        }
+        const popupText = `${file.name}: ${parsedGPX.name}${parsedGPX.author ? '<br/>Author: ' + parsedGPX.author : ''}${parsedGPX.description ? '<br/>Description: ' + parsedGPX.description : ''}${statsHtml}`;
         startMarker.bindPopup(popupText);
 
         //add arch for long paths
@@ -714,6 +732,14 @@ export class GalleryMapLightboxComponent implements OnChanges, OnDestroy {
     if (!this.photos?.length) {
       this.centerMap();
     }
+  }
+
+
+  private formatDistance(meters: number): string {
+    if (meters >= 1000) {
+      return `${(meters / 1000).toFixed(1)} km`;
+    }
+    return `${Math.round(meters)} m`;
   }
 }
 

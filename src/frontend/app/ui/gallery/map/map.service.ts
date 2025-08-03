@@ -4,7 +4,13 @@ import {FileDTO} from '../../../../../common/entities/FileDTO';
 import {Utils} from '../../../../../common/Utils';
 import {Config} from '../../../../../common/config/public/Config';
 import {MapLayers, MapProviders,} from '../../../../../common/config/public/ClientConfig';
-import {LatLngLiteral} from 'leaflet';
+import {LatLng, LatLngLiteral} from 'leaflet';
+
+interface GpxStats {
+  distance: number; // in meters
+  duration: number; // in seconds
+  averageSpeed: number; // in km/h
+}
 
 @Injectable()
 export class MapService {
@@ -98,9 +104,48 @@ export class MapService {
     }
   }
 
+  private calculateGpxStats(path: (LatLngLiteral & {time?:string}) []): GpxStats {
+    if (!path || path.length < 2) {
+      return { distance: 0, duration: 0, averageSpeed: 0 };
+    }
+
+    let totalDistance = 0;
+    let startTime: Date | null = null;
+    let endTime: Date | null = null;
+
+    // Calculate distance
+    for (let i = 0; i < path.length - 1; i++) {
+      const point1 = new LatLng(path[i].lat, path[i].lng);
+      const point2 = new LatLng(path[i + 1].lat, path[i + 1].lng);
+      totalDistance += point1.distanceTo(point2);
+    }
+
+    // Try to get time from GPX points if available
+    if (path[0]['time']) {
+      startTime = new Date(path[0]['time']);
+      endTime = new Date(path[path.length - 1]['time']);
+    }
+
+    const duration = startTime && endTime ? (endTime.getTime() - startTime.getTime()) / 1000 : 0;
+    const averageSpeed = duration > 0 ? (totalDistance / duration) * 3.6 : 0; // Convert m/s to km/h
+
+    return {
+      distance: totalDistance,
+      duration: duration,
+      averageSpeed: averageSpeed
+    };
+  }
+
   public async getMapCoordinates(
-      file: FileDTO
-  ): Promise<{ name: string, author?: string, description?: string, path: LatLngLiteral[][]; markers: LatLngLiteral[] }> {
+    file: FileDTO
+  ): Promise<{
+    name: string,
+    author?: string,
+    description?: string,
+    path: LatLngLiteral[][],
+    markers: LatLngLiteral[],
+    stats?: GpxStats
+  }> {
     const filePath = Utils.concatUrls(
         file.directory.path,
         file.directory.name,
@@ -126,35 +171,48 @@ export class MapService {
     const description = Array.from(metadata?.children || [])
       .find(child => child.tagName === 'desc')?.textContent;
 
-    const getCoordinates = (inputElement: Document, tagName: string): LatLngLiteral[] => {
+    const getCoordinates = (inputElement: Document, tagName: string): (LatLngLiteral & { time?: string })[] => {
       const elements = inputElement.getElementsByTagName(tagName);
       const ret: LatLngLiteral[] = [];
-      // eslint-disable-next-line @typescript-eslint/prefer-for-of
       for (let i = 0; i < elements.length; i++) {
-        ret.push({
+        const point: LatLngLiteral & { time?: string } = {
           lat: parseFloat(elements[i].getAttribute('lat')),
-          lng: parseFloat(elements[i].getAttribute('lon')),
-        });
+          lng: parseFloat(elements[i].getAttribute('lon'))
+        };
+        // Get time if available
+        const timeElement = elements[i].getElementsByTagName('time')[0];
+        if (timeElement) {
+          point.time = timeElement.textContent;
+        }
+        ret.push(point);
       }
       return ret;
     };
     const trksegs = gpx.getElementsByTagName('trkseg');
     if (!trksegs) {
+      const path = [getCoordinates(gpx, 'trkpt')];
       return {
         name,
         author,
         description,
-        path: [getCoordinates(gpx, 'trkpt')],
-        markers: getCoordinates(gpx, 'wpt'),
+        path,
+        markers: getCoordinates(gpx, 'wpt')
       };
     }
     const trksegArr = [].slice.call(trksegs);
+    const paths = [...trksegArr].map(t => getCoordinates(t, 'trkpt'));
+
+    // Calculate combined stats for all path segments
+    const combinedPath = paths.flat();
+    const stats = this.calculateGpxStats(combinedPath);
+
     return {
       name,
       author,
       description,
-      path: [...trksegArr].map(t => getCoordinates(t, 'trkpt')),
+      path: paths,
       markers: getCoordinates(gpx, 'wpt'),
+      stats
     };
   }
 }

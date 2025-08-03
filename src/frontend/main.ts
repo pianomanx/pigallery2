@@ -61,6 +61,7 @@ import { MarkdownModule } from 'ngx-markdown';
 import { AppComponent } from './app/app.component';
 import {Marker} from 'leaflet';
 import {MarkerFactory} from './app/ui/gallery/map/MarkerFactory';
+import {DurationPipe} from './app/pipes/DurationPipe';
 
 if (environment.production) {
   enableProdMode();
@@ -163,6 +164,7 @@ bootstrapApplication(AppComponent, {
         MDFilesFilterPipe,
         FileSizePipe,
         DatePipe,
+        DurationPipe,
         provideHttpClient(withInterceptorsFromDi()),
         provideAnimations()
     ]
