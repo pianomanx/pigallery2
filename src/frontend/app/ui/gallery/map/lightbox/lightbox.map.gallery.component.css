@@ -94,9 +94,12 @@
   font-size: x-large;
 }
 
-::ng-deep .marker-svg-small .marker-svg-wrapper {
+::ng-deep  .marker-svg-wrapper {
   width: 30px;
   height: 30px;
+}
+
+::ng-deep .marker-svg-small .marker-svg-wrapper {
   transform: scale(0.5);
 }
 
@@ -124,6 +127,16 @@
   left: 5px
 }
 
+::ng-deep .custom-div-icon:hover , ::ng-deep .gpx-marker-highlighted  {
+  transition: all 0.2s ease-in-out;
+  z-index: 9999 !important;
+}
+
+
+::ng-deep .custom-div-icon:hover .marker-svg-wrapper, ::ng-deep .gpx-marker-highlighted .marker-svg-wrapper {
+  transition: all 0.2s ease-in-out;
+  transform: scale(1.2);
+}
 
 ::ng-deep .custom-div-icon svg {
   position: absolute;
@@ -208,6 +221,12 @@
   border: 2px rgba(0, 123, 255, 0.6) solid;
 }
 
+::ng-deep .gpx-line {
+  transition: opacity 0.2s ease-in-out;
+  cursor: pointer;
+}
 
-
+::ng-deep .gpx-line:hover {
+  stroke-width: 5;
+}
 

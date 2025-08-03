@@ -613,7 +613,6 @@ export class GalleryMapLightboxComponent implements OnChanges, OnDestroy {
   private async loadGPXFiles(): Promise<void> {
     this.clearPath();
     if (this.gpxFiles.length === 0) {
-
       this.pathLayersConfigOrdered.forEach(p => {
         // remove from controls
         this.mapLayerControl.removeLayer(p.layer);
@@ -621,7 +620,6 @@ export class GalleryMapLightboxComponent implements OnChanges, OnDestroy {
         if (this.leafletMap) {
           this.leafletMap.removeLayer(p.layer);
         }
-
       });
       return;
     }
@@ -651,31 +649,44 @@ export class GalleryMapLightboxComponent implements OnChanges, OnDestroy {
       }
 
       if (parsedGPX.path.length !== 0 && parsedGPX.path[0].length !== 0) {
-        // render the beginning of the path with a marker
-        const mkr = marker(parsedGPX.path[0][0]);
-        pathLayer.layer.addLayer(mkr);
-
-        mkr.setIcon(pathLayer.icon);
+        // Create the start marker
+        const startMarker = marker(parsedGPX.path[0][0]);
+        pathLayer.layer.addLayer(startMarker);
+        startMarker.setIcon(pathLayer.icon);
 
         // Setting popup info with improved formatting
         const popupText = `${file.name}: ${parsedGPX.name}${parsedGPX.author ? '<br/>Author: ' + parsedGPX.author : ''}${parsedGPX.description ? '<br/>Description: ' + parsedGPX.description : ''}`;
-        mkr.bindPopup(popupText);
+        startMarker.bindPopup(popupText);
 
         //add arch for long paths
         parsedGPX.path.forEach(p => {
           this.addArchForLongDistancePaths(p);
-          pathLayer.layer.addLayer(
-            polyline(p, {
-              smoothFactor: 3,
-              interactive: false,
-              color: pathLayer?.theme?.color,
-              dashArray: pathLayer?.theme?.dashArray
-            })
-          );
+          const pathLine = polyline(p, {
+            smoothFactor: 3,
+            interactive: true,
+            className: 'gpx-line',
+            color: pathLayer?.theme?.color,
+            dashArray: pathLayer?.theme?.dashArray
+          });
+
+          // Add hover effect
+          pathLine.on('mouseover', () => {
+            startMarker.getElement()?.classList.add('gpx-marker-highlighted');
+          });
+
+          pathLine.on('mouseout', () => {
+            startMarker.getElement()?.classList.remove('gpx-marker-highlighted');
+          });
+
+          // Add click handler to show popup
+          pathLine.on('click', () => {
+            startMarker.openPopup();
+          });
+
+          pathLayer.layer.addLayer(pathLine);
         });
-
-
       }
+
       parsedGPX.markers.forEach((mc) => {
         const mkr = marker(mc);
         mkr.setIcon(pathLayer.icon);
@@ -688,7 +699,6 @@ export class GalleryMapLightboxComponent implements OnChanges, OnDestroy {
 
     // Add layer to the map
     this.pathLayersConfigOrdered.filter(pl => pl.layer.getLayers().length > 0).forEach((pl) => {
-
       this.mapLayerControl.addOverlay(
         pl.layer,
         pl.name
