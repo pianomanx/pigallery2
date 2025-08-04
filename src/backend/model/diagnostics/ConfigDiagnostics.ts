@@ -328,6 +328,7 @@ export class ConfigDiagnostics {
           } as MediaRendererInput, true
         );
       } catch (e) {
+        Logger.verbose(e)
         Logger.verbose(LOG_TAG, 'The current OS does not support the following photo format:' + ext + ', removing it form config.');
         config.supportedFormats.splice(i, 1);
         removedSome = true;
