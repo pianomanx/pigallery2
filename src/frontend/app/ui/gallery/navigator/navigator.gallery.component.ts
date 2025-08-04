@@ -93,14 +93,32 @@ export class GalleryNavigatorComponent {
     this.routes = this.contentLoaderService.content.pipe(
         map((c) => {
           this.parentPath = null;
-          if (!c.directory) {
+          if (!c.directory && !this.isExactDirectorySearch(c)) {
             return [];
           }
 
-          const path = c.directory.path.replace(new RegExp('\\\\', 'g'), '/');
+          let path: string;
+          let name: string;
+          if (c.directory) {
+            path = c.directory.path;
+            name = c.directory.name;
+          } else {
+            // Handle exact directory search
+            const searchQuery = c.searchResult.searchQuery as TextSearch;
+            path = searchQuery.text.replace(/^\.\//, ''); // Remove leading ./ if present
+            const lastSlashIndex = path.lastIndexOf('/');
+            if (lastSlashIndex !== -1) {
+              name = path.substring(lastSlashIndex + 1);
+              path = path.substring(0, lastSlashIndex);
+            } else {
+              name = path;
+              path = '';
+            }
+          }
 
+          path = path.replace(new RegExp('\\\\', 'g'), '/');
           const dirs = path.split('/');
-          dirs.push(c.directory.name);
+          dirs.push(name);
 
           // removing empty strings
           for (let i = 0; i < dirs.length; i++) {
@@ -152,12 +170,22 @@ export class GalleryNavigatorComponent {
     );
   }
 
+  private isExactDirectorySearch(content: ContentWrapperWithError): boolean {
+    const searchQuery = content.searchResult?.searchQuery as TextSearch;
+    return !!content.searchResult &&
+      searchQuery?.type === SearchQueryTypes.directory &&
+      searchQuery?.matchType === TextSearchQueryMatchTypes.exact_match &&
+      !searchQuery?.negate;
+  }
+
   get isDirectory(): boolean {
-    return !!this.contentLoaderService.content.value.directory;
+    const content = this.contentLoaderService.content.value;
+    return !!content.directory || this.isExactDirectorySearch(content);
   }
 
   get isSearch(): boolean {
-    return !!this.contentLoaderService.content.value.searchResult;
+    const content = this.contentLoaderService.content.value;
+    return !!content.searchResult && !this.isExactDirectorySearch(content);
   }
 
   get ItemCount(): number {
@@ -299,4 +327,3 @@ interface NavigatorPath {
   route: string;
   title?: string;
 }
-
