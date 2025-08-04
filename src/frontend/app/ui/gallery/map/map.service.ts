@@ -28,29 +28,29 @@ export class MapService {
       {
         name: $localize`street`,
         url:
-            'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}?access_token=' +
-            Config.Map.mapboxAccessToken,
+          'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}?access_token=' +
+          Config.Map.mapboxAccessToken,
         darkLayer: false
       },
       {
         name: $localize`satellite`,
         url:
-            'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' +
-            Config.Map.mapboxAccessToken,
+          'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=' +
+          Config.Map.mapboxAccessToken,
         darkLayer: false
       },
       {
         name: $localize`hybrid`,
         url:
-            'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}?access_token=' +
-            Config.Map.mapboxAccessToken,
+          'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}?access_token=' +
+          Config.Map.mapboxAccessToken,
         darkLayer: false
       },
       {
         name: $localize`dark`,
         url:
-            'https://api.mapbox.com/styles/v1/mapbox/navigation-night-v1/tiles/256/{z}/{x}/{y}?access_token=' +
-            Config.Map.mapboxAccessToken,
+          'https://api.mapbox.com/styles/v1/mapbox/navigation-night-v1/tiles/256/{z}/{x}/{y}?access_token=' +
+          Config.Map.mapboxAccessToken,
         darkLayer: true
       },
     ];
@@ -72,7 +72,7 @@ export class MapService {
 
   public get Attributions(): string {
     const OSM =
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
     const MB = '&copy; <a href="https://www.mapbox.com/">Mapbox</a>';
 
     if (Config.Map.mapProvider === MapProviders.OpenStreetMap) {
@@ -104,9 +104,9 @@ export class MapService {
     }
   }
 
-  private calculateGpxStats(path: (LatLngLiteral & {time?:string}) []): GpxStats {
+  private calculateGpxStats(path: (LatLngLiteral & { time?: string }) []): GpxStats {
     if (!path || path.length < 2) {
-      return { distance: 0, duration: 0, averageSpeed: 0 };
+      return {distance: 0, duration: 0, averageSpeed: 0};
     }
 
     let totalDistance = 0;
@@ -126,7 +126,11 @@ export class MapService {
       endTime = new Date(path[path.length - 1]['time']);
     }
 
-    const duration = startTime && endTime ? (endTime.getTime() - startTime.getTime()) / 1000 : 0;
+    let duration = startTime && endTime ? (endTime.getTime() - startTime.getTime()) / 1000 : 0;
+    // should be at least 1 second
+    if (duration < 1000) {
+      duration = 0;
+    }
     const averageSpeed = duration > 0 ? (totalDistance / duration) * 3.6 : 0; // Convert m/s to km/h
 
     return {
@@ -147,12 +151,12 @@ export class MapService {
     stats?: GpxStats
   }> {
     const filePath = Utils.concatUrls(
-        file.directory.path,
-        file.directory.name,
-        file.name
+      file.directory.path,
+      file.directory.name,
+      file.name
     );
     const gpx = await this.networkService.getXML(
-        '/gallery/content/' + filePath + '/bestFit'
+      '/gallery/content/' + filePath + '/bestFit'
     );
 
     // Look for name in metadata first, then in track
