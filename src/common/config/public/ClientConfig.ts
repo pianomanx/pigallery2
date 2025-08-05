@@ -775,12 +775,11 @@ export class NavBarConfig {
     tags: {
       name: $localize`Download Zip`,
       priority: ConfigPriority.advanced,
-      experimental: true,
       githubIssue: 52
     },
-    description: $localize`Enable download zip of a directory contents Directory flattening. (Does not work for searches.)`
+    description: $localize`Enable zipped download of the listed directory or search results.`
   })
-  enableDownloadZip: boolean = false;
+  enableDownloadZip: boolean = true;
 
   @ConfigProperty({
     tags: {
