@@ -87,22 +87,24 @@ export class GalleryMWs {
     if (Config.Gallery.NavBar.enableDownloadZip === false) {
       return next();
     }
-    const directoryName = req.params['directory'] || '/';
-    const absoluteDirectoryName = path.join(
-      ProjectPath.ImageFolder,
-      directoryName
-    );
-    try {
-      if ((await fsp.stat(absoluteDirectoryName)).isDirectory() === false) {
-        return next();
-      }
-    } catch (e) {
+
+    if (Config.Search.enabled === false || !req.params['searchQueryDTO']) {
       return next();
     }
 
+    // Handle search-query-based zip
     try {
+      const query: SearchQueryDTO = JSON.parse(req.params['searchQueryDTO'] as string);
+
+      // Get all media items from search
+      const searchResult = await ObjectManagers.getInstance().SearchManager.search(query);
+
+      if (!searchResult.media || searchResult.media.length === 0) {
+        return next(new ErrorDTO(ErrorCodes.INPUT_ERROR, 'No media found for zip'));
+      }
+
       res.set('Content-Type', 'application/zip');
-      res.set('Content-Disposition', 'attachment; filename=Gallery.zip');
+      res.set('Content-Disposition', 'attachment; filename=SearchResults.zip');
 
       const archive = archiver('zip', {
         store: true, // disable compression
@@ -118,22 +120,41 @@ export class GalleryMWs {
 
       archive.pipe(res);
 
-      // append photos in absoluteDirectoryName
-      // using case-insensitive glob of extensions
-      for (const ext of SupportedFormats.WithDots.Photos) {
-        archive.glob(`*${ext}`, {cwd: absoluteDirectoryName, nocase: true});
-      }
-      // append videos in absoluteDirectoryName
-      // using case-insensitive glob of extensions
-      for (const ext of SupportedFormats.WithDots.Videos) {
-        archive.glob(`*${ext}`, {cwd: absoluteDirectoryName, nocase: true});
+      // Track used filenames (case insensitive)
+      const usedNames = new Map<string, number>();
+
+      // Add each media file to the archive with unique names
+      for (const media of searchResult.media) {
+        const mediaPath = path.join(
+          ProjectPath.ImageFolder,
+          media.directory.path,
+          media.directory.name,
+          media.name
+        );
+
+        // Get file extension and base name
+        const ext = path.extname(media.name);
+        const baseName = path.basename(media.name, ext);
+        const lowerName = media.name.toLowerCase();
+
+        // Check if this name was used before
+        let uniqueName = media.name;
+        if (usedNames.has(lowerName)) {
+          const count = usedNames.get(lowerName) + 1;
+          usedNames.set(lowerName, count);
+          uniqueName = baseName + '_' + count + ext;
+        } else {
+          usedNames.set(lowerName, 1);
+        }
+
+        archive.file(mediaPath, { name: uniqueName });
       }
 
       await archive.finalize();
       return next();
     } catch (err) {
       return next(
-        new ErrorDTO(ErrorCodes.GENERAL_ERROR, 'Error creating zip', err)
+        new ErrorDTO(ErrorCodes.GENERAL_ERROR, 'Error creating search results zip', err)
       );
     }
   }

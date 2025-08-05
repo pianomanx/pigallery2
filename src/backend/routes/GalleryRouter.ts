@@ -50,11 +50,10 @@ export class GalleryRouter {
 
   protected static addDirectoryZip(app: Express): void {
     app.get(
-        [Config.Server.apiPath + '/gallery/zip/:directory(*)'],
+        [Config.Server.apiPath + '/gallery/zip/:searchQueryDTO(*)'],
         // common part
         AuthenticationMWs.authenticate,
-        AuthenticationMWs.normalizePathParam('directory'),
-        AuthenticationMWs.authorisePath('directory', true),
+        AuthenticationMWs.authorise(UserRoles.Guest),
 
         // specific part
         ServerTimingMWs.addServerTiming,

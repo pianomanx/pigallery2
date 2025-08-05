@@ -7,7 +7,7 @@ import {QueryService} from '../../../model/query.service';
 import {Utils} from '../../../../../common/Utils';
 import {GroupByTypes, GroupingMethod, SortByDirectionalTypes, SortByTypes} from '../../../../../common/entities/SortingMethods';
 import {Config} from '../../../../../common/config/public/Config';
-import {SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes,} from '../../../../../common/entities/SearchQueryDTO';
+import {SearchQueryDTO, SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes,} from '../../../../../common/entities/SearchQueryDTO';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 import {GallerySortingService} from './sorting.service';
@@ -252,19 +252,35 @@ export class GalleryNavigatorComponent {
 
   getDownloadZipLink(): string {
     const c = this.contentLoaderService.content.value;
-    if (!c.directory) {
+    if (!c) {
       return null;
     }
+
+    let searchQuery: SearchQueryDTO;
+    if (c.searchResult) {
+      // For search results, use the existing search query
+      searchQuery = c.searchResult.searchQuery;
+    } else if (c.directory) {
+      // For directory content, create an exact directory search query
+      searchQuery = {
+        type: SearchQueryTypes.directory,
+        matchType: TextSearchQueryMatchTypes.exact_match,
+        text: Utils.concatUrls('./', c.directory.path, c.directory.name)
+      } as TextSearch;
+    } else {
+      return null;
+    }
+
     let queryParams = '';
     Object.entries(this.queryService.getParams()).forEach((e) => {
       queryParams += e[0] + '=' + e[1];
     });
+
     return Utils.concatUrls(
         Config.Server.urlBase,
         Config.Server.apiPath,
         '/gallery/zip/',
-        c.directory.path,
-        c.directory.name,
+        encodeURIComponent(JSON.stringify(searchQuery)) +
         '?' + queryParams
     );
   }
