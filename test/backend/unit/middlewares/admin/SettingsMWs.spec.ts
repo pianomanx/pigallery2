@@ -3,7 +3,7 @@ import {expect} from 'chai';
 import {ErrorDTO} from '../../../../../src/common/entities/Error';
 import {ObjectManagers} from '../../../../../src/backend/model/ObjectManagers';
 import {SettingsMWs} from '../../../../../src/backend/middlewares/admin/SettingsMWs';
-import {DatabaseType, ServerUserConfig} from '../../../../../src/common/config/private/PrivateConfig';
+import {ServerUserConfig} from '../../../../../src/common/config/private/PrivateConfig';
 import {Config} from '../../../../../src/common/config/private/Config';
 import {UserRoles} from '../../../../../src/common/entities/UserDTO';
 import * as fs from 'fs';
