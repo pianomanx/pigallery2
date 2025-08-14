@@ -41,6 +41,7 @@ export class GalleryMWs {
     try {
       const directory =
         await ObjectManagers.getInstance().GalleryManager.listDirectory(
+          req.session.context,
           directoryName,
           parseInt(
             req.query[QueryParams.gallery.knownLastModified] as string,
@@ -57,12 +58,12 @@ export class GalleryMWs {
         return next();
       }
       if (
-        req.session['user'].permissions &&
-        req.session['user'].permissions.length > 0 &&
-        req.session['user'].permissions[0] !== '/*'
+        req.session.context?.user.permissions &&
+        req.session.context?.user.permissions.length > 0 &&
+        req.session.context?.user.permissions[0] !== '/*'
       ) {
         directory.directories = directory.directories.filter((d): boolean =>
-          UserDTOUtils.isDirectoryAvailable(d, req.session['user'].permissions)
+          UserDTOUtils.isDirectoryAvailable(d, req.session.context.user.permissions)
         );
       }
       req.resultPipe = new ContentWrapper(directory, null);

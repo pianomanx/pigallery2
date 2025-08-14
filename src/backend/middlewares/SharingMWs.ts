@@ -102,9 +102,9 @@ export class SharingMWs {
       sharingKey,
       path: directoryName,
       password: createSharing.password,
-      creator: req.session['user'],
+      creator: req.session.context?.user,
       expires:
-        createSharing.valid >= 0 // if === -1 its forever
+        createSharing.valid >= 0 // if === -1 it's forever
           ? Date.now() + createSharing.valid
           : new Date(9999, 0, 1).getTime(), // never expire
       includeSubfolders: createSharing.includeSubfolders,
@@ -155,7 +155,7 @@ export class SharingMWs {
         updateSharing.password && updateSharing.password !== ''
           ? updateSharing.password
           : null,
-      creator: req.session['user'],
+      creator: req.session.context?.user,
       expires:
         updateSharing.valid >= 0 // if === -1 its forever
           ? Date.now() + updateSharing.valid
@@ -165,7 +165,7 @@ export class SharingMWs {
     };
 
     try {
-      const forceUpdate = req.session['user'].role >= UserRoles.Admin;
+      const forceUpdate = req.session.context.user.role >= UserRoles.Admin;
       req.resultPipe =
         await ObjectManagers.getInstance().SharingManager.updateSharing(
           sharing,
@@ -203,9 +203,9 @@ export class SharingMWs {
 
     try {
       // Check if user has the right to delete sharing.
-      if (req.session['user'].role < UserRoles.Admin) {
+      if (req.session.context?.user.role < UserRoles.Admin) {
         const s = await ObjectManagers.getInstance().SharingManager.findOne(sharingKey);
-        if (s.creator.id !== req.session['user'].id) {
+        if (s.creator.id !== req.session.context?.user.id) {
           return next(new ErrorDTO(ErrorCodes.NOT_AUTHORISED, 'Can\'t delete sharing.'));
         }
       }
@@ -260,12 +260,12 @@ export class SharingMWs {
 
     const dir = path.normalize(req.params['directory'] || '/');
     try {
-      if (req.session['user'].role >= UserRoles.Admin) {
+      if (req.session.context?.user.role >= UserRoles.Admin) {
         req.resultPipe =
           await ObjectManagers.getInstance().SharingManager.listAllForDir(dir);
       } else {
         req.resultPipe =
-          await ObjectManagers.getInstance().SharingManager.listAllForDir(dir, req.session['user']);
+          await ObjectManagers.getInstance().SharingManager.listAllForDir(dir, req.session.context?.user);
       }
       return next();
     } catch (err) {

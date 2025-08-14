@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+import * as crypto from 'crypto';
 import {SQLConnection} from './database/SQLConnection';
 import {Logger} from '../Logger';
 import {LocationManager} from './database/LocationManager';
@@ -15,6 +16,9 @@ import {PersonManager} from './database/PersonManager';
 import {SharingManager} from './database/SharingManager';
 import {IObjectManager} from './database/IObjectManager';
 import {ExtensionManager} from './extension/ExtensionManager';
+import {SessionContext} from './SessionContext';
+import {UserEntity} from './database/enitites/UserEntity';
+import {ANDSearchQuery, SearchQueryDTOUtils, SearchQueryTypes} from '../../common/entities/SearchQueryDTO';
 
 const LOG_TAG = '[ObjectManagers]';
 
@@ -51,8 +55,8 @@ export class ObjectManagers {
     Logger.silly(LOG_TAG, 'Object manager reset begin');
     if (ObjectManagers.isReady()) {
       if (
-          ObjectManagers.getInstance().IndexingManager &&
-          ObjectManagers.getInstance().IndexingManager.IsSavingInProgress
+        ObjectManagers.getInstance().IndexingManager &&
+        ObjectManagers.getInstance().IndexingManager.IsSavingInProgress
       ) {
         await ObjectManagers.getInstance().IndexingManager.SavingReady;
       }
@@ -111,7 +115,7 @@ export class ObjectManagers {
   }
 
   public async onDataChange(
-      changedDir: ParentDirectoryDTO = null
+    changedDir: ParentDirectoryDTO = null
   ): Promise<void> {
     await this.VersionManager.onNewDataVersion();
 
@@ -268,5 +272,28 @@ export class ObjectManagers {
     }
     this.extensionManager = value;
     this.managers.push(this.extensionManager as IObjectManager);
+  }
+
+  async buildContext(user: UserEntity): Promise<SessionContext> {
+    const context = new SessionContext();
+    context.user = user;
+    if (user.blockQuery) {
+      user.blockQuery = SearchQueryDTOUtils.negate(user.blockQuery);
+    }
+    if (user.allowQuery || user.blockQuery) {
+      let query = user.allowQuery || user.blockQuery;
+      if (user.allowQuery && user.blockQuery) {
+        query = {
+          type: SearchQueryTypes.AND,
+          list: [
+            user.allowQuery,
+            user.blockQuery
+          ]
+        } as ANDSearchQuery;
+      }
+      context.projectionQuery = await ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(query);
+      context.user.projectionKey = crypto.createHash('md5').update(JSON.stringify(query)).digest('hex');
+    }
+    return context;
   }
 }

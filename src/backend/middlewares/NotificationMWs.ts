@@ -4,7 +4,7 @@ import {NotificationManager} from '../model/NotifocationManager';
 
 export class NotificationMWs {
   public static list(req: Request, res: Response, next: NextFunction): void {
-    if (req.session['user'].role >= UserRoles.Admin) {
+    if (req.session.context?.user.role >= UserRoles.Admin) {
       req.resultPipe = NotificationManager.notifications;
     } else if (NotificationManager.notifications.length > 0) {
       req.resultPipe = NotificationManager.HasNotification;
