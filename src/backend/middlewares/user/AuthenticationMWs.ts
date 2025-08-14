@@ -160,7 +160,7 @@ export class AuthenticationMWs {
               sharing.password) &&
               !PasswordHelper.comparePassword(password, sharing.password))
       ) {
-        Logger.warn(LOG_TAG, 'Failed login with sharing:' + sharing.sharingKey + ', bad password');
+        Logger.warn(LOG_TAG, 'Failed login from IP `' + req.ip + '` with sharing:' + sharing.sharingKey + ', bad password');
         res.status(401);
         return next(new ErrorDTO(ErrorCodes.CREDENTIAL_NOT_FOUND));
       }
@@ -209,7 +209,7 @@ export class AuthenticationMWs {
         typeof req.body.loginCredential.username === 'undefined' ||
         typeof req.body.loginCredential.password === 'undefined'
     ) {
-      Logger.warn(LOG_TAG, 'Failed login no user or password provided');
+      Logger.warn(LOG_TAG, 'Failed login from IP `' + req.ip + '` no user or password provided');
       return next(
           new ErrorDTO(
               ErrorCodes.INPUT_ERROR,
@@ -234,7 +234,7 @@ export class AuthenticationMWs {
       }
       return next();
     } catch (err) {
-      Logger.warn(LOG_TAG, 'Failed login for user:' + req.body.loginCredential.username
+      Logger.warn(LOG_TAG, 'Failed login from IP `' + req.ip + '` for user:' + req.body.loginCredential.username
           + ', bad password');
       return next(
           new ErrorDTO(
