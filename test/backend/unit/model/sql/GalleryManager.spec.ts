@@ -50,7 +50,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
   describe = tmpDescribe;
 
   let galleryManager: GalleryManagerTest;
-  let connection: Connection;
+  let connection: Connection;/*
   let dir: ParentDirectoryDTO;
   let subDir: SubDirectoryDTO;
   let subDir2: SubDirectoryDTO;
@@ -127,18 +127,14 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
 
     p4 = (dir.directories[1].media[0] as any);
     p4.directory = dir.directories[1];
-  };
-
-  const setUpSqlDB = async () => {
-    await sqlHelper.initDB();
-    await setUpGalleryTest();
-    await ObjectManagers.getInstance().init();
-  };
+  };*/
 
   before(async () => {
-    await setUpSqlDB();
-    galleryManager = new GalleryManagerTest();
+    await sqlHelper.initDB();
+    await sqlHelper.setUpTestGallery();
+    await ObjectManagers.getInstance().init();
     connection = await SQLConnection.getConnection();
+    galleryManager = new GalleryManagerTest();
   });
 
   after(async () => {
@@ -151,12 +147,9 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
       // Setup a session with no projection query
       const session = new SessionContext();
 
-      // Use the already persisted directory from our setup
-      expect(dir).to.not.be.null;
-      expect(dir.media).to.not.be.empty;
 
       // Get the directory contents without any filtering using our directory's name and path
-      const dirInfo = await galleryManager.getDirIdAndTime(connection, dir.name, dir.path);
+      const dirInfo = await galleryManager.getDirIdAndTime(connection, sqlHelper.testGalleyEntities.dir.name, sqlHelper.testGalleyEntities.dir.path);
       expect(dirInfo).to.not.be.null;
 
       const directory = await galleryManager.getParentDirFromId(connection, session, dirInfo.id);
@@ -178,11 +171,8 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
       const session = await ObjectManagers.getInstance().buildContext({allowQuery: searchQuery} as any);
 
 
-      // Use the already persisted directory from our setup
-      expect(dir).to.not.be.null;
-
       // Get the directory contents with filtering using our directory's name and path
-      const dirInfo = await galleryManager.getDirIdAndTime(connection, dir.name, dir.path);
+      const dirInfo = await galleryManager.getDirIdAndTime(connection, sqlHelper.testGalleyEntities.dir.name, sqlHelper.testGalleyEntities.dir.path);
       expect(dirInfo).to.not.be.null;
 
       // Get the directory contents with filtering
@@ -212,7 +202,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
       const session = await ObjectManagers.getInstance().buildContext({allowQuery: searchQuery} as any);
 
 
-      const dirInfo = await galleryManager.getDirIdAndTime(connection, dir.name, dir.path);
+      const dirInfo = await galleryManager.getDirIdAndTime(connection, sqlHelper.testGalleyEntities.dir.name, sqlHelper.testGalleyEntities.dir.path);
       expect(dirInfo).to.not.be.null;
 
       const directory = await galleryManager.getParentDirFromId(connection, session, dirInfo.id);

@@ -5,23 +5,26 @@ import {UserEntity} from '../../../../src/backend/model/database/enitites/UserEn
 import {SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes} from '../../../../src/common/entities/SearchQueryDTO';
 import {UserRoles} from '../../../../src/common/entities/UserDTO';
 import {Brackets} from 'typeorm';
+import {DBTestHelper} from '../../DBTestHelper';
 
-declare const describe: any;
+declare let describe: any;
 declare const it: any;
 declare const beforeEach: any;
 declare const afterEach: any;
+const tmpDescribe = describe;
+describe = DBTestHelper.describe(); // fake it os IDE plays nicely (recognize the test)
 
-describe('ObjectManagers', () => {
+describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
+  describe = tmpDescribe;
   describe('buildContext', () => {
 
     // Reset ObjectManagers before each test
     beforeEach(async () => {
       await ObjectManagers.reset();
+      await ObjectManagers.getInstance().init();
     });
 
-    afterEach(async () => {
-      await ObjectManagers.reset();
-    });
+    afterEach(sqlHelper.clearDB);
 
     it('should create a basic context with user and no queries', async () => {
       // Create a basic user with no queries
