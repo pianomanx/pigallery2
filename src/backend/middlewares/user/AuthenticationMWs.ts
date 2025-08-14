@@ -18,16 +18,17 @@ export class AuthenticationMWs {
       next: NextFunction
   ): Promise<void> {
     if (Config.Users.authenticationRequired === false) {
-      req.session['user'] = {
+      const user = {
         name: UserRoles[Config.Users.unAuthenticatedUserRole],
         role: Config.Users.unAuthenticatedUserRole,
       } as UserDTO;
+      req.session.context = await ObjectManagers.getInstance().buildContext(user);
       return next();
     }
     try {
       const user = await AuthenticationMWs.getSharingUser(req);
       if (user) {
-        req.session['user'] = user;
+        req.session.context = await ObjectManagers.getInstance().buildContext(user);
         return next();
       }
       // eslint-disable-next-line no-empty
@@ -43,28 +44,29 @@ export class AuthenticationMWs {
       next: NextFunction
   ): Promise<void> {
     if (Config.Users.authenticationRequired === false) {
-      req.session['user'] = {
+      const user = {
         name: UserRoles[Config.Users.unAuthenticatedUserRole],
         role: Config.Users.unAuthenticatedUserRole,
       } as UserDTO;
+      req.session.context = await ObjectManagers.getInstance().buildContext(user);
       return next();
     }
 
     // if already authenticated, do not try to use sharing authentication
-    if (typeof req.session['user'] !== 'undefined') {
+    if (typeof req.session.context  !== 'undefined') {
       return next();
     }
 
     try {
       const user = await AuthenticationMWs.getSharingUser(req);
       if (user) {
-        req.session['user'] = user;
+        req.session.context = await ObjectManagers.getInstance().buildContext(user);
         return next();
       }
     } catch (err) {
       return next(new ErrorDTO(ErrorCodes.CREDENTIAL_NOT_FOUND, null, err));
     }
-    if (typeof req.session['user'] === 'undefined') {
+    if (typeof req.session.context === 'undefined') {
       res.status(401);
       return next(
           new ErrorDTO(ErrorCodes.NOT_AUTHENTICATED, 'Not authenticated')
@@ -104,7 +106,7 @@ export class AuthenticationMWs {
       }
 
       if (
-          !UserDTOUtils.isDirectoryPathAvailable(p, req.session['user'].permissions)
+          !UserDTOUtils.isDirectoryPathAvailable(p, req.session.context.user.permissions)
       ) {
         return res.sendStatus(403);
       }
@@ -121,7 +123,7 @@ export class AuthenticationMWs {
         res: Response,
         next: NextFunction
     ): void {
-      if (req.session['user'].role < role) {
+      if (req.session.context?.user.role < role) {
         return next(new ErrorDTO(ErrorCodes.NOT_AUTHORISED));
       }
       return next();
@@ -170,12 +172,13 @@ export class AuthenticationMWs {
         sharingPath += '*';
       }
 
-      req.session['user'] = {
+      const user = {
         name: 'Guest',
         role: UserRoles.LimitedGuest,
         permissions: [sharingPath],
         usedSharingKey: sharing.sharingKey,
       } as UserDTO;
+      req.session.context = await ObjectManagers.getInstance().buildContext(user);
       return next();
     } catch (err) {
       return next(new ErrorDTO(ErrorCodes.GENERAL_ERROR, null, err));
@@ -187,7 +190,7 @@ export class AuthenticationMWs {
       res: Response,
       next: NextFunction
   ): void {
-    if (typeof req.session['user'] !== 'undefined') {
+    if (typeof req.session.context?.user !== 'undefined') {
       return next(new ErrorDTO(ErrorCodes.ALREADY_AUTHENTICATED));
     }
     return next();
@@ -202,7 +205,7 @@ export class AuthenticationMWs {
       return res.sendStatus(404);
     }
 
-    // not enough parameter
+    // not enough parameters
     if (
         typeof req.body === 'undefined' ||
         typeof req.body.loginCredential === 'undefined' ||
@@ -226,7 +229,7 @@ export class AuthenticationMWs {
           })
       );
       delete user.password;
-      req.session['user'] = user;
+      req.session.context = await ObjectManagers.getInstance().buildContext(user);
       if (req.body.loginCredential.rememberMe) {
         req.sessionOptions.expires = new Date(
             Date.now() + Config.Server.sessionTimeout
@@ -247,7 +250,7 @@ export class AuthenticationMWs {
   }
 
   public static logout(req: Request, res: Response, next: NextFunction): void {
-    delete req.session['user'];
+    delete req.session.context;
     return next();
   }
 

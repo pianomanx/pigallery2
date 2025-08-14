@@ -7,6 +7,7 @@ import {ObjectManagers} from '../../../../../src/backend/model/ObjectManagers';
 import {Config} from '../../../../../src/common/config/private/Config';
 import * as path from 'path';
 import {UserManager} from '../../../../../src/backend/model/database/UserManager';
+import {SearchQueryTypes, TextSearchQueryMatchTypes} from '../../../../../src/common/entities/SearchQueryDTO';
 
 
 declare const describe: any;
@@ -23,7 +24,9 @@ describe('Authentication middleware', () => {
     it('should call next on authenticated', (done: (err?: any) => void) => {
       const req: any = {
         session: {
-          user: 'A user'
+          context: {
+            user: 'A user'
+          }
         },
         sessionOptions: {},
         query: {},
@@ -72,7 +75,9 @@ describe('Authentication middleware', () => {
 
     const req = {
       session: {
-        user: {permissions: null as string[]}
+        context: {
+          user: {permissions: null as string[]}
+        }
       },
       sessionOptions: {},
       query: {},
@@ -93,14 +98,14 @@ describe('Authentication middleware', () => {
     };
 
     it('should catch unauthorized path usage', async () => {
-      req.session['user'].permissions = [path.normalize('/sub/subsub')];
+      req.session.context.user.permissions = [path.normalize('/sub/subsub')];
       expect(await test('/sub/subsub')).to.be.eql('ok');
       expect(await test('/test')).to.be.eql(403);
       expect(await test('/')).to.be.eql(403);
       expect(await test('/sub/test')).to.be.eql(403);
       expect(await test('/sub/subsub/test')).to.be.eql(403);
       expect(await test('/sub/subsub/test/test2')).to.be.eql(403);
-      req.session['user'].permissions = [path.normalize('/sub/subsub'), path.normalize('/sub/subsub2')];
+      req.session.context.user.permissions = [path.normalize('/sub/subsub'), path.normalize('/sub/subsub2')];
       expect(await test('/sub/subsub2')).to.be.eql('ok');
       expect(await test('/sub/subsub')).to.be.eql('ok');
       expect(await test('/test')).to.be.eql(403);
@@ -108,7 +113,7 @@ describe('Authentication middleware', () => {
       expect(await test('/sub/test')).to.be.eql(403);
       expect(await test('/sub/subsub/test')).to.be.eql(403);
       expect(await test('/sub/subsub2/test')).to.be.eql(403);
-      req.session['user'].permissions = [path.normalize('/sub/subsub*')];
+      req.session.context.user.permissions = [path.normalize('/sub/subsub*')];
       expect(await test('/b')).to.be.eql(403);
       expect(await test('/sub')).to.be.eql(403);
       expect(await test('/sub/subsub2')).to.be.eql(403);
@@ -144,7 +149,9 @@ describe('Authentication middleware', () => {
     it('should call next error on authenticated', (done: (err?: any) => void) => {
       const req: any = {
         session: {
-          user: 'A user'
+          context: {
+            user: 'A user'
+          }
         },
         sessionOptions: {},
       };
@@ -162,8 +169,10 @@ describe('Authentication middleware', () => {
     it('should call next on authorised', (done: (err?: any) => void) => {
       const req: any = {
         session: {
-          user: {
-            role: UserRoles.LimitedGuest
+          context: {
+            user: {
+              role: UserRoles.LimitedGuest
+            }
           }
         },
         sessionOptions: {}
@@ -183,8 +192,10 @@ describe('Authentication middleware', () => {
     it('should call next with error on not authorised', (done: (err?: any) => void) => {
       const req: any = {
         session: {
-          user: {
-            role: UserRoles.LimitedGuest
+          context: {
+            user: {
+              role: UserRoles.LimitedGuest
+            }
           }
         },
         sessionOptions: {}
@@ -200,8 +211,8 @@ describe('Authentication middleware', () => {
   });
 
   describe('login', () => {
-    beforeEach(() => {
-      ObjectManagers.reset();
+    beforeEach(async () => {
+      await ObjectManagers.reset();
     });
 
     describe('should call input ErrorDTO next on missing...', () => {
@@ -291,7 +302,7 @@ describe('Authentication middleware', () => {
 
     });
 
-    it('should call next with user on the session on  finding user', (done: (err?: any) => void) => {
+    it('should call next with user on the session on finding user', (done: (err?: any) => void) => {
       const req: any = {
         session: {},
         body: {
@@ -303,19 +314,226 @@ describe('Authentication middleware', () => {
         query: {},
         params: {}
       };
+      const testUser = 'test user' as any;
+      const testContext = {user: testUser};
+
       const next: any = (err: ErrorDTO) => {
         expect(err).to.be.undefined;
-        expect(req.session['user']).to.be.eql('test user');
+        expect(req.session.context).to.be.eql(testContext);
         done();
       };
+
       ObjectManagers.getInstance().UserManager = {
         findOne: (filter: never) => {
-          return Promise.resolve('test user' as any);
+          return Promise.resolve(testUser);
         }
       } as UserManager;
+
+      // Add SearchManager mock to avoid errors in buildContext
+      ObjectManagers.getInstance().SearchManager = {
+        prepareAndBuildWhereQuery: (query: any) => {
+          return Promise.resolve(null);
+        }
+      } as any;
+
+
       AuthenticationMWs.login(req, null, next);
+    });
+
+    it('should create context with allowQuery', (done: (err?: any) => void) => {
+      const req: any = {
+        session: {},
+        body: {
+          loginCredential: {
+            username: 'aa',
+            password: 'bb'
+          }
+        },
+        query: {},
+        params: {}
+      };
+
+      const testUser = {
+        name: 'testuser',
+        role: UserRoles.Admin,
+        allowQuery: {
+          type: SearchQueryTypes.directory,
+          text: '/allowed/path',
+          matchType: TextSearchQueryMatchTypes.exact_match
+        }
+      };
+
+      const projectionQuery = {someQueryObject: true};
+      const testContext = {
+        user: testUser,
+        projectionQuery: projectionQuery
+      };
+
+      const next: any = (err: ErrorDTO) => {
+        try {
+        expect(err).to.be.undefined;
+        expect(req.session?.context).to.be.eql(testContext);
+          done();
+        }catch (e){
+          done(e);
+        }
+      };
+
+      ObjectManagers.getInstance().UserManager = {
+        findOne: (filter: never) => {
+          return Promise.resolve(testUser);
+        }
+      } as any;
 
 
+      // @ts-ignore
+      ObjectManagers.getInstance().buildContext = async (user: any) => {
+        expect(user).to.be.eql(testUser);
+        return testContext;
+      };
+
+
+      AuthenticationMWs.login(req, null, next);
+    });
+
+    it('should create context with blockQuery', (done: (err?: any) => void) => {
+      const req: any = {
+        session: {},
+        body: {
+          loginCredential: {
+            username: 'aa',
+            password: 'bb'
+          }
+        },
+        query: {},
+        params: {}
+      };
+
+      const testUser = {
+        name: 'testuser',
+        role: UserRoles.Admin,
+        blockQuery: {
+          type: SearchQueryTypes.directory,
+          text: '/blocked/path',
+          matchType: TextSearchQueryMatchTypes.exact_match
+        }
+      };
+
+      const projectionQuery = {someQueryObject: true};
+      const testContext = {
+        user: testUser,
+        projectionQuery: projectionQuery
+      };
+
+
+      const next: any = (err: ErrorDTO) => {
+        try {
+          expect(err).to.be.undefined;
+          expect(req.session?.context).to.be.eql(testContext);
+          done();
+        }catch (e){
+          done(e);
+        }
+      };
+
+      // @ts-ignore
+      ObjectManagers.getInstance().UserManager = {
+        findOne: (filter: never) => {
+          return Promise.resolve(testUser);
+        }
+      } as UserManager;
+
+      ObjectManagers.getInstance().SearchManager = {
+        prepareAndBuildWhereQuery: (query: any) => {
+          // In real code, the blockQuery would be negated first
+          expect(query).not.to.be.undefined;
+          return Promise.resolve(projectionQuery);
+        }
+      } as any;
+
+      // @ts-ignore
+      ObjectManagers.getInstance().buildContext = async (user: any) => {
+        expect(user).to.be.eql(testUser);
+        return testContext;
+      };
+
+      AuthenticationMWs.login(req, null, next);
+    });
+
+    it('should create context with both allowQuery and blockQuery', (done: (err?: any) => void) => {
+      const req: any = {
+        session: {},
+        body: {
+          loginCredential: {
+            username: 'aa',
+            password: 'bb'
+          }
+        },
+        query: {},
+        params: {}
+      };
+
+      const testUser = {
+        name: 'testuser',
+        role: UserRoles.Admin,
+        allowQuery: {
+          type: SearchQueryTypes.directory,
+          text: '/allowed/path',
+          matchType: TextSearchQueryMatchTypes.exact_match
+        },
+        blockQuery: {
+          type: SearchQueryTypes.directory,
+          text: '/blocked/path',
+          matchType: TextSearchQueryMatchTypes.exact_match
+        }
+      };
+
+      const projectionQuery = {someQueryObject: true};
+      const testContext = {
+        user: {
+          ...testUser,
+          projectionKey: 'some-hash-value'
+        },
+        projectionQuery: projectionQuery
+      };
+
+      const next: any = (err: ErrorDTO) => {
+        try {
+          expect(err).to.be.undefined;
+          expect(req.session.context).to.be.eql(testContext);
+          expect(req.session.context.user.projectionKey).not.to.be.undefined;
+          done();
+        }catch (e){
+          done(e);
+        }
+      };
+
+      // @ts-ignore
+      ObjectManagers.getInstance().UserManager = {
+        findOne: (filter: never) => {
+          return Promise.resolve({...testUser});
+        }
+      } as UserManager;
+
+      ObjectManagers.getInstance().SearchManager = {
+        prepareAndBuildWhereQuery: (query: any) => {
+          // In the real code, this would be an AND query combining allowQuery and negated blockQuery
+          expect(query.type).to.be.eql(SearchQueryTypes.AND);
+          expect(query.list).to.have.lengthOf(2);
+          return Promise.resolve(projectionQuery);
+        }
+      } as any;
+
+      // @ts-ignore
+      ObjectManagers.getInstance().buildContext = async (user: any) => {
+        expect(user).to.deep.include({
+          name: testUser.name,
+          role: testUser.role
+        });
+        return testContext;
+      };
+
+      AuthenticationMWs.login(req, null, next);
     });
   });
 
@@ -324,15 +542,17 @@ describe('Authentication middleware', () => {
     it('should call next on logout', (done: (err?: any) => void) => {
       const req: any = {
         session: {
-          user: {
-            role: UserRoles.LimitedGuest
+          context: {
+            user: {
+              role: UserRoles.LimitedGuest
+            }
           }
         }
       };
       const next: any = (err: ErrorDTO) => {
         try {
           expect(err).to.be.undefined;
-          expect(req.user).to.be.undefined;
+          expect(req.session.context).to.be.undefined;
           done();
         } catch (err) {
           done(err);

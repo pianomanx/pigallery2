@@ -11,7 +11,7 @@ import * as fs from 'fs';
 const LOG_TAG = '[ExtensionConfigWrapper]';
 
 /**
- * Wraps to original config and makes sure all extension related config is loaded
+ * Wraps to the original config and makes sure all extension-related configs are loaded
  */
 export class ExtensionConfigWrapper {
 

@@ -25,12 +25,9 @@ import {
   TextSearchQueryMatchTypes,
   ToDateSearch
 } from '../../../../../src/common/entities/SearchQueryDTO';
-import {IndexingManager} from '../../../../../src/backend/model/database/IndexingManager';
 import {DirectoryBaseDTO, ParentDirectoryDTO, SubDirectoryDTO} from '../../../../../src/common/entities/DirectoryDTO';
 import {TestHelper} from '../../../../TestHelper';
 import {ObjectManagers} from '../../../../../src/backend/model/ObjectManagers';
-import {GalleryManager} from '../../../../../src/backend/model/database/GalleryManager';
-import {Connection} from 'typeorm';
 import {GPSMetadata, PhotoDTO, PhotoMetadata} from '../../../../../src/common/entities/PhotoDTO';
 import {VideoDTO} from '../../../../../src/common/entities/VideoDTO';
 import {AutoCompleteItem} from '../../../../../src/common/entities/AutoCompleteItem';
@@ -38,7 +35,6 @@ import {Config} from '../../../../../src/common/config/private/Config';
 import {SearchQueryParser} from '../../../../../src/common/SearchQueryParser';
 import {FileDTO} from '../../../../../src/common/entities/FileDTO';
 import {SortByTypes} from '../../../../../src/common/entities/SortingMethods';
-import {LogLevel} from '../../../../../src/common/config/private/PrivateConfig';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
@@ -56,13 +52,6 @@ const tmpDescribe = describe;
 describe = DBTestHelper.describe(); // fake it os IDE plays nicely (recognize the test)
 
 
-class IndexingManagerTest extends IndexingManager {
-
-  public async saveToDB(scannedDirectory: ParentDirectoryDTO): Promise<void> {
-    return super.saveToDB(scannedDirectory);
-  }
-}
-
 class SearchManagerTest extends SearchManager {
 
   public flattenSameOfQueries(query: SearchQueryDTO): SearchQueryDTO {
@@ -71,16 +60,6 @@ class SearchManagerTest extends SearchManager {
 
 }
 
-class GalleryManagerTest extends GalleryManager {
-
-  public async getDirIdAndTime(connection: Connection, directoryName: string, directoryParent: string) {
-    return super.getDirIdAndTime(connection, directoryName, directoryParent);
-  }
-
-  public async getParentDirFromId(connection: Connection, dir: number): Promise<ParentDirectoryDTO> {
-    return super.getParentDirFromId(connection, dir);
-  }
-}
 
 describe('SearchManager', (sqlHelper: DBTestHelper) => {
   describe = tmpDescribe;
@@ -115,27 +94,27 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     subDir2 = TestHelper.getDirectoryEntry(directory, 'Return of the Jedi');
     p = TestHelper.getPhotoEntry1(directory);
     p.metadata.creationDate = Date.now();
-    p.metadata.creationDateOffset = "+02:00";
+    p.metadata.creationDateOffset = '+02:00';
     p2 = TestHelper.getPhotoEntry2(directory);
     p2.metadata.creationDate = Date.now() - 60 * 60 * 24 * 1000;
-    p2.metadata.creationDateOffset = "+02:00";
+    p2.metadata.creationDateOffset = '+02:00';
     v = TestHelper.getVideoEntry1(directory);
     v.metadata.creationDate = Date.now() - 60 * 60 * 24 * 7 * 1000;
-    v.metadata.creationDateOffset = "+02:00";
+    v.metadata.creationDateOffset = '+02:00';
     gpx = TestHelper.getRandomizedGPXEntry(directory);
     p4 = TestHelper.getPhotoEntry4(subDir2);
     let d = new Date();
     //set creation date to one year and one day earlier
     p4.metadata.creationDate = d.getTime() - 60 * 60 * 24 * (Utils.isDateFromLeapYear(d) ? 367 : 366) * 1000;
-    p4.metadata.creationDateOffset = "+02:00";
+    p4.metadata.creationDateOffset = '+02:00';
     const pFaceLessTmp = TestHelper.getPhotoEntry3(subDir);
     delete pFaceLessTmp.metadata.faces;
     d = new Date();
     //we create a date 1 month and 1 day before now
     d = Utils.addMonthToDate(d, -1); //subtract 1 month in the "human way"
-    d.setDate(d.getDate()-1); //subtract 1 day
+    d.setDate(d.getDate() - 1); //subtract 1 day
     pFaceLessTmp.metadata.creationDate = d.getTime();
-    pFaceLessTmp.metadata.creationDateOffset = "+02:00";
+    pFaceLessTmp.metadata.creationDateOffset = '+02:00';
 
     dir = await DBTestHelper.persistTestDir(directory);
     subDir = dir.directories[0];

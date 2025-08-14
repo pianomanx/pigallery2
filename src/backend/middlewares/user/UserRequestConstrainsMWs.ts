@@ -16,7 +16,7 @@ export class UserRequestConstrainsMWs {
     ) {
       return next();
     }
-    if (req.session['user'].id !== parseInt(req.params.id, 10)) {
+    if (req.session.context?.user.id !== parseInt(req.params.id, 10)) {
       return next(new ErrorDTO(ErrorCodes.NOT_AUTHORISED));
     }
 
@@ -35,7 +35,7 @@ export class UserRequestConstrainsMWs {
       return next();
     }
 
-    if (req.session['user'].id === parseInt(req.params.id, 10)) {
+    if (req.session.context?.user.id === parseInt(req.params.id, 10)) {
       return next(new ErrorDTO(ErrorCodes.NOT_AUTHORISED));
     }
 
@@ -54,7 +54,7 @@ export class UserRequestConstrainsMWs {
       return next();
     }
 
-    if (req.session['user'].id !== parseInt(req.params.id, 10)) {
+    if (req.session.context?.user.id !== parseInt(req.params.id, 10)) {
       return next();
     }
 

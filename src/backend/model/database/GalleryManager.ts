@@ -6,14 +6,15 @@ import {SQLConnection} from './SQLConnection';
 import {PhotoEntity} from './enitites/PhotoEntity';
 import {ProjectPath} from '../../ProjectPath';
 import {Config} from '../../../common/config/private/Config';
-import {Connection} from 'typeorm';
+import {Brackets, Connection} from 'typeorm';
 import {MediaEntity} from './enitites/MediaEntity';
 import {VideoEntity} from './enitites/VideoEntity';
 import {Logger} from '../../Logger';
 import {ObjectManagers} from '../ObjectManagers';
 import {DuplicatesDTO} from '../../../common/entities/DuplicatesDTO';
 import {ReIndexingSensitivity} from '../../../common/config/private/PrivateConfig';
-import { DiskManager } from '../fileaccess/DiskManager';
+import {DiskManager} from '../fileaccess/DiskManager';
+import {SessionContext} from '../SessionContext';
 
 const LOG_TAG = '[GalleryManager]';
 
@@ -23,7 +24,7 @@ export class GalleryManager {
     parent: string;
   } {
     relativeDirectoryName = DiskManager.normalizeDirPath(
-        relativeDirectoryName
+      relativeDirectoryName
     );
     return {
       name: path.basename(relativeDirectoryName),
@@ -32,12 +33,13 @@ export class GalleryManager {
   }
 
   public async listDirectory(
-      relativeDirectoryName: string,
-      knownLastModified?: number,
-      knownLastScanned?: number
+    session: SessionContext,
+    relativeDirectoryName: string,
+    knownLastModified?: number,
+    knownLastScanned?: number
   ): Promise<ParentDirectoryDTO> {
     const directoryPath = GalleryManager.parseRelativeDirePath(
-        relativeDirectoryName
+      relativeDirectoryName
     );
 
     const connection = await SQLConnection.getConnection();
@@ -48,35 +50,35 @@ export class GalleryManager {
       // Return as soon as possible without touching the original data source (hdd)
       // See https://github.com/bpatrik/pigallery2/issues/613
       if (
-          Config.Indexing.reIndexingSensitivity ===
-          ReIndexingSensitivity.never
+        Config.Indexing.reIndexingSensitivity ===
+        ReIndexingSensitivity.never
       ) {
         return null;
       }
 
       const stat = fs.statSync(
-          path.join(ProjectPath.ImageFolder, relativeDirectoryName)
+        path.join(ProjectPath.ImageFolder, relativeDirectoryName)
       );
       const lastModified = DiskManager.calcLastModified(stat);
 
       // If it seems that the content did not change, do not work on it
       if (
-          knownLastModified &&
-          knownLastScanned &&
-          lastModified === knownLastModified &&
-          dir.lastScanned === knownLastScanned
+        knownLastModified &&
+        knownLastScanned &&
+        lastModified === knownLastModified &&
+        dir.lastScanned === knownLastScanned
       ) {
         if (
-            Config.Indexing.reIndexingSensitivity ===
-            ReIndexingSensitivity.low
+          Config.Indexing.reIndexingSensitivity ===
+          ReIndexingSensitivity.low
         ) {
           return null;
         }
         if (
-            Date.now() - dir.lastScanned <=
-            Config.Indexing.cachedFolderTimeout &&
-            Config.Indexing.reIndexingSensitivity ===
-            ReIndexingSensitivity.medium
+          Date.now() - dir.lastScanned <=
+          Config.Indexing.cachedFolderTimeout &&
+          Config.Indexing.reIndexingSensitivity ===
+          ReIndexingSensitivity.medium
         ) {
           return null;
         }
@@ -84,16 +86,16 @@ export class GalleryManager {
 
       if (dir.lastModified !== lastModified) {
         Logger.silly(
-            LOG_TAG,
-            'Reindexing reason: lastModified mismatch: known: ' +
-            dir.lastModified +
-            ', current:' +
-            lastModified
+          LOG_TAG,
+          'Reindexing reason: lastModified mismatch: known: ' +
+          dir.lastModified +
+          ', current:' +
+          lastModified
         );
         const ret =
-            await ObjectManagers.getInstance().IndexingManager.indexDirectory(
-                relativeDirectoryName
-            );
+          await ObjectManagers.getInstance().IndexingManager.indexDirectory(
+            relativeDirectoryName
+          );
         for (const subDir of ret.directories) {
           if (!subDir.cover) {
             // if subdirectories do not have photos, so cannot show a cover, try getting one from DB
@@ -103,70 +105,70 @@ export class GalleryManager {
         return ret;
       }
 
-      // not indexed since a while, index it in a lazy manner
+      // not indexed since a while, index it lazily
       if (
-          (Date.now() - dir.lastScanned >
-              Config.Indexing.cachedFolderTimeout &&
-              Config.Indexing.reIndexingSensitivity >=
-              ReIndexingSensitivity.medium) ||
+        (Date.now() - dir.lastScanned >
+          Config.Indexing.cachedFolderTimeout &&
           Config.Indexing.reIndexingSensitivity >=
-          ReIndexingSensitivity.high
+          ReIndexingSensitivity.medium) ||
+        Config.Indexing.reIndexingSensitivity >=
+        ReIndexingSensitivity.high
       ) {
         // on the fly reindexing
 
         Logger.silly(
-            LOG_TAG,
-            'lazy reindexing reason: cache timeout: lastScanned: ' +
-            (Date.now() - dir.lastScanned) +
-            'ms ago, cachedFolderTimeout:' +
-            Config.Indexing.cachedFolderTimeout
+          LOG_TAG,
+          'lazy reindexing reason: cache timeout: lastScanned: ' +
+          (Date.now() - dir.lastScanned) +
+          'ms ago, cachedFolderTimeout:' +
+          Config.Indexing.cachedFolderTimeout
         );
         ObjectManagers.getInstance()
-            .IndexingManager.indexDirectory(relativeDirectoryName)
-            .catch(console.error);
+          .IndexingManager.indexDirectory(relativeDirectoryName)
+          .catch(console.error);
       }
-      return await this.getParentDirFromId(connection, dir.id);
+      return await this.getParentDirFromId(connection, session, dir.id);
     }
 
     // never scanned (deep indexed), do it and return with it
     Logger.silly(LOG_TAG, 'Reindexing reason: never scanned');
     return ObjectManagers.getInstance().IndexingManager.indexDirectory(
-        relativeDirectoryName
+      relativeDirectoryName
     );
   }
 
   async countDirectories(): Promise<number> {
     const connection = await SQLConnection.getConnection();
     return await connection
-        .getRepository(DirectoryEntity)
-        .createQueryBuilder('directory')
-        .getCount();
+      .getRepository(DirectoryEntity)
+      .createQueryBuilder('directory')
+      .getCount();
   }
 
   async countMediaSize(): Promise<number> {
     const connection = await SQLConnection.getConnection();
     const {sum} = await connection
-        .getRepository(MediaEntity)
-        .createQueryBuilder('media')
-        .select('SUM(media.metadata.fileSize)', 'sum')
-        .getRawOne();
+      .getRepository(MediaEntity)
+      .createQueryBuilder('media')
+      .select('SUM(media.metadata.fileSize)', 'sum')
+      .getRawOne();
     return sum || 0;
   }
 
   async countPhotos(): Promise<number> {
     const connection = await SQLConnection.getConnection();
     return await connection
-        .getRepository(PhotoEntity)
-        .createQueryBuilder('directory')
-        .getCount();
+      .getRepository(PhotoEntity)
+      .createQueryBuilder('directory')
+      .getCount();
   }
 
   async countVideos(): Promise<number> {
     const connection = await SQLConnection.getConnection();
     return await connection
-        .getRepository(VideoEntity)
-        .createQueryBuilder('directory')
-        .getCount();
+      .getRepository(VideoEntity)
+      .createQueryBuilder('directory')
+      .getCount();
   }
 
   public async getPossibleDuplicates(): Promise<DuplicatesDTO[]> {
@@ -174,31 +176,31 @@ export class GalleryManager {
     const mediaRepository = connection.getRepository(MediaEntity);
 
     let duplicates = await mediaRepository
-        .createQueryBuilder('media')
-        .innerJoin(
-            (query) =>
-                query
-                    .from(MediaEntity, 'innerMedia')
-                    .select([
-                      'innerMedia.name as name',
-                      'innerMedia.metadata.fileSize as fileSize',
-                      'count(*)',
-                    ])
-                    .groupBy('innerMedia.name, innerMedia.metadata.fileSize')
-                    .having('count(*)>1'),
-            'innerMedia',
-            'media.name=innerMedia.name AND media.metadata.fileSize = innerMedia.fileSize'
-        )
-        .innerJoinAndSelect('media.directory', 'directory')
-        .orderBy('media.name, media.metadata.fileSize')
-        .limit(Config.Duplicates.listingLimit)
-        .getMany();
+      .createQueryBuilder('media')
+      .innerJoin(
+        (query) =>
+          query
+            .from(MediaEntity, 'innerMedia')
+            .select([
+              'innerMedia.name as name',
+              'innerMedia.metadata.fileSize as fileSize',
+              'count(*)',
+            ])
+            .groupBy('innerMedia.name, innerMedia.metadata.fileSize')
+            .having('count(*)>1'),
+        'innerMedia',
+        'media.name=innerMedia.name AND media.metadata.fileSize = innerMedia.fileSize'
+      )
+      .innerJoinAndSelect('media.directory', 'directory')
+      .orderBy('media.name, media.metadata.fileSize')
+      .limit(Config.Duplicates.listingLimit)
+      .getMany();
 
     const duplicateParis: DuplicatesDTO[] = [];
     const processDuplicates = (
-        duplicateList: MediaEntity[],
-        equalFn: (a: MediaEntity, b: MediaEntity) => boolean,
-        checkDuplicates = false
+      duplicateList: MediaEntity[],
+      equalFn: (a: MediaEntity, b: MediaEntity) => boolean,
+      checkDuplicates = false
     ): void => {
       let i = duplicateList.length - 1;
       while (i >= 0) {
@@ -216,15 +218,15 @@ export class GalleryManager {
         if (checkDuplicates) {
           // ad to group if one already existed
           const foundDuplicates = duplicateParis.find(
-              (dp): boolean =>
-                  !!dp.media.find(
-                      (m): boolean => !!list.find((lm): boolean => lm.id === m.id)
-                  )
+            (dp): boolean =>
+              !!dp.media.find(
+                (m): boolean => !!list.find((lm): boolean => lm.id === m.id)
+              )
           );
           if (foundDuplicates) {
             list.forEach((lm): void => {
               if (
-                  foundDuplicates.media.find((m): boolean => m.id === lm.id)
+                foundDuplicates.media.find((m): boolean => m.id === lm.id)
               ) {
                 return;
               }
@@ -239,40 +241,40 @@ export class GalleryManager {
     };
 
     processDuplicates(
-        duplicates,
-        (a, b): boolean =>
-            a.name === b.name && a.metadata.fileSize === b.metadata.fileSize
+      duplicates,
+      (a, b): boolean =>
+        a.name === b.name && a.metadata.fileSize === b.metadata.fileSize
     );
 
     duplicates = await mediaRepository
-        .createQueryBuilder('media')
-        .innerJoin(
-            (query) =>
-                query
-                    .from(MediaEntity, 'innerMedia')
-                    .select([
-                      'innerMedia.metadata.creationDate as creationDate',
-                      'innerMedia.metadata.fileSize as fileSize',
-                      'count(*)',
-                    ])
-                    .groupBy(
-                        'innerMedia.metadata.creationDate, innerMedia.metadata.fileSize'
-                    )
-                    .having('count(*)>1'),
-            'innerMedia',
-            'media.metadata.creationDate=innerMedia.creationDate AND media.metadata.fileSize = innerMedia.fileSize'
-        )
-        .innerJoinAndSelect('media.directory', 'directory')
-        .orderBy('media.metadata.creationDate, media.metadata.fileSize')
-        .limit(Config.Duplicates.listingLimit)
-        .getMany();
+      .createQueryBuilder('media')
+      .innerJoin(
+        (query) =>
+          query
+            .from(MediaEntity, 'innerMedia')
+            .select([
+              'innerMedia.metadata.creationDate as creationDate',
+              'innerMedia.metadata.fileSize as fileSize',
+              'count(*)',
+            ])
+            .groupBy(
+              'innerMedia.metadata.creationDate, innerMedia.metadata.fileSize'
+            )
+            .having('count(*)>1'),
+        'innerMedia',
+        'media.metadata.creationDate=innerMedia.creationDate AND media.metadata.fileSize = innerMedia.fileSize'
+      )
+      .innerJoinAndSelect('media.directory', 'directory')
+      .orderBy('media.metadata.creationDate, media.metadata.fileSize')
+      .limit(Config.Duplicates.listingLimit)
+      .getMany();
 
     processDuplicates(
-        duplicates,
-        (a, b): boolean =>
-            a.metadata.creationDate === b.metadata.creationDate &&
-            a.metadata.fileSize === b.metadata.fileSize,
-        true
+      duplicates,
+      (a, b): boolean =>
+        a.metadata.creationDate === b.metadata.creationDate &&
+        a.metadata.fileSize === b.metadata.fileSize,
+      true
     );
 
     return duplicateParis;
@@ -282,20 +284,20 @@ export class GalleryManager {
    * Returns with the directories only, does not include media or metafiles
    */
   public async selectDirStructure(
-      relativeDirectoryName: string
+    relativeDirectoryName: string
   ): Promise<DirectoryEntity> {
     const directoryPath = GalleryManager.parseRelativeDirePath(
-        relativeDirectoryName
+      relativeDirectoryName
     );
     const connection = await SQLConnection.getConnection();
     const query = connection
-        .getRepository(DirectoryEntity)
-        .createQueryBuilder('directory')
-        .where('directory.name = :name AND directory.path = :path', {
-          name: directoryPath.name,
-          path: directoryPath.parent,
-        })
-        .leftJoinAndSelect('directory.directories', 'directories');
+      .getRepository(DirectoryEntity)
+      .createQueryBuilder('directory')
+      .where('directory.name = :name AND directory.path = :path', {
+        name: directoryPath.name,
+        path: directoryPath.parent,
+      })
+      .leftJoinAndSelect('directory.directories', 'directories');
 
     return await query.getOne();
   }
@@ -304,14 +306,14 @@ export class GalleryManager {
    * Sets cover for the directory and caches it in the DB
    */
   public async fillCoverForSubDir(
-      connection: Connection,
-      dir: SubDirectoryDTO
+    connection: Connection,
+    dir: SubDirectoryDTO
   ): Promise<void> {
     if (!dir.validCover) {
       dir.cover =
-          await ObjectManagers.getInstance().CoverManager.setAndGetCoverForDirectory(
-              dir
-          );
+        await ObjectManagers.getInstance().CoverManager.setAndGetCoverForDirectory(
+          dir
+        );
     }
 
     dir.media = [];
@@ -324,48 +326,76 @@ export class GalleryManager {
     lastModified: number
   }> {
     return await connection
-        .getRepository(DirectoryEntity)
-        .createQueryBuilder('directory')
-        .where('directory.name = :name AND directory.path = :path', {
-          name: name,
-          path: path,
-        })
-        .select([
-          'directory.id',
-          'directory.lastScanned',
-          'directory.lastModified',
-        ]).getOne();
+      .getRepository(DirectoryEntity)
+      .createQueryBuilder('directory')
+      .where('directory.name = :name AND directory.path = :path', {
+        name: name,
+        path: path,
+      })
+      .select([
+        'directory.id',
+        'directory.lastScanned',
+        'directory.lastModified',
+      ]).getOne();
   }
 
   protected async getParentDirFromId(
-      connection: Connection,
-      partialDirId: number
+    connection: Connection,
+    session: SessionContext,
+    partialDirId: number
   ): Promise<ParentDirectoryDTO> {
+
+    const mediaJoinCondition = () => {
+      // Temporary QB to let Brackets build conditions and params
+      const dummyQb = connection.createQueryBuilder();
+      session.projectionQuery.whereFactory(dummyQb);
+
+      // Build condition string
+      const sql = dummyQb.expressionMap.wheres
+        .map(w => w.condition)
+        .join(' ');
+
+      // Extract params that Brackets added
+      const params = dummyQb.getParameters();
+
+      return {sql, params};
+    };
+    let sql = 'media.directoryId = directory.id';
+    let params = {};
+    if (session.projectionQuery) {
+      const mj = mediaJoinCondition();
+      sql += ' AND ' + mj.sql;
+      params = mj.params;
+    }
+
     const query = connection
-        .getRepository(DirectoryEntity)
-        .createQueryBuilder('directory')
-        .where('directory.id = :id', {
-          id: partialDirId
-        })
-        .leftJoinAndSelect('directory.directories', 'directories')
-        .leftJoinAndSelect('directory.media', 'media')
-        .leftJoinAndSelect('directories.cover', 'cover')
-        .leftJoinAndSelect('cover.directory', 'coverDirectory')
-        .select([
-          'directory',
-          'directories',
-          'media',
-          'cover.name',
-          'coverDirectory.name',
-          'coverDirectory.path',
-        ]);
+      .getRepository(DirectoryEntity)
+      .createQueryBuilder('directory')
+      .where('directory.id = :id', {
+        id: partialDirId
+      })
+      .leftJoinAndSelect('directory.directories', 'directories')
+      .leftJoinAndSelect(
+        'directory.media',
+        'media', sql, params
+      )
+      .leftJoinAndSelect('directories.cover', 'cover')
+      .leftJoinAndSelect('cover.directory', 'coverDirectory')
+      .select([
+        'directory',
+        'directories',
+        'media',
+        'cover.name',
+        'coverDirectory.name',
+        'coverDirectory.path',
+      ]);
 
     // TODO: do better filtering
     // NOTE: it should not cause an issue as it also do not save to the DB
     if (
-        Config.MetaFile.gpx === true ||
-        Config.MetaFile.pg2conf === true ||
-        Config.MetaFile.markdown === true
+      Config.MetaFile.gpx === true ||
+      Config.MetaFile.pg2conf === true ||
+      Config.MetaFile.markdown === true
     ) {
       query.leftJoinAndSelect('directory.metaFile', 'metaFile');
     }

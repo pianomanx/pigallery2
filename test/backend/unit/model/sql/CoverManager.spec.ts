@@ -17,6 +17,7 @@ import {Utils} from '../../../../../src/common/Utils';
 import {SQLConnection} from '../../../../../src/backend/model/database/SQLConnection';
 import {DirectoryEntity} from '../../../../../src/backend/model/database/enitites/DirectoryEntity';
 import {ClientSortingConfig} from '../../../../../src/common/config/public/ClientConfig';
+import {SessionContext} from '../../../../../src/backend/model/SessionContext';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
@@ -55,8 +56,8 @@ class GalleryManagerTest extends GalleryManager {
     return super.getDirIdAndTime(connection, directoryName, directoryParent);
   }
 
-  public async getParentDirFromId(connection: Connection, dir: number): Promise<ParentDirectoryDTO> {
-    return super.getParentDirFromId(connection, dir);
+  public async getParentDirFromId(connection: Connection, session: SessionContext, dir: number): Promise<ParentDirectoryDTO> {
+    return super.getParentDirFromId(connection, session, dir);
   }
 }
 
@@ -179,7 +180,7 @@ describe('CoverManager', (sqlHelper: DBTestHelper) => {
     const conn = await SQLConnection.getConnection();
 
     await conn.createQueryBuilder()
-        .update(DirectoryEntity).set({validCover: false}).execute();
+      .update(DirectoryEntity).set({validCover: false}).execute();
 
     expect(await pm.getPartialDirsWithoutCovers()).to.deep.equalInAnyOrder([dir, subDir, subDir2].map(d => partialDir(d)));
   });
@@ -272,7 +273,7 @@ describe('CoverManager', (sqlHelper: DBTestHelper) => {
     expect(subdir.validCover).to.equal(true);
     expect(subdir.cover.id).to.equal(p2.id);
 
-    // new version should invalidate
+    // The new version should invalidate
     await pm.onNewDataVersion(subDir as ParentDirectoryDTO);
     subdir = await selectDir();
     expect(subdir.validCover).to.equal(false);
@@ -280,13 +281,14 @@ describe('CoverManager', (sqlHelper: DBTestHelper) => {
     expect(subdir.cover.id).to.equal(p2.id);
 
     await conn.createQueryBuilder()
-        .update(DirectoryEntity)
-        .set({validCover: false, cover: null}).execute();
+      .update(DirectoryEntity)
+      .set({validCover: false, cover: null}).execute();
     expect((await selectDir()).cover).to.equal(null);
 
+    const session = new SessionContext();
 
-    const res = await gm.getParentDirFromId(conn,
-        (await gm.getDirIdAndTime(conn, dir.name, dir.path)).id);
+    const res = await gm.getParentDirFromId(conn, session,
+      (await gm.getDirIdAndTime(conn, dir.name, dir.path)).id);
     subdir = await selectDir();
     expect(subdir.validCover).to.equal(true);
     expect(subdir.cover.id).to.equal(p2.id);

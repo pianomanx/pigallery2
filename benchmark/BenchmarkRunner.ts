@@ -30,6 +30,7 @@ import {
 } from '../src/common/entities/SearchQueryDTO';
 import {defaultQueryKeywords, QueryKeywords, SearchQueryParser} from '../src/common/SearchQueryParser';
 import {ParentDirectoryDTO} from '../src/common/entities/DirectoryDTO';
+import {SessionContext} from '../src/backend/model/SessionContext';
 
 
 export interface BenchmarkResult {
@@ -268,7 +269,8 @@ export class BenchmarkRunner {
       const queue = ['/'];
       while (queue.length > 0) {
         const dirPath = queue.shift();
-        const dir = await gm.listDirectory(dirPath);
+        const session = new SessionContext();
+        const dir = await gm.listDirectory(session,dirPath);
         dir.directories.forEach((d): number => queue.push(path.join(d.path + d.name)));
         if (biggest < dir.media.length) {
           biggestPath = path.join(dir.path + dir.name);

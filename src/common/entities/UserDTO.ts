@@ -16,6 +16,7 @@ export interface UserDTO {
   role: UserRoles;
   usedSharingKey?: string;
   permissions: string[]; // user can only see these permissions. if ends with *, its recursive
+  projectionKey?: string; // allow- and blocklist projection hash. if null, no projection
 }
 
 export const UserDTOUtils = {
@@ -35,8 +36,8 @@ export const UserDTOUtils = {
       if (permission[permission.length - 1] === '*') {
         permission = permission.slice(0, -1);
         if (
-            path.startsWith(permission) &&
-            (!path[permission.length] || path[permission.length] === '/')
+          path.startsWith(permission) &&
+          (!path[permission.length] || path[permission.length] === '/')
         ) {
           return true;
         }
@@ -50,12 +51,12 @@ export const UserDTOUtils = {
   },
 
   isDirectoryAvailable: (
-      directory: DirectoryPathDTO,
-      permissions: string[]
+    directory: DirectoryPathDTO,
+    permissions: string[]
   ): boolean => {
     return UserDTOUtils.isDirectoryPathAvailable(
-        Utils.concatUrls(directory.path, directory.name),
-        permissions
+      Utils.concatUrls(directory.path, directory.name),
+      permissions
     );
   },
 };

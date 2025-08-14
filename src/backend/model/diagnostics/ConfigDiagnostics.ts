@@ -292,15 +292,16 @@ export class ConfigDiagnostics {
         settings.SearchQuery
       )
     ) {
-      throw new Error('SearchQuery is not valid. Got: ' + JSON.stringify(sp.parse(sp.stringify(settings.SearchQuery))));
+      throw new Error('SearchQuery is not valid. Expected: ' + JSON.stringify(sp.parse(sp.stringify(settings.SearchQuery))) +
+        ' Got: ' + JSON.stringify(settings.SearchQuery));
     }
   }
 
   /**
    * Removes unsupported image formats.
-   * It is possible that some OS support one or the other image formats (like Mac os does with HEIC)
-   * , but others not.
-   * Those formats are added to the config, but dynamically removed.
+   * It is possible that some OS support one or the other image formats (like macOS does with HEIC),
+   * but others do not.
+   * Those formats are added to the config but dynamically removed.
    * @param config
    */
   static async removeUnsupportedPhotoExtensions(config: ClientPhotoConfig): Promise<void> {
@@ -328,7 +329,7 @@ export class ConfigDiagnostics {
           } as MediaRendererInput, true
         );
       } catch (e) {
-        Logger.verbose(e)
+        Logger.verbose(e);
         Logger.verbose(LOG_TAG, 'The current OS does not support the following photo format:' + ext + ', removing it form config.');
         config.supportedFormats.splice(i, 1);
         removedSome = true;
