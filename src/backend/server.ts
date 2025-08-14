@@ -117,6 +117,11 @@ export class Server {
     // Get PORT from environment and store in Express.
     this.app.set('port', Config.Server.port);
 
+    // Set express 'trust proxy' setting to extract Remote Client IP
+    // from optional reverse proxies trusted headers
+    // See https://expressjs.com/en/guide/behind-proxies.html
+    this.app.set('trust proxy', Server.getAppTrustProxyConfig());
+
     // Create HTTP server.
     this.server = _http.createServer(this.app);
 
@@ -194,6 +199,27 @@ export class Server {
   private onClose = () => {
     Logger.info(LOG_TAG, 'Closed http server');
   };
+
+  private static getAppTrustProxyConfig(): boolean | string | number {
+    const trustProxyValue = Config.Server.trustProxy;
+
+    switch (trustProxyValue) {
+      case "true":
+        return true;
+        break;
+
+      case "false":
+        return false;
+        break;
+
+      default:
+        if (/^\d+$/.test(trustProxyValue)) {
+          return Number(trustProxyValue);
+        }
+
+        return trustProxyValue;
+    }
+  }
 
   public Stop(): Promise<void> {
     return new Promise((resolve, reject) => {
