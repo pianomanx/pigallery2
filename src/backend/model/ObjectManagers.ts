@@ -291,7 +291,17 @@ export class ObjectManagers {
           ]
         } as ANDSearchQuery;
       }
-      context.projectionQuery = await ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(query);
+
+      // Build the Brackets-based query
+
+      const brackets = await  ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(query);
+
+      // New projection structure
+      context.projection = {
+        query: brackets,
+      };
+
+
       context.user.projectionKey = crypto.createHash('md5').update(JSON.stringify(query)).digest('hex');
     }
     return context;

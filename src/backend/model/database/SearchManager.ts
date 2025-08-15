@@ -367,7 +367,7 @@ export class SearchManager {
           if (Config.Gallery.ignoreTimestampOffset === true) {
             query.addOrderBy('media.metadata.creationDate + (coalesce(media.metadata.creationDateOffset,0) * 60000)', sort.ascending ? 'ASC' : 'DESC');
           } else {
-            query.addOrderBy('media.metadata.creationDate', sort.ascending ? 'ASC' : 'DESC'); 
+            query.addOrderBy('media.metadata.creationDate', sort.ascending ? 'ASC' : 'DESC');
           }
           break;
         case SortByTypes.Rating:
@@ -598,12 +598,12 @@ export class SearchManager {
           if (Config.Gallery.ignoreTimestampOffset === true) {
             q.where(
               `(media.metadata.creationDate + (coalesce(media.metadata.creationDateOffset,0) * 60000)) ${relation} :to${queryId}`,
-              textParam 
+              textParam
             );
           } else {
             q.where(
               `media.metadata.creationDate ${relation} :to${queryId}`,
-              textParam 
+              textParam
             );
 
           }
@@ -912,7 +912,7 @@ export class SearchManager {
                   }
                   return q;
                 }
-                
+
                 const dayOfYear = Utils.getDayOfYear(d);
                 addWhere('%m%d', dayOfYear - tq.daysLength < 0);
                 break;
