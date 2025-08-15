@@ -734,6 +734,101 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
     });
   });
 
+
+  DBTestHelper.savedDescribe('indexDirectory(waitForSave)', () => {
+    beforeEach(async () => {
+      await sqlHelper.initDB();
+    });
+
+    afterEach(async () => {
+      Config.loadSync();
+      await sqlHelper.clearDB();
+    });
+
+    it('resolves after the specific directory is saved and does not wait for the whole queue (even with duplicates)', async () => {
+      // Ensure ImageFolder is non-empty for the empty-root guard
+      Config.Album.enabled = true;
+      Config.Faces.enabled = true;
+      ProjectPath.reset();
+      Config.Media.folder = path.join(__dirname, '/../../../assets');
+      ProjectPath.ImageFolder = path.join(__dirname, '/../../../assets');
+
+      const completedSaves: string[] = [];
+
+      class IMWithDelay extends IndexingManager {
+        public async saveToDB(scannedDirectory: ParentDirectoryDTO): Promise<void> {
+          // mimic original concurrency guard
+          (this as any).isSaving = true;
+          try {
+            if (scannedDirectory.name === 'B') {
+              await new Promise((res) => setTimeout(res, 30));
+              completedSaves.push('B');
+              return;
+            }
+            if (scannedDirectory.name === 'C') {
+              await new Promise((res) => setTimeout(res, 80));
+              completedSaves.push('C');
+              return;
+            }
+            await new Promise((res) => setTimeout(res, 10));
+            completedSaves.push(scannedDirectory.name);
+          } finally {
+            (this as any).isSaving = false;
+          }
+        }
+      }
+
+      // Stub DiskManager.scanDirectory to return consistent DTOs
+      const originalScan = DiskManager.scanDirectory;
+      const makeDir = (name: string): ParentDirectoryDTO => ({
+        name,
+        path: path.join(path.sep),
+        mediaCount: 0,
+        lastModified: 1,
+        lastScanned: 1,
+        youngestMedia: 0,
+        oldestMedia: 0,
+        directories: [],
+        media: [],
+        metaFile: []
+      } as unknown as ParentDirectoryDTO);
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      DiskManager.scanDirectory = async (rel: string): Promise<ParentDirectoryDTO> => makeDir(rel);
+
+      const im = new IMWithDelay();
+
+      try {
+        // Queue two saves for the same directory ('B'), then another different directory ('C')
+        const pB1 = im.indexDirectory('B', true);
+        const pB2 = im.indexDirectory('B', true);
+        const pC = im.indexDirectory('C', true); // queued after Bs and slower
+
+        // Wait for first 'B' save only; should not wait for 'C'
+        await pB1;
+        expect(completedSaves[0]).to.equal('B');
+        expect(completedSaves.filter(n => n === 'B').length).to.be.equal(1);
+        expect(completedSaves.includes('C')).to.equal(false);
+
+        // Wait for second 'B' save; regardless of dedupe, it should finish before 'C'
+        await pB2;
+        expect(completedSaves.filter(n => n === 'B').length).to.be.equal(2);
+        expect(completedSaves.includes('C')).to.equal(false);
+
+        // Now ensure 'C' completes afterwards
+        await pC;
+        expect(completedSaves[completedSaves.length - 1]).to.equal('C');
+      } finally {
+        // restore stubs
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        DiskManager.scanDirectory = originalScan;
+        ProjectPath.reset();
+      }
+    });
+  });
+
   DBTestHelper.savedDescribe('should index .pg2conf', () => {
 
 

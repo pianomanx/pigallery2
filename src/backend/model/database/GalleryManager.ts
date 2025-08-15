@@ -50,6 +50,8 @@ export class GalleryManager {
       // Return as soon as possible without touching the original data source (hdd)
       // See https://github.com/bpatrik/pigallery2/issues/613
       if (
+        knownLastModified &&
+        knownLastScanned &&
         Config.Indexing.reIndexingSensitivity ===
         ReIndexingSensitivity.never
       ) {
@@ -92,17 +94,26 @@ export class GalleryManager {
           ', current:' +
           lastModified
         );
-        const ret =
+        if (session?.projectionQuery) {
+          // Need to wait for save, then return a DB-based result with projection
           await ObjectManagers.getInstance().IndexingManager.indexDirectory(
-            relativeDirectoryName
+            relativeDirectoryName,
+            true
           );
-        for (const subDir of ret.directories) {
-          if (!subDir.cover) {
-            // if subdirectories do not have photos, so cannot show a cover, try getting one from DB
-            await this.fillCoverForSubDir(connection, subDir);
+          return await this.getParentDirFromId(connection, session, dir.id);
+        } else {
+          const ret =
+            await ObjectManagers.getInstance().IndexingManager.indexDirectory(
+              relativeDirectoryName
+            );
+          for (const subDir of ret.directories) {
+            if (!subDir.cover) {
+              // if subdirectories do not have photos, so cannot show a cover, try getting one from DB
+              await this.fillCoverForSubDir(connection, subDir);
+            }
           }
+          return ret;
         }
-        return ret;
       }
 
       // not indexed since a while, index it lazily
@@ -132,6 +143,16 @@ export class GalleryManager {
 
     // never scanned (deep indexed), do it and return with it
     Logger.silly(LOG_TAG, 'Reindexing reason: never scanned');
+    if (session?.projectionQuery) {
+      // Save must be completed to query with projection
+      await ObjectManagers.getInstance().IndexingManager.indexDirectory(
+        relativeDirectoryName,
+        true
+      );
+      const connection = await SQLConnection.getConnection();
+      const dir = await this.getDirIdAndTime(connection, directoryPath.name, directoryPath.parent);
+      return await this.getParentDirFromId(connection, session, dir.id);
+    }
     return ObjectManagers.getInstance().IndexingManager.indexDirectory(
       relativeDirectoryName
     );
