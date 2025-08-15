@@ -935,6 +935,16 @@ export class ServerServiceConfig extends ClientServiceConfig {
 
   @ConfigProperty({
     tags: {
+      name: $localize`Trust Proxy`,
+      priority: ConfigPriority.underTheHood,
+      githubIssue: 1014
+    },
+    description: $localize`Should the backend trust proxies to extract remote Client IP`,
+  })
+  trustProxy: string = "false";
+
+  @ConfigProperty({
+    tags: {
       name: $localize`Port`,
       priority: ConfigPriority.advanced,
       uiResetNeeded: {server: true},
