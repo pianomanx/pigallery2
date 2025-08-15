@@ -939,7 +939,7 @@ export class ServerServiceConfig extends ClientServiceConfig {
       priority: ConfigPriority.underTheHood,
       githubIssue: 1014
     },
-    description: $localize`Should the backend trust proxies to extract remote Client IP`,
+    description: $localize`Should the backend trust proxies to extract remote Client IP. See express docs, for valid values: https://expressjs.com/en/guide/behind-proxies.html`,
   })
   trustProxy: string = "false";
 
