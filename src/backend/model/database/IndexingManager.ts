@@ -23,6 +23,7 @@ import {PersonJunctionTable} from './enitites/PersonJunctionTable';
 import {MDFileEntity} from './enitites/MDFileEntity';
 import {MDFileDTO} from '../../../common/entities/MDFileDTO';
 import {DiskManager} from '../fileaccess/DiskManager';
+import {SessionContext} from '../SessionContext';
 
 const LOG_TAG = '[IndexingManager]';
 

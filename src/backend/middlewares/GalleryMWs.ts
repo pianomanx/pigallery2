@@ -98,7 +98,8 @@ export class GalleryMWs {
       const query: SearchQueryDTO = JSON.parse(req.params['searchQueryDTO'] as string);
 
       // Get all media items from search
-      const searchResult = await ObjectManagers.getInstance().SearchManager.search(query);
+      const searchResult = await ObjectManagers.getInstance().SearchManager.search(
+        req.session.context, query);
 
       if (!searchResult.media || searchResult.media.length === 0) {
         return next(new ErrorDTO(ErrorCodes.INPUT_ERROR, 'No media found for zip'));
@@ -148,7 +149,7 @@ export class GalleryMWs {
           usedNames.set(lowerName, 1);
         }
 
-        archive.file(mediaPath, { name: uniqueName });
+        archive.file(mediaPath, {name: uniqueName});
       }
 
       await archive.finalize();
@@ -271,6 +272,7 @@ export class GalleryMWs {
 
     try {
       const result = await ObjectManagers.getInstance().SearchManager.search(
+        req.session.context,
         query
       );
 
@@ -315,6 +317,7 @@ export class GalleryMWs {
     try {
       req.resultPipe =
         await ObjectManagers.getInstance().SearchManager.autocomplete(
+          req.session.context,
           req.params['text'],
           type
         );
@@ -344,7 +347,9 @@ export class GalleryMWs {
       );
 
       const photos =
-        await ObjectManagers.getInstance().SearchManager.getNMedia(query, [{method: SortByTypes.Random, ascending: null}], 1, true);
+        await ObjectManagers.getInstance().SearchManager.getNMedia(
+          req.session.context,
+          query, [{method: SortByTypes.Random, ascending: null}], 1, true);
       if (!photos || photos.length !== 1) {
         return next(new ErrorDTO(ErrorCodes.INPUT_ERROR, 'No photo found'));
       }
