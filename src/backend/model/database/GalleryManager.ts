@@ -363,7 +363,7 @@ export class GalleryManager {
         'coverDirectory.path',
       ]);
 
-    if(!session.projection) {
+    if(!session.projectionQuery) {
       query.leftJoinAndSelect('directory.media', 'media');
     }
 
@@ -386,13 +386,13 @@ export class GalleryManager {
 
     // TODO: transform projection query to plain SQL query (String) and
     //  use it as leftJoinAndSelect on the dir query for performance improvement
-    if(session.projection) {
+    if(session.projectionQuery) {
       const mQuery = connection.getRepository(MediaEntity)
         .createQueryBuilder('media')
         .where('media.directory = :id', {
           id: partialDirId
         })
-        .andWhere(session.projection.query);
+        .andWhere(session.projectionQuery);
       dir.media = await mQuery.getMany();
     }
 
@@ -401,7 +401,7 @@ export class GalleryManager {
 
   async authoriseMedia(session: SessionContext, mediaPath: string) {
     // If no projection set for session, proceed
-    if (!session?.projection) {
+    if (!session?.projectionQuery) {
       return true;
     }
 
@@ -418,12 +418,10 @@ export class GalleryManager {
       .innerJoin('media.directory', 'directory')
       .where('media.name = :name', {name: fileName})
       .andWhere('directory.name = :dname AND directory.path = :dpath', {dname: directoryName, dpath: directoryParent})
-      .andWhere(session.projection.query);
+      .andWhere(session.projectionQuery);
 
     const count = await qb.getCount();
-    if (count === 0) {
-      return false;
-    }
-    return true;
+
+    return count !== 0;
   }
 }
