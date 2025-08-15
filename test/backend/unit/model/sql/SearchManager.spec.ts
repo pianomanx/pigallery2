@@ -1716,4 +1716,98 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     }], 1, true))).to.deep.equalInAnyOrder([searchifyMedia(pFaceLess)]);
   });
 
+  describe('projectionQuery (session scoped filter)', () => {
+    it('getCount should respect projectionQuery', async () => {
+      const sm = new SearchManager();
+      const session = new SessionContext();
+
+      const projQ = ({
+        text: 'wookiees',
+        matchType: TextSearchQueryMatchTypes.exact_match,
+        type: SearchQueryTypes.keyword
+      } as TextSearch);
+      session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
+
+      const searchQ = {text: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
+
+      // validate projection less count
+      expect(await sm.getCount(new SessionContext(), projQ)).to.equal(1);
+      expect(await sm.getCount(new SessionContext(), searchQ)).to.equal(4);
+
+      // test
+      expect(await sm.getCount(session, searchQ)).to.equal(1);
+
+    });
+
+    it('getNMedia should respect projectionQuery', async () => {
+      const sm = new SearchManager();
+      const session = new SessionContext();
+
+      const projQ = ({
+        text: 'wookiees',
+        matchType: TextSearchQueryMatchTypes.exact_match,
+        type: SearchQueryTypes.keyword
+      } as TextSearch);
+      session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
+
+      const searchQ = {text: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
+
+      const media = await sm.getNMedia(session, searchQ, [{
+        method: SortByTypes.Random,
+        ascending: null
+      }], 10, true);
+
+      expect(Utils.clone(media)).to.deep.equalInAnyOrder([searchifyMedia(pFaceLess)]);
+    });
+
+
+    it('autocomplete should respect projectionQuery', async () => {
+      const sm = new SearchManager();
+      const session = new SessionContext();
+
+      const projQ = ({
+        text: 'wookiees',
+        matchType: TextSearchQueryMatchTypes.exact_match,
+        type: SearchQueryTypes.keyword
+      } as TextSearch);
+      session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
+
+      // validate projection less count
+      expect((await sm.autocomplete(new SessionContext(), 'star', SearchQueryTypes.any_text)).length).to.equal(2);
+
+      // test
+      expect((await sm.autocomplete(session, 'star', SearchQueryTypes.any_text)).length).to.equal(1);
+      expect(await sm.autocomplete(session, 'star', SearchQueryTypes.any_text)).to.deep.equal([{
+        text: 'star wars',
+        type: SearchQueryTypes.keyword,
+      }]);
+    });
+
+    it('search should respect projectionQuery', async () => {
+      const sm = new SearchManager();
+      const session = new SessionContext();
+
+      const projQ = ({
+        text: 'wookiees',
+        matchType: TextSearchQueryMatchTypes.exact_match,
+        type: SearchQueryTypes.keyword
+      } as TextSearch);
+      session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
+
+      const searchQ = {text: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
+
+      Config.Search.listDirectories = false;
+      Config.Search.listMetafiles = false;
+
+      const result = await sm.search(session, searchQ);
+      expect(removeDir(result)).to.deep.equalInAnyOrder(removeDir({
+        searchQuery: searchQ,
+        directories: [],
+        media: [pFaceLess],
+        metaFile: [],
+        resultOverflow: false
+      } as SearchResultDTO));
+    });
+  });
+
 });
