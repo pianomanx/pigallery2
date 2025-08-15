@@ -19,6 +19,7 @@ import {ExtensionManager} from './extension/ExtensionManager';
 import {SessionContext} from './SessionContext';
 import {UserEntity} from './database/enitites/UserEntity';
 import {ANDSearchQuery, SearchQueryDTOUtils, SearchQueryTypes} from '../../common/entities/SearchQueryDTO';
+import {Config} from '../../common/config/private/Config';
 
 const LOG_TAG = '[ObjectManagers]';
 
@@ -277,24 +278,25 @@ export class ObjectManagers {
   async buildContext(user: UserEntity): Promise<SessionContext> {
     const context = new SessionContext();
     context.user = user;
-    if (user.blockQuery) {
-      user.blockQuery = SearchQueryDTOUtils.negate(user.blockQuery);
+    let blockQuery = user.overrideAllowBlockList ? user.blockQuery : Config.Users.blockQuery;
+    const allowQuery = user.overrideAllowBlockList ? user.allowQuery : Config.Users.allowQuery;
+    if (SearchQueryDTOUtils.isValidQuery(blockQuery)) {
+      blockQuery = SearchQueryDTOUtils.negate(blockQuery);
     }
-    if (user.allowQuery || user.blockQuery) {
-      let query = user.allowQuery || user.blockQuery;
-      if (user.allowQuery && user.blockQuery) {
+    if (SearchQueryDTOUtils.isValidQuery(allowQuery) || SearchQueryDTOUtils.isValidQuery(blockQuery)) {
+      let query = allowQuery || blockQuery;
+      if (allowQuery && blockQuery) {
         query = {
           type: SearchQueryTypes.AND,
           list: [
-            user.allowQuery,
-            user.blockQuery
+            allowQuery,
+            blockQuery
           ]
         } as ANDSearchQuery;
       }
-
+      console.log(allowQuery, blockQuery, query);
       // Build the Brackets-based query
       context.projectionQuery = await ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(query);
-
 
       context.user.projectionKey = crypto.createHash('md5').update(JSON.stringify(query)).digest('hex');
     }

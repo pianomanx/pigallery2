@@ -48,6 +48,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       user.id = 2;
       user.name = 'allowuser';
       user.role = UserRoles.Admin;
+      user.overrideAllowBlockList = true;
       user.allowQuery = {
         type: SearchQueryTypes.directory,
         text: '/allowed/path',
@@ -80,6 +81,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       user.id = 3;
       user.name = 'blockuser';
       user.role = UserRoles.Admin;
+      user.overrideAllowBlockList = true;
       user.blockQuery = {
         type: SearchQueryTypes.directory,
         text: '/blocked/path',
@@ -119,6 +121,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       user.id = 4;
       user.name = 'bothuser';
       user.role = UserRoles.Admin;
+      user.overrideAllowBlockList = true;
       user.allowQuery = {
         type: SearchQueryTypes.AND,
         list:[
@@ -176,6 +179,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       user1.id = 5;
       user1.name = 'user1';
       user1.role = UserRoles.Admin;
+      user1.overrideAllowBlockList = true;
       user1.allowQuery = {
         type: SearchQueryTypes.directory,
         text: '/allowed/path',
@@ -186,6 +190,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       user2.id = 6;
       user2.name = 'user2';
       user2.role = UserRoles.Admin;
+      user2.overrideAllowBlockList = true;
       user2.allowQuery = {
         type: SearchQueryTypes.directory,
         text: '/allowed/path',

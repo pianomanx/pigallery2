@@ -326,9 +326,14 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
       const testContext = {user: testUser};
 
       const next: any = (err: ErrorDTO) => {
-        expect(err).to.be.undefined;
-        expect(req.session.context).to.be.eql(testContext);
-        done();
+        try {
+          expect(err).to.be.undefined;
+          expect(req.session.context).to.be.eql(testContext);
+          done();
+        } catch (error) {
+          console.error(error);
+          done(error);
+        }
       };
 
       ObjectManagers.getInstance().UserManager = {
@@ -379,10 +384,10 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
 
       const next: any = (err: ErrorDTO) => {
         try {
-        expect(err).to.be.undefined;
-        expect(req.session?.context).to.be.eql(testContext);
+          expect(err).to.be.undefined;
+          expect(req.session?.context).to.be.eql(testContext);
           done();
-        }catch (e){
+        } catch (e) {
           done(e);
         }
       };
@@ -439,7 +444,7 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
           expect(err).to.be.undefined;
           expect(req.session?.context).to.be.eql(testContext);
           done();
-        }catch (e){
+        } catch (e) {
           done(e);
         }
       };
@@ -511,7 +516,7 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
           expect(req.session.context).to.be.eql(testContext);
           expect(req.session.context.user.projectionKey).not.to.be.undefined;
           done();
-        }catch (e){
+        } catch (e) {
           done(e);
         }
       };
