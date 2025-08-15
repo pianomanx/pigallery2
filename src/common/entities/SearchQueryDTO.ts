@@ -139,6 +139,9 @@ export const SearchQueryDTOUtils = {
         throw new Error('Unknown type' + query.type);
     }
   },
+  isValidQuery(query: SearchQueryDTO): boolean {
+    return query && query.type !== undefined && !(query.type === SearchQueryTypes.any_text && !(query as TextSearch).text);
+  }
 };
 
 export interface SearchQueryDTO {

@@ -20,6 +20,10 @@ export class UserEntity implements UserDTO {
   @Column('simple-array', {nullable: true})
   permissions: string[];
 
+  // only if this set to true, will the per-user allow/blocklist be considered
+  @Column({type: 'boolean', default: false})
+  overrideAllowBlockList?: boolean;
+
   @Column({
     type: 'text',
     nullable: true,

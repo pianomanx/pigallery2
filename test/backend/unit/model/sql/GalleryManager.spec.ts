@@ -86,7 +86,10 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
         text: 'photo1', // We've named our test photo specifically with this pattern
         matchType: TextSearchQueryMatchTypes.like
       };
-      const session = await ObjectManagers.getInstance().buildContext({allowQuery: searchQuery} as any);
+      const session = await ObjectManagers.getInstance().buildContext({
+        allowQuery: searchQuery,
+        overrideAllowBlockList: true
+      } as any);
 
 
       // Get the directory contents with filtering using our directory's name and path
@@ -117,7 +120,10 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
       };
 
 
-      const session = await ObjectManagers.getInstance().buildContext({allowQuery: searchQuery} as any);
+      const session = await ObjectManagers.getInstance().buildContext({
+        allowQuery: searchQuery,
+        overrideAllowBlockList: true
+      } as any);
 
 
       const dirInfo = await galleryManager.getDirIdAndTime(connection, sqlHelper.testGalleyEntities.dir.name, sqlHelper.testGalleyEntities.dir.path);
