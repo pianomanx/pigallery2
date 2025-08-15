@@ -39,7 +39,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       // Verify the context
       expect(context).to.not.be.null;
       expect(context.user).to.be.eql(user);
-      expect(context.projection).to.be.undefined;
+      expect(context.projectionQuery).to.be.undefined;
     });
 
     it('should create a context with allowQuery and set projectionQuery', async () => {
@@ -70,7 +70,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       // Verify the context
       expect(context).to.not.be.null;
       expect(context.user).to.be.eql(user);
-      expect(context.projection.query).to.be.eql(mockProjectionQuery);
+      expect(context.projectionQuery).to.be.eql(mockProjectionQuery);
       expect(context.user.projectionKey).to.be.a('string').and.not.empty;
     });
 
@@ -107,7 +107,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       // Verify the context
       expect(context).to.not.be.null;
       expect(context.user).to.be.eql(user);
-      expect(context.projection.query).to.be.eql(mockProjectionQuery);
+      expect(context.projectionQuery).to.be.eql(mockProjectionQuery);
       expect(context.user.projectionKey).to.be.a('string').and.not.empty;
       // Verify the blockQuery was negated
       expect((user.blockQuery as TextSearch).negate).to.be.true;
@@ -164,7 +164,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       // Verify the context
       expect(context).to.not.be.null;
       expect(context.user).to.be.eql(user);
-      expect(context.projection.query).to.be.eql(mockProjectionQuery);
+      expect(context.projectionQuery).to.be.eql(mockProjectionQuery);
       expect(context.user.projectionKey).to.be.a('string').and.not.empty;
       // Verify the blockQuery was negated
       expect((user.blockQuery as TextSearch).negate).to.be.true;
