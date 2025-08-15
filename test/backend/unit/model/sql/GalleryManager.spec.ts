@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import {DBTestHelper} from '../../../DBTestHelper';
 import {GalleryManager} from '../../../../../src/backend/model/database/GalleryManager';
 import {ParentDirectoryDTO} from '../../../../../src/common/entities/DirectoryDTO';
@@ -6,6 +7,9 @@ import {SessionContext} from '../../../../../src/backend/model/SessionContext';
 import {SearchQueryTypes, TextSearchQueryMatchTypes} from '../../../../../src/common/entities/SearchQueryDTO';
 import {ObjectManagers} from '../../../../../src/backend/model/ObjectManagers';
 import {SQLConnection} from '../../../../../src/backend/model/database/SQLConnection';
+import {Config} from '../../../../../src/common/config/private/Config';
+import {ReIndexingSensitivity} from '../../../../../src/common/config/private/PrivateConfig';
+import {IndexingManager} from '../../../../../src/backend/model/database/IndexingManager';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
@@ -132,4 +136,202 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
     });
 
   });
+  describe('GalleryManager.listDirectory - reindexing severities and projection behavior', () => {
+    const origStatSync = fs.statSync;
+
+    let gm: GalleryManagerTest;
+    let sessionNoProj: SessionContext;
+    let sessionProj: SessionContext;
+
+    const indexed: any = {id: 1, lastScanned: 0, lastModified: 0};
+    let calledArgs: any[] = [];
+    let bgCalls = 0;
+
+    beforeEach(() => {
+      // Reset config defaults that matter for tests
+      Config.loadSync();
+
+      gm = new GalleryManagerTest();
+      sessionNoProj = new SessionContext();
+      sessionProj = new SessionContext();
+      // Make projectionQuery truthy without relying on SearchManager
+      (sessionProj as any).projectionQuery = {} as any;
+
+      // Stub fs.statSync to control directory mtime/ctime -> lastModified
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      fs.statSync = ((): any => ({ctime: new Date(0), mtime: new Date(0)})) as any;
+
+      // Stub getDirIdAndTime and getParentDirFromId to avoid DB
+      (gm as any).getDirIdAndTime = () => Promise.resolve(indexed);
+      (gm as any).getParentDirFromId = () => Promise.resolve('DB_RESULT' as any);
+
+      // Stub IndexingManager.indexDirectory to capture calls
+      calledArgs = [];
+      bgCalls = 0;
+      ObjectManagers.getInstance().IndexingManager = new IndexingManager();
+      ObjectManagers.getInstance().IndexingManager.indexDirectory = ((...args: any[]) => {
+        calledArgs = args;
+        bgCalls++;
+        const retObj = {directories: [], media: [], metaFile: [], name: 'INDEX_RESULT'} as any;
+        return Promise.resolve(retObj);
+      }) as any;
+    });
+
+    afterEach(() => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      fs.statSync = origStatSync;
+    });
+
+    const setStatTime = (t: number) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      fs.statSync = ((): any => ({ctime: new Date(t), mtime: new Date(t)})) as any;
+    };
+
+    it('never: returns DB result when already scanned (no projection) and known times are missing', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.never;
+      indexed.lastScanned = 123;
+      indexed.lastModified = 1;
+      setStatTime(1);
+
+      const res = await gm.listDirectory(sessionNoProj, './');
+      expect(res).to.equal('DB_RESULT');
+    });
+
+    it('never: returns DB result when already scanned (with projection) and known times are missing', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.never;
+      indexed.lastScanned = 123;
+      indexed.lastModified = 1;
+      setStatTime(1);
+
+      const res = await gm.listDirectory(sessionProj, './');
+      expect(res).to.equal('DB_RESULT');
+    });
+
+    it('low + mismatch: returns scanned result when no projection', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.low;
+      indexed.lastScanned = 10;
+      indexed.lastModified = 0; // DB says 0
+      setStatTime(1); // FS says 1 -> mismatch
+
+      const res = await gm.listDirectory(sessionNoProj, './');
+      expect(res).to.be.an('object');
+      expect((res as any).name).to.equal('INDEX_RESULT');
+      expect(calledArgs[0]).to.equal('./');
+      expect(calledArgs[1]).to.be.undefined; // no waitForSave
+    });
+
+    it('low + mismatch: waits for save and returns DB result when projection set', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.low;
+      indexed.lastScanned = 10;
+      indexed.lastModified = 0;
+      setStatTime(1);
+
+      const res = await gm.listDirectory(sessionProj, './');
+      expect(res).to.equal('DB_RESULT');
+      expect(calledArgs[0]).to.equal('./');
+      expect(calledArgs[1]).to.equal(true); // waitForSave
+    });
+
+    it('low + unchanged with known times: returns null (no projection)', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.low;
+      indexed.lastScanned = 10;
+      indexed.lastModified = 1;
+      setStatTime(1);
+
+      const res = await gm.listDirectory(sessionNoProj, './', 1, 10);
+      expect(res).to.equal(null);
+    });
+
+    it('low + unchanged with known times: returns null (with projection)', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.low;
+      indexed.lastScanned = 10;
+      indexed.lastModified = 1;
+      setStatTime(1);
+
+      const res = await gm.listDirectory(sessionProj, './', 1, 10);
+      expect(res).to.equal(null);
+    });
+
+    it('medium + unchanged within cache (known times): returns null', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.medium;
+      // Set lastScanned close to now so within cachedFolderTimeout
+      indexed.lastScanned = Date.now();
+      indexed.lastModified = 1;
+      setStatTime(1);
+
+      const res = await gm.listDirectory(sessionNoProj, './', 1, indexed.lastScanned);
+      expect(res).to.equal(null);
+    });
+
+    it('medium + cache expired (no known times): background reindex and DB result (no projection)', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.medium;
+      indexed.lastScanned = Date.now() - (Config.Indexing.cachedFolderTimeout + 1000);
+      indexed.lastModified = 1;
+      setStatTime(1);
+
+      const res = await gm.listDirectory(sessionNoProj, './');
+      expect(res).to.equal('DB_RESULT');
+      expect(bgCalls).to.be.greaterThan(0);
+    });
+
+    it('medium + cache expired (no known times): background reindex and DB result (with projection)', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.medium;
+      indexed.lastScanned = Date.now() - (Config.Indexing.cachedFolderTimeout + 1000);
+      indexed.lastModified = 1;
+      setStatTime(1);
+
+      const res = await gm.listDirectory(sessionProj, './');
+      expect(res).to.equal('DB_RESULT');
+      expect(bgCalls).to.be.greaterThan(0);
+    });
+
+    it('high + unchanged: background reindex and DB result (no projection)', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.high;
+      indexed.lastScanned = Date.now();
+      indexed.lastModified = 1;
+      setStatTime(1);
+
+      const res = await gm.listDirectory(sessionNoProj, './');
+      expect(res).to.equal('DB_RESULT');
+      expect(bgCalls).to.be.greaterThan(0);
+    });
+
+    it('high + unchanged: background reindex and DB result (with projection)', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.high;
+      indexed.lastScanned = Date.now();
+      indexed.lastModified = 1;
+      setStatTime(1);
+
+      const res = await gm.listDirectory(sessionProj, './');
+      expect(res).to.equal('DB_RESULT');
+      expect(bgCalls).to.be.greaterThan(0);
+    });
+
+    it('never scanned (lastScanned=null): without projection returns scanned result', async () => {
+      // Simulate never scanned dir
+      indexed.lastScanned = null;
+      indexed.lastModified = 0;
+      setStatTime(0);
+
+      const res = await gm.listDirectory(sessionNoProj, './');
+      expect(res).to.be.an('object');
+      expect((res as any).name).to.equal('INDEX_RESULT');
+    });
+
+    it('never scanned (lastScanned=null): with projection waits for save and returns DB result', async () => {
+      // Simulate never scanned dir
+      indexed.lastScanned = null;
+      indexed.lastModified = 0;
+      setStatTime(0);
+
+      const res = await gm.listDirectory(sessionProj, './');
+      expect(res).to.equal('DB_RESULT');
+      expect(calledArgs[1]).to.equal(true);
+    });
+  });
+
 });
+
