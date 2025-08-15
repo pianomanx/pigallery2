@@ -8,17 +8,25 @@ import {Config} from '../../../../../src/common/config/private/Config';
 import * as path from 'path';
 import {UserManager} from '../../../../../src/backend/model/database/UserManager';
 import {SearchQueryTypes, TextSearchQueryMatchTypes} from '../../../../../src/common/entities/SearchQueryDTO';
+import {DBTestHelper} from '../../../DBTestHelper';
 
 
-declare const describe: any;
+declare let describe: any;
 declare const it: any;
+declare const before: any;
 declare const beforeEach: any;
+const tmpDescribe = describe;
+describe = DBTestHelper.describe();
 
-describe('Authentication middleware', () => {
+describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
+  describe = tmpDescribe;
 
-  beforeEach(() => {
-    ObjectManagers.reset();
+  before(sqlHelper.clearDB);
+
+  beforeEach(async () => {
+    await ObjectManagers.reset();
   });
+
 
   describe('authenticate', () => {
     it('should call next on authenticated', (done: (err?: any) => void) => {
@@ -87,7 +95,7 @@ describe('Authentication middleware', () => {
     };
 
 
-    const authoriseDirPath = AuthenticationMWs.authorisePath('path', true);
+    const authoriseDirPath = AuthenticationMWs.authoriseDirectories('path');
     const test = (relativePath: string): Promise<string | number> => {
       return new Promise((resolve) => {
         req.params.path = path.normalize(relativePath);
@@ -537,6 +545,74 @@ describe('Authentication middleware', () => {
     });
   });
 
+
+  describe('authoriseMedia', () => {
+
+    const buildReq = (mediaRelPath: string, permissions: string[]) => ({
+      session: {
+        context: {
+          user: {permissions}
+        }
+      },
+      params: {
+        mediaPath: path.normalize(mediaRelPath)
+      }
+    });
+
+    const run = (req: any) => new Promise((resolve) => {
+      const res = {sendStatus: (code: number) => resolve(code)} as any;
+      const next = () => resolve('ok');
+      const mw = AuthenticationMWs.authoriseMedia('mediaPath');
+      // Normalization is called by the router, mimic it here
+      AuthenticationMWs.normalizePathParam('mediaPath')(req as any, {} as any, () => {
+        (mw as any)(req as any, res, next);
+      });
+    });
+
+    it('should deny if directory permission fails', async () => {
+      const req = buildReq('/private/dir/photo.jpg', [path.normalize('/allowed')]);
+      // No GalleryManager mock needed; should fail before DB check
+      const result = await run(req);
+      expect(result).to.eql(403);
+    });
+
+    it('should call next if directory permitted and GalleryManager.authoriseMedia allows', async () => {
+      const req = buildReq('/allowed/dir/photo.jpg', [path.normalize('/allowed*')]);
+
+      // Mock GalleryManager to allow
+      (ObjectManagers.getInstance() as any).GalleryManager = {
+        authoriseMedia: async (_session: any, _mediaPath: string) => true
+      } as any;
+
+      const result = await run(req);
+      expect(result).to.eql('ok');
+    });
+
+    it('should deny if GalleryManager.authoriseMedia denies', async () => {
+      const req = buildReq('/allowed/dir/photo.jpg', [path.normalize('/allowed*')]);
+
+      // Mock GalleryManager to deny
+      (ObjectManagers.getInstance() as any).GalleryManager = {
+        authoriseMedia: async (_session: any, _mediaPath: string) => false
+      } as any;
+
+      const result = await run(req);
+      expect(result).to.eql(403);
+    });
+
+    it('should deny (403) on error thrown by GalleryManager.authoriseMedia', async () => {
+      const req = buildReq('/allowed/dir/photo.jpg', [path.normalize('/allowed*')]);
+
+      (ObjectManagers.getInstance() as any).GalleryManager = {
+        authoriseMedia: async () => {
+          throw new Error('db error');
+        }
+      } as any;
+
+      const result = await run(req);
+      expect(result).to.eql(403);
+    });
+  });
 
   describe('logout', () => {
     it('should call next on logout', (done: (err?: any) => void) => {

@@ -6,7 +6,7 @@ import {SQLConnection} from './SQLConnection';
 import {PhotoEntity} from './enitites/PhotoEntity';
 import {ProjectPath} from '../../ProjectPath';
 import {Config} from '../../../common/config/private/Config';
-import {Brackets, Connection} from 'typeorm';
+import {Connection} from 'typeorm';
 import {MediaEntity} from './enitites/MediaEntity';
 import {VideoEntity} from './enitites/VideoEntity';
 import {Logger} from '../../Logger';
@@ -345,28 +345,6 @@ export class GalleryManager {
     partialDirId: number
   ): Promise<ParentDirectoryDTO> {
 
-    const mediaJoinCondition = () => {
-      // Temporary QB to let Brackets build conditions and params
-      const dummyQb = connection.createQueryBuilder();
-      session.projectionQuery.whereFactory(dummyQb);
-
-      // Build condition string
-      const sql = dummyQb.expressionMap.wheres
-        .map(w => w.condition)
-        .join(' ');
-
-      // Extract params that Brackets added
-      const params = dummyQb.getParameters();
-
-      return {sql, params};
-    };
-    let sql = 'media.directoryId = directory.id';
-    let params = {};
-    if (session.projectionQuery) {
-      const mj = mediaJoinCondition();
-      sql += ' AND ' + mj.sql;
-      params = mj.params;
-    }
 
     const query = connection
       .getRepository(DirectoryEntity)
@@ -375,20 +353,19 @@ export class GalleryManager {
         id: partialDirId
       })
       .leftJoinAndSelect('directory.directories', 'directories')
-      .leftJoinAndSelect(
-        'directory.media',
-        'media', sql, params
-      )
       .leftJoinAndSelect('directories.cover', 'cover')
       .leftJoinAndSelect('cover.directory', 'coverDirectory')
       .select([
         'directory',
         'directories',
-        'media',
         'cover.name',
         'coverDirectory.name',
         'coverDirectory.path',
       ]);
+
+    if(!session.projection) {
+      query.leftJoinAndSelect('directory.media', 'media');
+    }
 
     // TODO: do better filtering
     // NOTE: it should not cause an issue as it also do not save to the DB
@@ -407,6 +384,46 @@ export class GalleryManager {
       }
     }
 
+    // TODO: transform projection query to plain SQL query (String) and
+    //  use it as leftJoinAndSelect on the dir query for performance improvement
+    if(session.projection) {
+      const mQuery = connection.getRepository(MediaEntity)
+        .createQueryBuilder('media')
+        .where('media.directory = :id', {
+          id: partialDirId
+        })
+        .andWhere(session.projection.query);
+      dir.media = await mQuery.getMany();
+    }
+
     return dir;
+  }
+
+  async authoriseMedia(session: SessionContext, mediaPath: string) {
+    // If no projection set for session, proceed
+    if (!session?.projection) {
+      return true;
+    }
+
+    // Validate media is available under projectionQuery
+    const fileName = path.basename(mediaPath);
+    const dirRelPath = path.dirname(mediaPath);
+    const directoryName = path.basename(dirRelPath);
+    const directoryParent = path.join(path.dirname(dirRelPath), path.sep);
+
+    const connection = await SQLConnection.getConnection();
+    const qb = connection
+      .getRepository(MediaEntity)
+      .createQueryBuilder('media')
+      .innerJoin('media.directory', 'directory')
+      .where('media.name = :name', {name: fileName})
+      .andWhere('directory.name = :dname AND directory.path = :dpath', {dname: directoryName, dpath: directoryParent})
+      .andWhere(session.projection.query);
+
+    const count = await qb.getCount();
+    if (count === 0) {
+      return false;
+    }
+    return true;
   }
 }

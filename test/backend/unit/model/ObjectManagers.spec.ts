@@ -2,7 +2,7 @@
 import {expect} from 'chai';
 import {ObjectManagers} from '../../../../src/backend/model/ObjectManagers';
 import {UserEntity} from '../../../../src/backend/model/database/enitites/UserEntity';
-import {SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes} from '../../../../src/common/entities/SearchQueryDTO';
+import {ANDSearchQuery, SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes} from '../../../../src/common/entities/SearchQueryDTO';
 import {UserRoles} from '../../../../src/common/entities/UserDTO';
 import {Brackets} from 'typeorm';
 import {DBTestHelper} from '../../DBTestHelper';
@@ -20,8 +20,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
 
     // Reset ObjectManagers before each test
     beforeEach(async () => {
-      await ObjectManagers.reset();
-      await ObjectManagers.getInstance().init();
+      await sqlHelper.initDB();
     });
 
     afterEach(sqlHelper.clearDB);
@@ -40,7 +39,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       // Verify the context
       expect(context).to.not.be.null;
       expect(context.user).to.be.eql(user);
-      expect(context.projectionQuery).to.be.undefined;
+      expect(context.projection).to.be.undefined;
     });
 
     it('should create a context with allowQuery and set projectionQuery', async () => {
@@ -71,7 +70,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       // Verify the context
       expect(context).to.not.be.null;
       expect(context.user).to.be.eql(user);
-      expect(context.projectionQuery).to.be.eql(mockProjectionQuery);
+      expect(context.projection.query).to.be.eql(mockProjectionQuery);
       expect(context.user.projectionKey).to.be.a('string').and.not.empty;
     });
 
@@ -108,7 +107,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       // Verify the context
       expect(context).to.not.be.null;
       expect(context.user).to.be.eql(user);
-      expect(context.projectionQuery).to.be.eql(mockProjectionQuery);
+      expect(context.projection.query).to.be.eql(mockProjectionQuery);
       expect(context.user.projectionKey).to.be.a('string').and.not.empty;
       // Verify the blockQuery was negated
       expect((user.blockQuery as TextSearch).negate).to.be.true;
@@ -121,10 +120,20 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       user.name = 'bothuser';
       user.role = UserRoles.Admin;
       user.allowQuery = {
-        type: SearchQueryTypes.directory,
-        text: '/allowed/path',
-        matchType: TextSearchQueryMatchTypes.exact_match
-      } as TextSearch;
+        type: SearchQueryTypes.AND,
+        list:[
+          {
+            type: SearchQueryTypes.directory,
+            text: '/allowed/path',
+            matchType: TextSearchQueryMatchTypes.exact_match
+          } as TextSearch,
+          {
+            type: SearchQueryTypes.file_name,
+            text: 'photo',
+            matchType: TextSearchQueryMatchTypes.exact_match
+          } as TextSearch
+        ]
+      } as ANDSearchQuery;
       user.blockQuery = {
         type: SearchQueryTypes.directory,
         text: '/blocked/path',
@@ -155,7 +164,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       // Verify the context
       expect(context).to.not.be.null;
       expect(context.user).to.be.eql(user);
-      expect(context.projectionQuery).to.be.eql(mockProjectionQuery);
+      expect(context.projection.query).to.be.eql(mockProjectionQuery);
       expect(context.user.projectionKey).to.be.a('string').and.not.empty;
       // Verify the blockQuery was negated
       expect((user.blockQuery as TextSearch).negate).to.be.true;
@@ -182,14 +191,13 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
         text: '/allowed/path',
         matchType: TextSearchQueryMatchTypes.exact_match
       } as TextSearch;
-
       // Mock the SearchManager.prepareAndBuildWhereQuery method
       const mockProjectionQuery = new Brackets(qb => qb.where('directory.path = :path', {path: '/allowed/path'}));
-      ObjectManagers.getInstance().SearchManager = {
+ /*     ObjectManagers.getInstance().SearchManager = {
         prepareAndBuildWhereQuery: (query: any) => {
           return Promise.resolve(mockProjectionQuery);
         }
-      } as any;
+      } as any;*/
 
       // Create the contexts
       const context1 = await ObjectManagers.getInstance().buildContext(user1);

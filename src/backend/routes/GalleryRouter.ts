@@ -36,7 +36,7 @@ export class GalleryRouter {
         // common part
         AuthenticationMWs.authenticate,
         AuthenticationMWs.normalizePathParam('directory'),
-        AuthenticationMWs.authorisePath('directory', true),
+        AuthenticationMWs.authoriseDirectories('directory'),
         VersionMWs.injectGalleryVersion,
 
         // specific part
@@ -71,7 +71,7 @@ export class GalleryRouter {
         // common part
         AuthenticationMWs.authenticate,
         AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authorisePath('mediaPath', false),
+        AuthenticationMWs.authoriseMedia('mediaPath'),
 
         // specific part
         GalleryMWs.loadFile,
@@ -90,7 +90,7 @@ export class GalleryRouter {
         // common part
         AuthenticationMWs.authenticate,
         AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authorisePath('mediaPath', false),
+        AuthenticationMWs.authoriseMedia('mediaPath'),
 
         // specific part
         GalleryMWs.loadFile,
@@ -109,7 +109,7 @@ export class GalleryRouter {
         // common part
         AuthenticationMWs.authenticate,
         AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authorisePath('mediaPath', false),
+        AuthenticationMWs.authoriseMedia('mediaPath'),
 
         // specific part
         GalleryMWs.loadFile,
@@ -129,7 +129,7 @@ export class GalleryRouter {
         // common part
         AuthenticationMWs.authenticate,
         AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authorisePath('mediaPath', false),
+        AuthenticationMWs.authoriseMetaFiles('mediaPath'),
 
         // specific part
         GalleryMWs.loadFile,
@@ -148,7 +148,7 @@ export class GalleryRouter {
         // common part
         AuthenticationMWs.authenticate,
         AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authorisePath('mediaPath', false),
+        AuthenticationMWs.authoriseMetaFiles('mediaPath'),
 
         // specific part
         GalleryMWs.loadFile,
@@ -187,7 +187,7 @@ export class GalleryRouter {
         // common part
         AuthenticationMWs.authenticate,
         AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authorisePath('mediaPath', false),
+        AuthenticationMWs.authoriseMedia('mediaPath'),
 
         // specific part
         GalleryMWs.loadFile,
@@ -205,7 +205,7 @@ export class GalleryRouter {
         // common part
         AuthenticationMWs.authenticate,
         AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authorisePath('mediaPath', false),
+        AuthenticationMWs.authoriseMedia('mediaPath'),
 
         // specific part
         GalleryMWs.loadFile,
@@ -223,7 +223,7 @@ export class GalleryRouter {
         // common part
         AuthenticationMWs.authenticate,
         AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authorisePath('mediaPath', false),
+        AuthenticationMWs.authoriseMedia('mediaPath'),
 
         // specific part
         GalleryMWs.loadFile,
@@ -241,7 +241,7 @@ export class GalleryRouter {
         // common part
         AuthenticationMWs.authenticate,
         AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authorisePath('mediaPath', false),
+        AuthenticationMWs.authoriseMedia('mediaPath'),
 
         // specific part
         GalleryMWs.loadFile,

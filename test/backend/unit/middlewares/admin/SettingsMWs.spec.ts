@@ -6,22 +6,24 @@ import {SettingsMWs} from '../../../../../src/backend/middlewares/admin/Settings
 import {ServerUserConfig} from '../../../../../src/common/config/private/PrivateConfig';
 import {Config} from '../../../../../src/common/config/private/Config';
 import {UserRoles} from '../../../../../src/common/entities/UserDTO';
-import * as fs from 'fs';
-import * as path from 'path';
 import {ExtensionConfigWrapper} from '../../../../../src/backend/model/extension/ExtensionConfigWrapper';
 import {ConfigClassBuilder} from 'typeconfig/node';
+import {DBTestHelper} from '../../../DBTestHelper';
 
 
-declare const describe: any;
+declare let describe: any;
 declare const it: any;
+declare const before: any;
 declare const beforeEach: any;
+const tmpDescribe = describe;
+describe = DBTestHelper.describe();
 
-describe('Settings middleware', () => {
+describe('Settings middleware', (sqlHelper: DBTestHelper) => {
+  describe = tmpDescribe;
 
-  const tempDir = path.join(__dirname, '../../../tmp');
+  before(sqlHelper.clearDB);
   beforeEach(async () => {
-    await ObjectManagers.reset();
-    await fs.promises.rm(tempDir, {recursive: true, force: true});
+    await sqlHelper.initDB();
     await ObjectManagers.getInstance().init();
   });
 

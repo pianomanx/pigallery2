@@ -1,20 +1,11 @@
 import {DBTestHelper} from '../../../DBTestHelper';
 import {GalleryManager} from '../../../../../src/backend/model/database/GalleryManager';
-import {ParentDirectoryDTO, SubDirectoryDTO} from '../../../../../src/common/entities/DirectoryDTO';
-import {Connection, Brackets} from 'typeorm';
+import {ParentDirectoryDTO} from '../../../../../src/common/entities/DirectoryDTO';
+import {Connection} from 'typeorm';
 import {SessionContext} from '../../../../../src/backend/model/SessionContext';
 import {SearchQueryTypes, TextSearchQueryMatchTypes} from '../../../../../src/common/entities/SearchQueryDTO';
 import {ObjectManagers} from '../../../../../src/backend/model/ObjectManagers';
-import * as path from 'path';
 import {SQLConnection} from '../../../../../src/backend/model/database/SQLConnection';
-import {TestHelper} from '../../../../TestHelper';
-import {PhotoDTO} from '../../../../../src/common/entities/PhotoDTO';
-import {VideoDTO} from '../../../../../src/common/entities/VideoDTO';
-import {FileDTO} from '../../../../../src/common/entities/FileDTO';
-import {Utils} from '../../../../../src/common/Utils';
-import {UserEntity} from '../../../../../src/backend/model/database/enitites/UserEntity';
-import {Config} from '../../../../../src/common/config/private/Config';
-import {SQLLogLevel} from '../../../../../src/common/config/private/PrivateConfig';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
@@ -50,84 +41,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
   describe = tmpDescribe;
 
   let galleryManager: GalleryManagerTest;
-  let connection: Connection;/*
-  let dir: ParentDirectoryDTO;
-  let subDir: SubDirectoryDTO;
-  let subDir2: SubDirectoryDTO;
-  let p: PhotoDTO;
-  let p2: PhotoDTO;
-  let p3: PhotoDTO;
-  let p4: PhotoDTO;
-  let v: VideoDTO;
-  let gpx: FileDTO;
-
-  const setUpGalleryTest = async (): Promise<void> => {
-    // Create base directory structure
-    const directory: ParentDirectoryDTO = TestHelper.getDirectoryEntry();
-    subDir = TestHelper.getDirectoryEntry(directory, 'The Phantom Menace');
-    subDir2 = TestHelper.getDirectoryEntry(directory, 'Return of the Jedi');
-
-    // Create photo entries with specific names to match the test cases
-    p = TestHelper.getPhotoEntry1(directory);
-    p.name = 'photo1.jpg'; // Ensure we have a photo1 for the test case
-    p.metadata.creationDate = Date.now();
-    p.metadata.creationDateOffset = '+02:00';
-
-    p2 = TestHelper.getPhotoEntry2(directory);
-    p2.name = 'photo2.jpg';
-    p2.metadata.creationDate = Date.now() - 60 * 60 * 24 * 1000; // 1 day ago
-    p2.metadata.creationDateOffset = '+02:00';
-
-    // Create video entry
-    v = TestHelper.getVideoEntry1(directory);
-    v.metadata.creationDate = Date.now() - 60 * 60 * 24 * 7 * 1000; // 1 week ago
-    v.metadata.creationDateOffset = '+02:00';
-
-    // Create a GPX file
-    gpx = TestHelper.getRandomizedGPXEntry(directory);
-
-    // Create photos in subdirectories
-    p3 = TestHelper.getPhotoEntry3(subDir);
-    p3.name = 'photo3.jpg';
-    let d = new Date();
-    d = Utils.addMonthToDate(d, -1); // 1 month ago
-    d.setDate(d.getDate() - 1); // minus 1 day
-    p3.metadata.creationDate = d.getTime();
-    p3.metadata.creationDateOffset = '+02:00';
-
-    p4 = TestHelper.getPhotoEntry4(subDir2);
-    p4.name = 'photo4.jpg';
-    d = new Date();
-    // Set creation date to one year and one day earlier
-    p4.metadata.creationDate = d.getTime() - 60 * 60 * 24 * (Utils.isDateFromLeapYear(d) ? 367 : 366) * 1000;
-    p4.metadata.creationDateOffset = '+02:00';
-
-    // Persist the directory structure to the database
-    dir = await DBTestHelper.persistTestDir(directory);
-    subDir = dir.directories[0];
-    subDir2 = dir.directories[1];
-
-    // Get the media items from the persisted directory
-    p = (dir.media.filter(m => m.name === p.name)[0] as any);
-    p.directory = dir;
-
-    p2 = (dir.media.filter(m => m.name === p2.name)[0] as any);
-    p2.directory = dir;
-
-    v = (dir.media.filter(m => m.name === v.name)[0] as any);
-    v.directory = dir;
-
-    if (dir.metaFile && dir.metaFile.length > 0) {
-      gpx = (dir.metaFile[0] as any);
-      gpx.directory = dir;
-    }
-
-    p3 = (dir.directories[0].media[0] as any);
-    p3.directory = dir.directories[0];
-
-    p4 = (dir.directories[1].media[0] as any);
-    p4.directory = dir.directories[1];
-  };*/
+  let connection: Connection;
 
   before(async () => {
     await sqlHelper.initDB();
