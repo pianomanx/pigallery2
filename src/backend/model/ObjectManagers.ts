@@ -301,10 +301,10 @@ export class ObjectManagers {
 
   }
 
-  public  buildAllowListForSharing(sharing:SharingEntity): SearchQueryDTO {
+  public buildAllowListForSharing(sharing: SharingEntity): SearchQueryDTO {
     const creatorQuery = this.getQueryForUser(sharing.creator);
     let finalQuery = sharing.searchQuery;
-    if(creatorQuery){
+    if (creatorQuery) {
       finalQuery = {
         type: SearchQueryTypes.AND,
         list: [
@@ -316,6 +316,10 @@ export class ObjectManagers {
     return finalQuery;
   }
 
+  public createProjectionKey(q: SearchQueryDTO) {
+    return 'pr:' + crypto.createHash('md5').update(JSON.stringify(q)).digest('hex');
+  }
+
   public async buildContext(user: ContextUser): Promise<SessionContext> {
     const context = new SessionContext();
     context.user = user;
@@ -324,7 +328,7 @@ export class ObjectManagers {
     if (finalQuery) {
       // Build the Brackets-based query
       context.projectionQuery = await ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(finalQuery);
-      context.user.projectionKey = crypto.createHash('md5').update(JSON.stringify(finalQuery)).digest('hex');
+      context.user.projectionKey = ObjectManagers.getInstance().createProjectionKey(finalQuery);
     }
     return context;
   }

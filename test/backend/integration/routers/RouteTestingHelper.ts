@@ -33,7 +33,7 @@ export class RouteTestingHelper {
       usedSharingKey: sharing.sharingKey,
     } as UserDTO;
     const q = ObjectManagers.getInstance().buildAllowListForSharing(sharing as any);
-    u.projectionKey = crypto.createHash('md5').update(JSON.stringify(q)).digest('hex');
+    u.projectionKey = ObjectManagers.getInstance().createProjectionKey(q);
 
     return u;
   }

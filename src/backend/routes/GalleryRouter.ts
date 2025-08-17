@@ -52,7 +52,7 @@ export class GalleryRouter {
         [Config.Server.apiPath + '/gallery/zip/:searchQueryDTO(*)'],
         // common part
         AuthenticationMWs.authenticate,
-        AuthenticationMWs.authorise(UserRoles.Guest),
+        AuthenticationMWs.authorise(UserRoles.LimitedGuest),
 
         // specific part
         ServerTimingMWs.addServerTiming,
@@ -162,7 +162,7 @@ export class GalleryRouter {
         [Config.Server.apiPath + '/gallery/random/:searchQueryDTO'],
         // common part
         AuthenticationMWs.authenticate,
-        AuthenticationMWs.authorise(UserRoles.Guest),
+        AuthenticationMWs.authorise(UserRoles.LimitedGuest),
         VersionMWs.injectGalleryVersion,
 
         // specific part
@@ -255,7 +255,7 @@ export class GalleryRouter {
         Config.Server.apiPath + '/search/:searchQueryDTO(*)',
         // common part
         AuthenticationMWs.authenticate,
-        AuthenticationMWs.authorise(UserRoles.Guest),
+        AuthenticationMWs.authorise(UserRoles.LimitedGuest),
         VersionMWs.injectGalleryVersion,
 
         // specific part
@@ -272,7 +272,7 @@ export class GalleryRouter {
         Config.Server.apiPath + '/autocomplete/:text(*)',
         // common part
         AuthenticationMWs.authenticate,
-        AuthenticationMWs.authorise(UserRoles.Guest),
+        AuthenticationMWs.authorise(UserRoles.LimitedGuest),
         VersionMWs.injectGalleryVersion,
 
         // specific part
