@@ -31,7 +31,7 @@ describe('Share', () => {
 
         cy.intercept({
           method: 'Get',
-          url: '/pgapi/gallery/content/*',
+          url: '/pgapi/search/*',
         }).as('getSharedContent');
         cy.visit(link);
         cy.get('input#password').type('secret');
@@ -62,7 +62,7 @@ describe('Share', () => {
 
         cy.intercept({
           method: 'Get',
-          url: '/pgapi/gallery/content/*',
+          url: '/pgapi/search/*',
         }).as('getSharedContent');
          cy.visit(link);
 
@@ -95,7 +95,7 @@ describe('Share', () => {
 
         cy.intercept({
           method: 'Get',
-          url: '/pgapi/gallery/content/*',
+          url: '/pgapi/search/*',
         }).as('getSharedContent');
         cy.visit(link);
 
