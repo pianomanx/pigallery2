@@ -282,6 +282,16 @@ export class ClientAlbumConfig {
       }
   })
   enabled: boolean = true;
+
+
+  @ConfigProperty({
+    type: UserRoles, tags: {
+      name: $localize`Albums listing right`,
+      priority: ConfigPriority.underTheHood
+    },
+    description: $localize`Required minimum right to show the albums tab.`
+  })
+  readAccessMinRole: UserRoles = UserRoles.User;
 }
 
 @SubConfigClass({tags: {client: true}, softReadonly: true})
