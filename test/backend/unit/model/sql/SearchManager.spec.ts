@@ -1576,7 +1576,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     (it('should flatter SOME_OF query', () => {
       const sm = new SearchManagerTest();
       const parser = new SearchQueryParser();
-      const alphabet = 'abcdefghijklmnopqrstu';
+      const alphabet = 'abcdefghijklmnopqrs';
 
 
       const shortestDepth = (q: SearchQueryDTO): number => {

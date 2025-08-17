@@ -8,6 +8,7 @@ import {QueryParams} from '../../../../common/QueryParams';
 import {UserDTO, UserRoles} from '../../../../common/entities/UserDTO';
 import {Utils} from '../../../../common/Utils';
 import {Config} from '../../../../common/config/public/Config';
+import {SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes} from '../../../../common/entities/SearchQueryDTO';
 
 
 @Injectable()
@@ -80,8 +81,8 @@ export class ShareService {
         this.sharingSubject.value == null
       ) {
         this.sharingKey = user.usedSharingKey || this.getSharingKey();
-        if(!this.sharingKey){ //no key to fetch
-          return
+        if (!this.sharingKey) { //no key to fetch
+          return;
         }
         await this.getSharing();
       }
@@ -102,13 +103,11 @@ export class ShareService {
 
   public createSharing(
     dir: string,
-    includeSubFolders: boolean,
     password: string,
     valid: number
   ): Promise<SharingDTO> {
     return this.networkService.postJson('/share/' + dir, {
       createSharing: {
-        includeSubfolders: includeSubFolders,
         valid,
         ...(!!password && {password: password}) // only add password if present
       } as CreateSharingDTO,
@@ -118,14 +117,12 @@ export class ShareService {
   public updateSharing(
     dir: string,
     sharingId: number,
-    includeSubFolders: boolean,
     password: string,
     valid: number
   ): Promise<SharingDTO> {
     return this.networkService.putJson('/share/' + dir, {
       updateSharing: {
         id: sharingId,
-        includeSubfolders: includeSubFolders,
         valid,
         password,
       } as CreateSharingDTO,
@@ -169,7 +166,11 @@ export class ShareService {
   public async getSharingListForDir(
     dir: string
   ): Promise<SharingDTO[]> {
-    return this.networkService.getJson('/share/list/' + dir);
+    return this.networkService.getJson('/share/list/' + JSON.stringify({
+      type: SearchQueryTypes.directory,
+      text: dir,
+      matchType: TextSearchQueryMatchTypes.exact_match
+    } as TextSearch));
   }
 
 

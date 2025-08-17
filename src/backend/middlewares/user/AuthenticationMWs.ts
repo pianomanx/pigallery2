@@ -1,6 +1,6 @@
 import {NextFunction, Request, Response} from 'express';
 import {ErrorCodes, ErrorDTO} from '../../../common/entities/Error';
-import {UserDTO, UserDTOUtils, UserRoles,} from '../../../common/entities/UserDTO';
+import {UserDTO, UserRoles,} from '../../../common/entities/UserDTO';
 import {ObjectManagers} from '../../model/ObjectManagers';
 import {Config} from '../../../common/config/private/Config';
 import {PasswordHelper} from '../../model/PasswordHelper';
@@ -10,6 +10,8 @@ import * as path from 'path';
 import {Logger} from '../../Logger';
 import {SQLConnection} from '../../model/database/SQLConnection';
 import {MediaEntity} from '../../model/database/enitites/MediaEntity';
+import {UserEntity} from '../../model/database/enitites/UserEntity';
+import {ContextUser} from '../../model/SessionContext';
 
 const LOG_TAG = 'AuthenticationMWs';
 
@@ -93,43 +95,31 @@ export class AuthenticationMWs {
     };
   }
 
-  // Legacy authorisePath kept for compatibility; prefer new specific middlewares below
-  private static authorisePath(
-    paramName: string,
-    isDirectory: boolean
-  ): (req: Request, res: Response, next: NextFunction) => void {
-    return function authorisePath(
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ): Response | void {
-      let p: string = req.params[paramName];
-      if (!isDirectory) {
-        p = path.dirname(p);
-      }
-
-      if (
-        !UserDTOUtils.isDirectoryPathAvailable(p, req.session.context.user.permissions)
-      ) {
-        return res.sendStatus(403);
-      }
-
-      return next();
-    };
-  }
-
-  // New middlewares
-  public static authoriseDirectories(
-    paramName: string
-  ): (req: Request, res: Response, next: NextFunction) => void {
-    return AuthenticationMWs.authorisePath(paramName, true);
-  }
 
   public static authoriseMetaFiles(
     paramName: string
-  ): (req: Request, res: Response, next: NextFunction) => void {
-    // For metafiles: same behavior as legacy (check directory permission only)
-    return AuthenticationMWs.authorisePath(paramName, false);
+  ): (req: Request, res: Response, next: NextFunction) => Promise<void> {
+    return async function authoriseMetaFiles(
+      req: Request,
+      res: Response,
+      next: NextFunction
+    ): Promise<void> {
+      try {
+        const p: string = req.params[paramName];
+
+        if (!await ObjectManagers.getInstance().GalleryManager.authoriseMetaFile(req.session.context, p)) {
+          res.sendStatus(403);
+          return;
+        }
+
+        return next();
+      } catch (e) {
+        // On error, fail closed to be safe
+        Logger.warn(LOG_TAG, 'authoriseMedia error:', e);
+        res.sendStatus(403);
+        return;
+      }
+    };
   }
 
   public static authoriseMedia(
@@ -142,12 +132,6 @@ export class AuthenticationMWs {
     ): Promise<void> {
       try {
         const mediaRelPath: string = req.params[paramName];
-        // First: directory permission check (same as legacy for files)
-        const dirRelPath = path.dirname(mediaRelPath);
-        if (!UserDTOUtils.isDirectoryPathAvailable(dirRelPath, req.session.context.user.permissions)) {
-          res.sendStatus(403);
-          return;
-        }
 
         if (!await ObjectManagers.getInstance().GalleryManager.authoriseMedia(req.session.context, mediaRelPath)) {
           res.sendStatus(403);
@@ -217,17 +201,13 @@ export class AuthenticationMWs {
         return next(new ErrorDTO(ErrorCodes.CREDENTIAL_NOT_FOUND));
       }
 
-      let sharingPath = sharing.path;
-      if (sharing.includeSubfolders === true) {
-        sharingPath += '*';
-      }
-
       const user = {
         name: 'Guest',
         role: UserRoles.LimitedGuest,
-        permissions: [sharingPath],
         usedSharingKey: sharing.sharingKey,
-      } as UserDTO;
+        overrideAllowBlockList: true,
+        allowQuery: ObjectManagers.getInstance().buildAllowListForSharing(sharing)
+      } as ContextUser;
       req.session.context = await ObjectManagers.getInstance().buildContext(user);
       return next();
     } catch (err) {
@@ -304,7 +284,7 @@ export class AuthenticationMWs {
     return next();
   }
 
-  private static async getSharingUser(req: Request): Promise<UserDTO> {
+  private static async getSharingUser(req: Request): Promise<ContextUser> {
     if (
       Config.Sharing.enabled === true &&
       (!!req.query[QueryParams.gallery.sharingKey_query] ||
@@ -326,16 +306,13 @@ export class AuthenticationMWs {
         return null;
       }
 
-      let sharingPath = sharing.path;
-      if (sharing.includeSubfolders === true) {
-        sharingPath += '*';
-      }
       return {
         name: 'Guest',
         role: UserRoles.LimitedGuest,
-        permissions: [sharingPath],
         usedSharingKey: sharing.sharingKey,
-      } as UserDTO;
+        overrideAllowBlockList: true,
+        allowQuery: ObjectManagers.getInstance().buildAllowListForSharing(sharing)
+      } as ContextUser;
     }
     return null;
   }

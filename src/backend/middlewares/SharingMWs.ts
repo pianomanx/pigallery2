@@ -6,6 +6,7 @@ import {Config} from '../../common/config/private/Config';
 import {QueryParams} from '../../common/QueryParams';
 import * as path from 'path';
 import {UserRoles} from '../../common/entities/UserDTO';
+import {SearchQueryDTO, SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes} from '../../common/entities/SearchQueryDTO';
 
 export class SharingMWs {
   public static async getSharing(
@@ -97,17 +98,25 @@ export class SharingMWs {
     }
 
     const directoryName = path.normalize(req.params['directory'] || '/');
+
+    // Prefer provided searchQuery; otherwise fallback to strict directory exact-match query for compatibility
+    const searchQuery = createSharing.searchQuery || ({
+      type: SearchQueryTypes.directory,
+      text: directoryName,
+      matchType: TextSearchQueryMatchTypes.exact_match,
+      negate: false
+    } as TextSearch);
+
     const sharing: SharingDTO = {
       id: null,
       sharingKey,
-      path: directoryName,
+      searchQuery,
       password: createSharing.password,
       creator: req.session.context?.user,
       expires:
         createSharing.valid >= 0 // if === -1 it's forever
           ? Date.now() + createSharing.valid
           : new Date(9999, 0, 1).getTime(), // never expire
-      includeSubfolders: createSharing.includeSubfolders,
       timeStamp: Date.now(),
     };
 
@@ -147,9 +156,17 @@ export class SharingMWs {
     }
     const updateSharing: CreateSharingDTO = req.body.updateSharing;
     const directoryName = path.normalize(req.params['directory'] || '/');
+
+    const searchQuery = updateSharing.searchQuery || ({
+      type: SearchQueryTypes.directory,
+      text: directoryName,
+      matchType: TextSearchQueryMatchTypes.exact_match,
+      negate: false
+    } as TextSearch);
+
     const sharing: SharingDTO = {
       id: updateSharing.id,
-      path: directoryName,
+      searchQuery,
       sharingKey: '',
       password:
         updateSharing.password && updateSharing.password !== ''
@@ -160,7 +177,6 @@ export class SharingMWs {
         updateSharing.valid >= 0 // if === -1 its forever
           ? Date.now() + updateSharing.valid
           : new Date(9999, 0, 1).getTime(), // never expire
-      includeSubfolders: updateSharing.includeSubfolders,
       timeStamp: Date.now(),
     };
 
@@ -249,7 +265,7 @@ export class SharingMWs {
     }
   }
 
-  public static async listSharingForDir(
+  public static async listSharingForQuery(
     req: Request,
     res: Response,
     next: NextFunction
@@ -257,15 +273,16 @@ export class SharingMWs {
     if (Config.Sharing.enabled === false) {
       return next();
     }
-
-    const dir = path.normalize(req.params['directory'] || '/');
+    const query: SearchQueryDTO = JSON.parse(
+      req.params['searchQueryDTO'] as string
+    );
     try {
       if (req.session.context?.user.role >= UserRoles.Admin) {
         req.resultPipe =
-          await ObjectManagers.getInstance().SharingManager.listAllForDir(dir);
+          await ObjectManagers.getInstance().SharingManager.listAllForQuery(query);
       } else {
         req.resultPipe =
-          await ObjectManagers.getInstance().SharingManager.listAllForDir(dir, req.session.context?.user);
+          await ObjectManagers.getInstance().SharingManager.listAllForQuery(query, req.session.context?.user);
       }
       return next();
     } catch (err) {

@@ -36,7 +36,6 @@ export class GalleryRouter {
         // common part
         AuthenticationMWs.authenticate,
         AuthenticationMWs.normalizePathParam('directory'),
-        AuthenticationMWs.authoriseDirectories('directory'),
         VersionMWs.injectGalleryVersion,
 
         // specific part

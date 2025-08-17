@@ -37,7 +37,6 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
   showSharingList = false;
 
   input = {
-    includeSubfolders: true,
     valid: {
       amount: 30,
       type: ValidityTypes.Days as ValidityTypes,
@@ -139,7 +138,6 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
     this.sharing = await this.sharingService.updateSharing(
         this.currentDir,
         this.sharing.id,
-        this.input.includeSubfolders,
         this.input.password,
         this.calcValidity()
     );
@@ -157,7 +155,6 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
     this.url = $localize`loading..`;
     this.sharing = await this.sharingService.createSharing(
         this.currentDir,
-        this.input.includeSubfolders,
         this.input.password,
         this.calcValidity()
     );
