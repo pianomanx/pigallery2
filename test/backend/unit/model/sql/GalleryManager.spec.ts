@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import {DBTestHelper} from '../../../DBTestHelper';
 import {GalleryManager} from '../../../../../src/backend/model/database/GalleryManager';
 import {ParentDirectoryDTO} from '../../../../../src/common/entities/DirectoryDTO';
@@ -338,6 +339,130 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
       expect(calledArgs[1]).to.equal(true);
     });
   });
+  describe('GalleryManager authorisation', () => {
 
+    let gm: GalleryManager;
+
+    before(async () => {
+      await sqlHelper.initDB();
+      await sqlHelper.setUpTestGallery();
+      await ObjectManagers.getInstance().init();
+      gm = new GalleryManager();
+    });
+
+    after(async () => {
+      await sqlHelper.clearDB();
+    });
+
+
+    describe('authoriseMedia', () => {
+      it('returns true without projection', async () => {
+        const session = new SessionContext();
+        const root = sqlHelper.testGalleyEntities.dir;
+        const media = sqlHelper.testGalleyEntities.p; // Photo1_*.jpg in root
+        const mediaPath = path.join(root.path, root.name, media.name);
+
+        const res = await gm.authoriseMedia(session, mediaPath);
+        expect(res).to.equal(true);
+      });
+
+      it('enforces projection: allows only matching media name (like "Photo1")', async () => {
+        const searchQuery = {
+          type: SearchQueryTypes.file_name,
+          text: 'photo1',
+          matchType: TextSearchQueryMatchTypes.like,
+        };
+        const session = await ObjectManagers.getInstance().buildContext({
+          allowQuery: searchQuery,
+          overrideAllowBlockList: true,
+        } as any);
+
+        const root = sqlHelper.testGalleyEntities.dir;
+        const p1 = sqlHelper.testGalleyEntities.p; // Photo1_*.jpg
+        const p2 = sqlHelper.testGalleyEntities.p2; // Photo2_*.jpg
+
+        const p1Path = path.join(root.path, root.name, p1.name);
+        const p2Path = path.join(root.path, root.name, p2.name);
+
+        expect(await gm.authoriseMedia(session, p1Path)).to.equal(true);
+        expect(await gm.authoriseMedia(session, p2Path)).to.equal(false);
+      });
+
+      it('returns false when file exists but under different directory (directory constraint)', async () => {
+        const searchQuery = {
+          type: SearchQueryTypes.file_name,
+          text: 'photo1',
+          matchType: TextSearchQueryMatchTypes.like,
+        };
+        const session = await ObjectManagers.getInstance().buildContext({
+          allowQuery: searchQuery,
+          overrideAllowBlockList: true,
+        } as any);
+
+        const subDir = sqlHelper.testGalleyEntities.subDir; // The Phantom Menace
+        const p1 = sqlHelper.testGalleyEntities.p; // lives in root
+        const wrongPath = path.join(subDir.path, subDir.name, p1.name);
+
+        expect(await gm.authoriseMedia(session, wrongPath)).to.equal(false);
+      });
+
+      it('returns false for non-existent file under projection', async () => {
+        const searchQuery = {
+          type: SearchQueryTypes.file_name,
+          text: 'photo1',
+          matchType: TextSearchQueryMatchTypes.like,
+        };
+        const session = await ObjectManagers.getInstance().buildContext({
+          allowQuery: searchQuery,
+          overrideAllowBlockList: true,
+        } as any);
+
+        const root = sqlHelper.testGalleyEntities.dir;
+        const nonExist = path.join(root.path, root.name, 'does_not_exist.jpg');
+        expect(await gm.authoriseMedia(session, nonExist)).to.equal(false);
+      });
+    });
+
+    describe('authoriseMetaFile', () => {
+      it('returns true without projection', async () => {
+        const session = new SessionContext();
+        const root = sqlHelper.testGalleyEntities.dir;
+        const metaPath = path.join(root.path, root.name, 'README.md');
+        expect(await gm.authoriseMetaFile(session, metaPath)).to.equal(true);
+      });
+
+      it('allows directory that contains matching media (projection applied)', async () => {
+        const searchQuery = {
+          type: SearchQueryTypes.file_name,
+          text: 'photo1',
+          matchType: TextSearchQueryMatchTypes.like,
+        };
+        const session = await ObjectManagers.getInstance().buildContext({
+          allowQuery: searchQuery,
+          overrideAllowBlockList: true,
+        } as any);
+
+        const root = sqlHelper.testGalleyEntities.dir; // root contains Photo1_*.jpg
+        const metaPath = path.join(root.path, root.name, 'folder.gpx');
+        expect(await gm.authoriseMetaFile(session, metaPath)).to.equal(true);
+      });
+
+      it('denies directory that has no matching media under projection', async () => {
+        const searchQuery = {
+          type: SearchQueryTypes.file_name,
+          text: 'photo1',
+          matchType: TextSearchQueryMatchTypes.like,
+        };
+        const session = await ObjectManagers.getInstance().buildContext({
+          allowQuery: searchQuery,
+          overrideAllowBlockList: true,
+        } as any);
+
+        const subDir = sqlHelper.testGalleyEntities.subDir; // contains Photo3_*.jpg
+        const metaPath = path.join(subDir.path, subDir.name, 'info.md');
+        expect(await gm.authoriseMetaFile(session, metaPath)).to.equal(false);
+      });
+    });
+  });
 });
 

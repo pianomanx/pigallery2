@@ -40,7 +40,6 @@ export class RenderingMWs {
       name: req.session.context.user.name,
       role: req.session.context.user.role,
       usedSharingKey: req.session.context.user.usedSharingKey,
-      permissions: req.session.context.user.permissions,
       projectionKey: req.session.context.user.projectionKey,
     } as UserDTO;
 

@@ -4,6 +4,8 @@ Author: Junie (JetBrains autonomous programmer)
 Date: 2025-08-13
 Status: Updated after maintainer clarifications
 
+NOTE: scoped working is the same as projection. THe app uses the projection terminologie instead of scoped.
+
 ## Overview
 This document proposes a design to support:
 - Search-based sharing: a share link represents a pre-filtered view of the gallery.

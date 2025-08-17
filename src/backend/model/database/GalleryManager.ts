@@ -445,4 +445,31 @@ export class GalleryManager {
 
     return count !== 0;
   }
+
+  async authoriseMetaFile(session: SessionContext, p: string) {
+    // If no projection set for session, proceed
+    if (!session?.projectionQuery) {
+      return true;
+    }
+
+    // Authorize metafile if its directory contains any media that matches the projectionQuery
+    const dirRelPath = path.dirname(p);
+    const directoryName = path.basename(dirRelPath);
+    const directoryParent = path.join(path.dirname(dirRelPath), path.sep);
+
+    const connection = await SQLConnection.getConnection();
+    const qb = connection
+      .getRepository(MediaEntity)
+      .createQueryBuilder('media')
+      .innerJoin('media.directory', 'directory')
+      .where('directory.name = :dname AND directory.path = :dpath', {
+        dname: directoryName,
+        dpath: directoryParent,
+      })
+      .andWhere(session.projectionQuery);
+
+    const count = await qb.getCount();
+
+    return count !== 0;
+  }
 }

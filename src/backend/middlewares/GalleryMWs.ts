@@ -8,7 +8,6 @@ import {ObjectManagers} from '../model/ObjectManagers';
 import {ContentWrapper} from '../../common/entities/ConentWrapper';
 import {ProjectPath} from '../ProjectPath';
 import {Config} from '../../common/config/private/Config';
-import {UserDTOUtils} from '../../common/entities/UserDTO';
 import {MediaDTO, MediaDTOUtils} from '../../common/entities/MediaDTO';
 import {QueryParams} from '../../common/QueryParams';
 import {VideoProcessing} from '../model/fileaccess/fileprocessing/VideoProcessing';
@@ -56,15 +55,6 @@ export class GalleryMWs {
       if (directory == null) {
         req.resultPipe = new ContentWrapper(null, null, true);
         return next();
-      }
-      if (
-        req.session.context?.user.permissions &&
-        req.session.context?.user.permissions.length > 0 &&
-        req.session.context?.user.permissions[0] !== '/*'
-      ) {
-        directory.directories = directory.directories.filter((d): boolean =>
-          UserDTOUtils.isDirectoryAvailable(d, req.session.context.user.permissions)
-        );
       }
       req.resultPipe = new ContentWrapper(directory, null);
       return next();

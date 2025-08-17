@@ -16,10 +16,11 @@ import {PersonManager} from './database/PersonManager';
 import {SharingManager} from './database/SharingManager';
 import {IObjectManager} from './database/IObjectManager';
 import {ExtensionManager} from './extension/ExtensionManager';
-import {SessionContext} from './SessionContext';
+import {ContextUser, SessionContext} from './SessionContext';
 import {UserEntity} from './database/enitites/UserEntity';
-import {ANDSearchQuery, SearchQueryDTOUtils, SearchQueryTypes} from '../../common/entities/SearchQueryDTO';
+import {ANDSearchQuery, SearchQueryDTO, SearchQueryDTOUtils, SearchQueryTypes} from '../../common/entities/SearchQueryDTO';
 import {Config} from '../../common/config/private/Config';
+import {SharingEntity} from './database/enitites/SharingEntity';
 
 const LOG_TAG = '[ObjectManagers]';
 
@@ -275,30 +276,55 @@ export class ObjectManagers {
     this.managers.push(this.extensionManager as IObjectManager);
   }
 
-  async buildContext(user: UserEntity): Promise<SessionContext> {
-    const context = new SessionContext();
-    context.user = user;
+  private getQueryForUser(user: ContextUser) {
     let blockQuery = user.overrideAllowBlockList ? user.blockQuery : Config.Users.blockQuery;
     const allowQuery = user.overrideAllowBlockList ? user.allowQuery : Config.Users.allowQuery;
+
+    if (!SearchQueryDTOUtils.isValidQuery(allowQuery) && !SearchQueryDTOUtils.isValidQuery(blockQuery)) {
+      return null;
+    }
+
     if (SearchQueryDTOUtils.isValidQuery(blockQuery)) {
       blockQuery = SearchQueryDTOUtils.negate(blockQuery);
     }
-    if (SearchQueryDTOUtils.isValidQuery(allowQuery) || SearchQueryDTOUtils.isValidQuery(blockQuery)) {
-      let query = allowQuery || blockQuery;
-      if (allowQuery && blockQuery) {
-        query = {
-          type: SearchQueryTypes.AND,
-          list: [
-            allowQuery,
-            blockQuery
-          ]
-        } as ANDSearchQuery;
-      }
-      console.log(allowQuery, blockQuery, query);
-      // Build the Brackets-based query
-      context.projectionQuery = await ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(query);
+    let query = SearchQueryDTOUtils.isValidQuery(allowQuery) ? allowQuery : blockQuery;
+    if (SearchQueryDTOUtils.isValidQuery(allowQuery) && SearchQueryDTOUtils.isValidQuery(blockQuery)) {
+      query = {
+        type: SearchQueryTypes.AND,
+        list: [
+          allowQuery,
+          blockQuery
+        ]
+      } as ANDSearchQuery;
+    }
+    return query;
 
-      context.user.projectionKey = crypto.createHash('md5').update(JSON.stringify(query)).digest('hex');
+  }
+
+  public  buildAllowListForSharing(sharing:SharingEntity): SearchQueryDTO {
+    const creatorQuery = this.getQueryForUser(sharing.creator);
+    let finalQuery = sharing.searchQuery;
+    if(creatorQuery){
+      finalQuery = {
+        type: SearchQueryTypes.AND,
+        list: [
+          creatorQuery,
+          sharing.searchQuery
+        ]
+      } as ANDSearchQuery;
+    }
+    return finalQuery;
+  }
+
+  public async buildContext(user: ContextUser): Promise<SessionContext> {
+    const context = new SessionContext();
+    context.user = user;
+    let finalQuery = this.getQueryForUser(user);
+
+    if (finalQuery) {
+      // Build the Brackets-based query
+      context.projectionQuery = await ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(finalQuery);
+      context.user.projectionKey = crypto.createHash('md5').update(JSON.stringify(finalQuery)).digest('hex');
     }
     return context;
   }

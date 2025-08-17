@@ -1,10 +1,11 @@
 import {UserDTO, UserRoles} from '../../../../common/entities/UserDTO';
 import {Column, Entity, PrimaryGeneratedColumn, Unique} from 'typeorm';
 import {SearchQueryDTO} from '../../../../common/entities/SearchQueryDTO';
+import {ContextUser} from '../../SessionContext';
 
 @Entity()
 @Unique(['name'])
-export class UserEntity implements UserDTO {
+export class UserEntity implements UserDTO,ContextUser {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -16,9 +17,6 @@ export class UserEntity implements UserDTO {
 
   @Column('smallint')
   role: UserRoles;
-
-  @Column('simple-array', {nullable: true})
-  permissions: string[];
 
   // only if this set to true, will the per-user allow/blocklist be considered
   @Column({type: 'boolean', default: false})

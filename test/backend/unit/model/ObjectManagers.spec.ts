@@ -6,6 +6,7 @@ import {ANDSearchQuery, SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes}
 import {UserRoles} from '../../../../src/common/entities/UserDTO';
 import {Brackets} from 'typeorm';
 import {DBTestHelper} from '../../DBTestHelper';
+import {SharingEntity} from '../../../../src/backend/model/database/enitites/SharingEntity';
 
 declare let describe: any;
 declare const it: any;
@@ -31,7 +32,6 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       user.id = 1;
       user.name = 'testuser';
       user.role = UserRoles.Admin;
-      user.permissions = ['/test'];
 
       // Create the context
       const context = await ObjectManagers.getInstance().buildContext(user);
@@ -212,6 +212,98 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       expect(context1.user.projectionKey).to.be.a('string').and.not.empty;
       expect(context2.user.projectionKey).to.be.a('string').and.not.empty;
       expect(context1.user.projectionKey).to.be.eql(context2.user.projectionKey);
+    });
+  });
+
+  describe('buildAllowListForSharing', () => {
+    // Reset ObjectManagers before each test
+    beforeEach(async () => {
+      await sqlHelper.initDB();
+    });
+
+    afterEach(sqlHelper.clearDB);
+
+    it('should return sharing.searchQuery unchanged when creator has no allow/block query', async () => {
+      const creator = new UserEntity();
+      creator.id = 10;
+      creator.name = 'creator1';
+      creator.role = UserRoles.Admin;
+      creator.overrideAllowBlockList = true; // use only user queries; none set
+
+      const sharing = new SharingEntity();
+      sharing.creator = creator as any;
+      sharing.searchQuery = {
+        type: SearchQueryTypes.directory,
+        text: '/shared/path',
+        matchType: TextSearchQueryMatchTypes.exact_match
+      } as TextSearch;
+
+      const result = ObjectManagers.getInstance().buildAllowListForSharing(sharing);
+      expect(result).to.be.eql(sharing.searchQuery);
+    });
+
+    it('should AND creator allowQuery with sharing.searchQuery', async () => {
+      const creator = new UserEntity();
+      creator.id = 11;
+      creator.name = 'creator2';
+      creator.role = UserRoles.Admin;
+      creator.overrideAllowBlockList = true;
+      creator.allowQuery = {
+        type: SearchQueryTypes.directory,
+        text: '/allowed/by/creator',
+        matchType: TextSearchQueryMatchTypes.exact_match
+      } as TextSearch;
+
+      const sharing = new SharingEntity();
+      sharing.creator = creator as any;
+      sharing.searchQuery = {
+        type: SearchQueryTypes.file_name,
+        text: 'holiday',
+        matchType: TextSearchQueryMatchTypes.exact_match
+      } as TextSearch;
+
+      const result = ObjectManagers.getInstance().buildAllowListForSharing(sharing) as ANDSearchQuery;
+      expect(result.type).to.be.eql(SearchQueryTypes.AND);
+      expect(result.list).to.have.lengthOf(2);
+      expect(result.list[0]).to.be.eql(creator.allowQuery);
+      expect(result.list[1]).to.be.eql(sharing.searchQuery);
+    });
+
+    it('should AND creator (allow AND negated block) with sharing.searchQuery', async () => {
+      const creator = new UserEntity();
+      creator.id = 12;
+      creator.name = 'creator3';
+      creator.role = UserRoles.Admin;
+      creator.overrideAllowBlockList = true;
+      creator.allowQuery = {
+        type: SearchQueryTypes.directory,
+        text: '/allowed',
+        matchType: TextSearchQueryMatchTypes.exact_match
+      } as TextSearch;
+      creator.blockQuery = {
+        type: SearchQueryTypes.file_name,
+        text: 'secret',
+        matchType: TextSearchQueryMatchTypes.exact_match,
+        negate: false
+      } as TextSearch;
+
+      const sharing = new SharingEntity();
+      sharing.creator = creator as any;
+      sharing.searchQuery = {
+        type: SearchQueryTypes.directory,
+        text: '/event/path',
+        matchType: TextSearchQueryMatchTypes.exact_match
+      } as TextSearch;
+
+      const result = ObjectManagers.getInstance().buildAllowListForSharing(sharing) as ANDSearchQuery;
+      expect(result.type).to.be.eql(SearchQueryTypes.AND);
+      expect(result.list).to.have.lengthOf(2);
+      const creatorQuery = result.list[0] as ANDSearchQuery;
+      expect(creatorQuery.type).to.be.eql(SearchQueryTypes.AND);
+      expect(creatorQuery.list).to.have.lengthOf(2);
+      expect(creatorQuery.list[0]).to.be.eql(creator.allowQuery);
+      expect((creatorQuery.list[1] as TextSearch).negate).to.be.true;
+      expect(result.list[1]).to.be.eql(sharing.searchQuery);
     });
   });
 });

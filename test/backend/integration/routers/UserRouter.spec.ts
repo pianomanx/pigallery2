@@ -15,28 +15,25 @@ import {DatabaseType} from '../../../../src/common/config/private/PrivateConfig'
 import {ProjectPath} from '../../../../src/backend/ProjectPath';
 import * as chai from "chai";
 import {default as chaiHttp, request} from "chai-http";
+import {DBTestHelper} from '../../DBTestHelper';
 
 process.env.NODE_ENV = 'test';
 const should = chai.should();
 chai.use(chaiHttp);
 
 describe('UserRouter', () => {
+  const sqlHelper = new DBTestHelper(DatabaseType.sqlite);
 
   const testUser: UserDTO = {
     id: 1,
     name: 'test',
     password: 'test',
-    role: UserRoles.User,
-    permissions: null
+    role: UserRoles.User
   };
   const {password, ...expectedUser} = testUser;
-  const tempDir = path.join(__dirname, '../../tmp');
   let server: Server;
   const setUp = async () => {
-    await fs.promises.rm(tempDir, {recursive: true, force: true});
-    Config.Database.type = DatabaseType.sqlite;
-    Config.Database.dbFolder = tempDir;
-    ProjectPath.reset();
+    await sqlHelper.initDB()
 
     server = new Server(false);
     await server.onStarted.wait();
@@ -45,18 +42,10 @@ describe('UserRouter', () => {
     await SQLConnection.close();
   };
   const tearDown = async () => {
-    await ObjectManagers.reset();
-    await fs.promises.rm(tempDir, {recursive: true, force: true});
+    await sqlHelper.clearDB()
   };
 
-  const checkUserResult = (result: any, user: any) => {
 
-    result.should.have.status(200);
-    result.body.should.be.a('object');
-    should.equal(result.body.error, null);
-    const {...u} = result.body.result;
-    u.should.deep.equal(user);
-  };
 
   const login = async (srv: Server): Promise<any> => {
     const result = await (request.execute(srv.Server) as SuperAgentStatic)
@@ -69,7 +58,7 @@ describe('UserRouter', () => {
         } as LoginCredential
       });
 
-    checkUserResult(result, expectedUser);
+    RouteTestingHelper.shouldBeValidUIUser(result, expectedUser);
     return result;
   };
 
@@ -106,7 +95,7 @@ describe('UserRouter', () => {
         .get(Config.Server.apiPath + '/user/me')
         .set('Cookie', loginRes.res.headers['set-cookie']);
 
-      checkUserResult(result, expectedUser);
+      RouteTestingHelper.shouldBeValidUIUser(result, expectedUser);
     });
 
     it('it should not authenticate', async () => {
@@ -134,7 +123,7 @@ describe('UserRouter', () => {
         .set('Cookie', loginRes.res.headers['set-cookie']);
 
       // should return with logged in user, not limited sharing one
-      checkUserResult(result, expectedUser);
+      RouteTestingHelper.shouldBeValidUIUser(result, expectedUser);
     });
 
 
@@ -150,7 +139,7 @@ describe('UserRouter', () => {
       const result = await request.execute(server.Server)
         .get(Config.Server.apiPath + '/user/me?' + QueryParams.gallery.sharingKey_query + '=' + sharing.sharingKey);
 
-      checkUserResult(result, RouteTestingHelper.getExpectedSharingUser(sharing));
+      RouteTestingHelper.shouldBeValidUIUser(result, RouteTestingHelper.getExpectedSharingUserForUI(sharing));
     });
 
     it('it should not authenticate with sharing key without password', async () => {
@@ -183,7 +172,7 @@ describe('UserRouter', () => {
       } as UserDTO;
 
 
-      checkUserResult(result, expectedGuestUser);
+      RouteTestingHelper.shouldBeValidUIUser(result, expectedGuestUser);
     });
   });
 });

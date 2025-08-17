@@ -78,61 +78,6 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
     });
   });
 
-
-  describe('authorisePath', () => {
-
-    const req = {
-      session: {
-        context: {
-          user: {permissions: null as string[]}
-        }
-      },
-      sessionOptions: {},
-      query: {},
-      params: {
-        path: '/test'
-      }
-    };
-
-
-    const authoriseDirPath = AuthenticationMWs.authoriseDirectories('path');
-    const test = (relativePath: string): Promise<string | number> => {
-      return new Promise((resolve) => {
-        req.params.path = path.normalize(relativePath);
-        authoriseDirPath(req as any, {sendStatus: resolve} as any, () => {
-          resolve('ok');
-        });
-      });
-    };
-
-    it('should catch unauthorized path usage', async () => {
-      req.session.context.user.permissions = [path.normalize('/sub/subsub')];
-      expect(await test('/sub/subsub')).to.be.eql('ok');
-      expect(await test('/test')).to.be.eql(403);
-      expect(await test('/')).to.be.eql(403);
-      expect(await test('/sub/test')).to.be.eql(403);
-      expect(await test('/sub/subsub/test')).to.be.eql(403);
-      expect(await test('/sub/subsub/test/test2')).to.be.eql(403);
-      req.session.context.user.permissions = [path.normalize('/sub/subsub'), path.normalize('/sub/subsub2')];
-      expect(await test('/sub/subsub2')).to.be.eql('ok');
-      expect(await test('/sub/subsub')).to.be.eql('ok');
-      expect(await test('/test')).to.be.eql(403);
-      expect(await test('/')).to.be.eql(403);
-      expect(await test('/sub/test')).to.be.eql(403);
-      expect(await test('/sub/subsub/test')).to.be.eql(403);
-      expect(await test('/sub/subsub2/test')).to.be.eql(403);
-      req.session.context.user.permissions = [path.normalize('/sub/subsub*')];
-      expect(await test('/b')).to.be.eql(403);
-      expect(await test('/sub')).to.be.eql(403);
-      expect(await test('/sub/subsub2')).to.be.eql(403);
-      expect(await test('/sub/subsub2/test')).to.be.eql(403);
-      expect(await test('/sub/subsub')).to.be.eql('ok');
-      expect(await test('/sub/subsub/test')).to.be.eql('ok');
-      expect(await test('/sub/subsub/test/two')).to.be.eql('ok');
-    });
-
-  });
-
   describe('inverseAuthenticate', () => {
 
     it('should call next with error on authenticated', (done: (err?: any) => void) => {
@@ -553,10 +498,10 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
 
   describe('authoriseMedia', () => {
 
-    const buildReq = (mediaRelPath: string, permissions: string[]) => ({
+    const buildReq = (mediaRelPath: string) => ({
       session: {
         context: {
-          user: {permissions}
+          user: {role: UserRoles.LimitedGuest}
         }
       },
       params: {
@@ -574,15 +519,8 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
       });
     });
 
-    it('should deny if directory permission fails', async () => {
-      const req = buildReq('/private/dir/photo.jpg', [path.normalize('/allowed')]);
-      // No GalleryManager mock needed; should fail before DB check
-      const result = await run(req);
-      expect(result).to.eql(403);
-    });
-
-    it('should call next if directory permitted and GalleryManager.authoriseMedia allows', async () => {
-      const req = buildReq('/allowed/dir/photo.jpg', [path.normalize('/allowed*')]);
+    it('should call next if GalleryManager.authoriseMedia allows', async () => {
+      const req = buildReq('/allowed/dir/photo.jpg');
 
       // Mock GalleryManager to allow
       (ObjectManagers.getInstance() as any).GalleryManager = {
@@ -594,7 +532,7 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
     });
 
     it('should deny if GalleryManager.authoriseMedia denies', async () => {
-      const req = buildReq('/allowed/dir/photo.jpg', [path.normalize('/allowed*')]);
+      const req = buildReq('/allowed/dir/photo.jpg');
 
       // Mock GalleryManager to deny
       (ObjectManagers.getInstance() as any).GalleryManager = {
@@ -606,7 +544,7 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
     });
 
     it('should deny (403) on error thrown by GalleryManager.authoriseMedia', async () => {
-      const req = buildReq('/allowed/dir/photo.jpg', [path.normalize('/allowed*')]);
+      const req = buildReq('/allowed/dir/photo.jpg');
 
       (ObjectManagers.getInstance() as any).GalleryManager = {
         authoriseMedia: async () => {
@@ -614,6 +552,55 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
         }
       } as any;
 
+      const result = await run(req);
+      expect(result).to.eql(403);
+    });
+  });
+
+  describe('authoriseMetaFiles', () => {
+    const buildReq = (metaPath: string) => ({
+      session: {
+        context: {
+          user: {role: UserRoles.LimitedGuest}
+        }
+      },
+      params: {
+        metaPath: path.normalize(metaPath)
+      }
+    });
+
+    const run = (req: any) => new Promise((resolve) => {
+      const res = {sendStatus: (code: number) => resolve(code)} as any;
+      const next = () => resolve('ok');
+      const mw = AuthenticationMWs.authoriseMetaFiles('metaPath');
+      AuthenticationMWs.normalizePathParam('metaPath')(req as any, {} as any, () => {
+        (mw as any)(req as any, res, next);
+      });
+    });
+
+    it('should call next if GalleryManager.authoriseMetaFile allows', async () => {
+      const req = buildReq('/some/dir/notes.md');
+      (ObjectManagers.getInstance() as any).GalleryManager = {
+        authoriseMetaFile: async (_session: any, _path: string) => true
+      } as any;
+      const result = await run(req);
+      expect(result).to.eql('ok');
+    });
+
+    it('should deny if GalleryManager.authoriseMetaFile denies', async () => {
+      const req = buildReq('/some/dir/notes.md');
+      (ObjectManagers.getInstance() as any).GalleryManager = {
+        authoriseMetaFile: async (_session: any, _path: string) => false
+      } as any;
+      const result = await run(req);
+      expect(result).to.eql(403);
+    });
+
+    it('should deny (403) on error thrown by GalleryManager.authoriseMetaFile', async () => {
+      const req = buildReq('/some/dir/notes.md');
+      (ObjectManagers.getInstance() as any).GalleryManager = {
+        authoriseMetaFile: async () => { throw new Error('db error'); }
+      } as any;
       const result = await run(req);
       expect(result).to.eql(403);
     });
