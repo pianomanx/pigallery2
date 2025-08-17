@@ -32,6 +32,10 @@ describe('Share', () => {
         cy.intercept({
           method: 'Get',
           url: '/pgapi/search/*',
+        }, (req) => {
+          // Remove caching headers to force a 200 OK response from the server
+          delete req.headers['if-none-match'];
+          delete req.headers['if-modified-since'];
         }).as('getSharedContent');
         cy.visit(link);
         cy.get('input#password').type('secret');
@@ -41,6 +45,7 @@ describe('Share', () => {
         cy.get('.mb-0 > :nth-child(1) > .nav-link').contains('Gallery');
 
         cy.wait('@getSharedContent').then((interception) => {
+          expect(interception.response.statusCode).to.eq(200);
           assert.isNotNull(interception.response.body, '1st API call has data');
           assert.isNull(interception.response.body?.error, '1st API call has no error. got: ' + interception.response.body?.error);
         });
@@ -63,6 +68,10 @@ describe('Share', () => {
         cy.intercept({
           method: 'Get',
           url: '/pgapi/search/*',
+        }, (req) => {
+          // Remove caching headers to force a 200 OK response from the server
+          delete req.headers['if-none-match'];
+          delete req.headers['if-modified-since'];
         }).as('getSharedContent');
          cy.visit(link);
 
@@ -70,6 +79,7 @@ describe('Share', () => {
         cy.get('.mb-0 > :nth-child(1) > .nav-link').contains('Gallery');
 
         cy.wait('@getSharedContent').then((interception) => {
+          expect(interception.response.statusCode).to.eq(200);
           assert.isNotNull(interception.response.body, '1st API call has data');
           assert.isNull(interception.response.body?.error, '1st API call has no error. got: ' + interception.response.body?.error);
         });
@@ -96,14 +106,18 @@ describe('Share', () => {
         cy.intercept({
           method: 'Get',
           url: '/pgapi/search/*',
+        }, (req) => {
+          // Remove caching headers to force a 200 OK response from the server
+          delete req.headers['if-none-match'];
+          delete req.headers['if-modified-since'];
         }).as('getSharedContent');
         cy.visit(link);
-
 
         cy.get('.mb-0 > :nth-child(1) > .nav-link').contains('Gallery');
 
         cy.wait('@getSharedContent').then((interception) => {
-          assert.isNotNull(interception.response.body, '1st API call has data');
+          expect(interception.response.statusCode).to.eq(200);
+          assert.isNotNull(interception.response.body, '1st API call has data'+JSON.stringify(interception.response));
           assert.isNull(interception.response.body?.error, '1st API call has no error. got: ' + interception.response.body?.error);
         });
       });
