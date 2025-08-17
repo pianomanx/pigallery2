@@ -47,7 +47,7 @@ describe('Share', () => {
         cy.wait('@getSharedContent').then((interception) => {
           expect(interception.response.statusCode).to.eq(200);
           assert.isNotNull(interception.response.body, '1st API call has data');
-          assert.isNull(interception.response.body?.error, '1st API call has no error. got: ' + interception.response.body?.error);
+          assert.isNull(interception.response.body?.error, '1st API call has no error.');
         });
       });
 
@@ -81,7 +81,7 @@ describe('Share', () => {
         cy.wait('@getSharedContent').then((interception) => {
           expect(interception.response.statusCode).to.eq(200);
           assert.isNotNull(interception.response.body, '1st API call has data');
-          assert.isNull(interception.response.body?.error, '1st API call has no error. got: ' + interception.response.body?.error);
+          assert.isNull(interception.response.body?.error, '1st API call has no error.');
         });
       });
 
@@ -117,8 +117,8 @@ describe('Share', () => {
 
         cy.wait('@getSharedContent').then((interception) => {
           expect(interception.response.statusCode).to.eq(200);
-          assert.isNotNull(interception.response.body, '1st API call has data'+JSON.stringify(interception.response));
-          assert.isNull(interception.response.body?.error, '1st API call has no error. got: ' + interception.response.body?.error);
+          assert.isNotNull(interception.response.body, '1st API call has data');
+          assert.isNull(interception.response.body?.error, '1st API call has no error.');
         });
       });
   });
