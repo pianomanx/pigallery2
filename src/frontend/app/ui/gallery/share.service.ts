@@ -8,7 +8,7 @@ import {QueryParams} from '../../../../common/QueryParams';
 import {UserDTO, UserRoles} from '../../../../common/entities/UserDTO';
 import {Utils} from '../../../../common/Utils';
 import {Config} from '../../../../common/config/public/Config';
-import {SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes} from '../../../../common/entities/SearchQueryDTO';
+import {SearchQueryDTO, SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes} from '../../../../common/entities/SearchQueryDTO';
 
 
 @Injectable()
@@ -106,10 +106,25 @@ export class ShareService {
     password: string,
     valid: number
   ): Promise<SharingDTO> {
+    // Legacy dir-based API: backend will convert to strict directory searchQuery if searchQuery not provided
     return this.networkService.postJson('/share/' + dir, {
       createSharing: {
         valid,
         ...(!!password && {password: password}) // only add password if present
+      } as CreateSharingDTO,
+    });
+  }
+
+  public createSharingByQuery(
+    searchQuery: SearchQueryDTO,
+    password: string,
+    valid: number
+  ): Promise<SharingDTO> {
+    return this.networkService.postJson('/share/', {
+      createSharing: {
+        valid,
+        ...(!!password && {password: password}),
+        searchQuery
       } as CreateSharingDTO,
     });
   }
@@ -120,11 +135,28 @@ export class ShareService {
     password: string,
     valid: number
   ): Promise<SharingDTO> {
+    // Legacy dir-based API: backend will convert to strict directory searchQuery if searchQuery not provided
     return this.networkService.putJson('/share/' + dir, {
       updateSharing: {
         id: sharingId,
         valid,
         password,
+      } as CreateSharingDTO,
+    });
+  }
+
+  public updateSharingByQuery(
+    sharingId: number,
+    searchQuery: SearchQueryDTO,
+    password: string,
+    valid: number
+  ): Promise<SharingDTO> {
+    return this.networkService.putJson('/share/', {
+      updateSharing: {
+        id: sharingId,
+        valid,
+        password,
+        searchQuery
       } as CreateSharingDTO,
     });
   }
@@ -166,11 +198,17 @@ export class ShareService {
   public async getSharingListForDir(
     dir: string
   ): Promise<SharingDTO[]> {
-    return this.networkService.getJson('/share/list/' + JSON.stringify({
+    return this.getSharingListForQuery({
       type: SearchQueryTypes.directory,
       text: dir,
       matchType: TextSearchQueryMatchTypes.exact_match
-    } as TextSearch));
+    } as TextSearch);
+  }
+
+  public async getSharingListForQuery(
+    query: SearchQueryDTO
+  ): Promise<SharingDTO[]> {
+    return this.networkService.getJson('/share/list/' + JSON.stringify(query));
   }
 
 

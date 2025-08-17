@@ -8,14 +8,12 @@ import {Utils} from '../../../common/Utils';
 import {QueryParams} from '../../../common/QueryParams';
 import * as path from 'path';
 import {Logger} from '../../Logger';
-import {SQLConnection} from '../../model/database/SQLConnection';
-import {MediaEntity} from '../../model/database/enitites/MediaEntity';
-import {UserEntity} from '../../model/database/enitites/UserEntity';
 import {ContextUser} from '../../model/SessionContext';
 
 const LOG_TAG = 'AuthenticationMWs';
 
 export class AuthenticationMWs {
+
   public static async tryAuthenticate(
     req: Request,
     res: Response,
@@ -58,6 +56,10 @@ export class AuthenticationMWs {
 
     // if already authenticated, do not try to use sharing authentication
     if (typeof req.session.context !== 'undefined') {
+      // fix context. projectionQuery gets lost in the session between calls
+      if (req.session?.context && req.session.context?.user?.projectionKey && (!req.session.context?.projectionQuery || Object.keys(req.session.context?.projectionQuery || {}).length === 0)) {
+          req.session.context = await ObjectManagers.getInstance().buildContext(req.session.context.user);
+      }
       return next();
     }
 

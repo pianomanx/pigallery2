@@ -76,6 +76,80 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
       } as any, next);
 
     });
+
+    it('should rebuild context to restore projectionQuery if missing but projectionKey is present', async () => {
+      Config.Users.authenticationRequired = true;
+      const user: any = {name: 'Guest', role: UserRoles.LimitedGuest, projectionKey: 'k1'};
+      const rebuiltContext: any = {user, projectionQuery: {some: 'query'}};
+      const req: any = {
+        session: {context: {user, projectionQuery: undefined}},
+        query: {},
+        params: {}
+      };
+      let called = 0;
+      const orig = ObjectManagers.getInstance().buildContext;
+      (ObjectManagers.getInstance() as any).buildContext = async (u: any) => {
+        called++;
+        expect(u).to.eql(user);
+        return rebuiltContext;
+      };
+      let nextErr: any = 'not-called';
+      await AuthenticationMWs.authenticate(req, null as any, (err: any) => { nextErr = err; });
+      // restore
+      (ObjectManagers.getInstance() as any).buildContext = orig;
+
+      expect(nextErr).to.be.undefined;
+      expect(called).to.eql(1);
+      expect(req.session.context).to.eql(rebuiltContext);
+      expect(req.session.context.projectionQuery).to.deep.equal({some: 'query'});
+    });
+
+    it('should rebuild context if projectionQuery is an empty object', async () => {
+      Config.Users.authenticationRequired = true;
+      const user: any = {name: 'Guest', role: UserRoles.LimitedGuest, projectionKey: 'k-empty'};
+      const rebuiltContext: any = {user, projectionQuery: {restored: true}};
+      const req: any = {
+        session: {context: {user, projectionQuery: {}}},
+        query: {},
+        params: {}
+      };
+      let called = 0;
+      const orig = ObjectManagers.getInstance().buildContext;
+      (ObjectManagers.getInstance() as any).buildContext = async (u: any) => {
+        called++;
+        expect(u).to.eql(user);
+        return rebuiltContext;
+      };
+      let nextErr: any = 'not-called';
+      await AuthenticationMWs.authenticate(req, null as any, (err: any) => { nextErr = err; });
+      (ObjectManagers.getInstance() as any).buildContext = orig;
+
+      expect(nextErr).to.be.undefined;
+      expect(called).to.eql(1);
+      expect(req.session.context).to.eql(rebuiltContext);
+      expect(req.session.context.projectionQuery).to.deep.equal({restored: true});
+    });
+
+    it('should NOT rebuild context if projectionQuery is present', async () => {
+      Config.Users.authenticationRequired = true;
+      const user: any = {name: 'Guest', role: UserRoles.LimitedGuest, projectionKey: 'k2'};
+      const originalContext: any = {user, projectionQuery: {ok: true}};
+      const req: any = { session: {context: originalContext}, query: {}, params: {} };
+
+      let called = 0;
+      const orig = ObjectManagers.getInstance().buildContext;
+      (ObjectManagers.getInstance() as any).buildContext = async () => {
+        called++;
+        return originalContext;
+      };
+      let nextErr: any = 'not-called';
+      await AuthenticationMWs.authenticate(req, null as any, (err: any) => { nextErr = err; });
+      (ObjectManagers.getInstance() as any).buildContext = orig;
+
+      expect(nextErr).to.be.undefined;
+      expect(called).to.eql(0);
+      expect(req.session.context).to.eql(originalContext);
+    });
   });
 
   describe('inverseAuthenticate', () => {

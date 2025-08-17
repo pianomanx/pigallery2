@@ -15,6 +15,8 @@ import {ContentLoaderService} from '../contentLoader.service';
 import { NgIf, NgFor, DatePipe } from '@angular/common';
 import { NgIconComponent } from '@ng-icons/core';
 import { FormsModule } from '@angular/forms';
+import { SearchQueryDTO, SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes } from '../../../../../common/entities/SearchQueryDTO';
+import { StringifySearchQuery } from '../../../pipes/StringifySearchQuery';
 
 @Component({
     selector: 'app-gallery-share',
@@ -27,6 +29,7 @@ import { FormsModule } from '@angular/forms';
         ClipboardModule,
         NgFor,
         DatePipe,
+        StringifySearchQuery,
     ]
 })
 export class GalleryShareComponent implements OnInit, OnDestroy {
@@ -44,6 +47,8 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
     password: null as string,
   };
   currentDir = '';
+  currentQuery: SearchQueryDTO = null;
+  sharingTarget = '';
   sharing: SharingDTO = null;
   contentSubscription: Subscription = null;
   readonly passwordRequired = Config.Sharing.passwordRequired;
@@ -79,14 +84,30 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
     this.contentSubscription = this.galleryService.content.subscribe(
         async (content: ContentWrapper) => {
           this.activeShares = [];
-          this.enabled = !!content.directory;
-          if (!this.enabled) {
-            return;
-          }
-          this.currentDir = Utils.concatUrls(
+          this.enabled = !!(content.directory || (content as any).searchResult);
+          this.currentDir = '';
+          this.currentQuery = null;
+          this.sharingTarget = '';
+
+          if ((content as any).searchResult) {
+            this.currentQuery = (content as any).searchResult.searchQuery as SearchQueryDTO;
+            this.sharingTarget = $localize`Search query`;
+          } else if (content.directory) {
+            this.currentDir = Utils.concatUrls(
               content.directory.path,
               content.directory.name
-          );
+            );
+            this.currentQuery = {
+              type: SearchQueryTypes.directory,
+              text: this.currentDir,
+              matchType: TextSearchQueryMatchTypes.exact_match
+            } as TextSearch;
+            this.sharingTarget = this.currentDir;
+          }
+
+          if (!this.enabled || !this.currentQuery) {
+            return;
+          }
           await this.updateActiveSharesList();
         }
     );
@@ -106,7 +127,11 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
 
   private async updateActiveSharesList() {
     try {
-      this.activeShares = await this.sharingService.getSharingListForDir(this.currentDir);
+      if (!this.currentQuery) {
+        this.activeShares = [];
+        return;
+      }
+      this.activeShares = await this.sharingService.getSharingListForQuery(this.currentQuery);
     } catch (e) {
       this.activeShares = [];
       console.error(e);
@@ -130,14 +155,14 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
   }
 
   async update(): Promise<void> {
-    if (this.sharing == null) {
+    if (this.sharing == null || !this.currentQuery) {
       return;
     }
     this.urlValid = false;
     this.url = $localize`loading..`;
-    this.sharing = await this.sharingService.updateSharing(
-        this.currentDir,
+    this.sharing = await this.sharingService.updateSharingByQuery(
         this.sharing.id,
+        this.currentQuery,
         this.input.password,
         this.calcValidity()
     );
@@ -151,10 +176,14 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
       this.url = $localize`Set password.`;
       return;
     }
+    if (!this.currentQuery) {
+      this.url = $localize`Invalid settings`;
+      return;
+    }
     this.urlValid = false;
     this.url = $localize`loading..`;
-    this.sharing = await this.sharingService.createSharing(
-        this.currentDir,
+    this.sharing = await this.sharingService.createSharingByQuery(
+        this.currentQuery,
         this.input.password,
         this.calcValidity()
     );
