@@ -195,15 +195,6 @@ export class ShareService {
     }
   }
 
-  public async getSharingListForDir(
-    dir: string
-  ): Promise<SharingDTO[]> {
-    return this.getSharingListForQuery({
-      type: SearchQueryTypes.directory,
-      text: dir,
-      matchType: TextSearchQueryMatchTypes.exact_match
-    } as TextSearch);
-  }
 
   public async getSharingListForQuery(
     query: SearchQueryDTO
