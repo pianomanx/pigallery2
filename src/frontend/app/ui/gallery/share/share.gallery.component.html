@@ -60,27 +60,10 @@
                  name="sharing-dir"
                  id="sharing-dir"
                  class="full-width form-control"
-                 [ngModel]="currentDir">
+                 [ngModel]="galleryService.isSearchResult() ? (currentQuery | searchQuery) : sharingTarget">
         </div>
       </div>
 
-      <div class="row">
-        <div class="col-4">
-          <label class="control-label" for="includeSubfolders" i18n>Include subfolders:</label>
-        </div>
-        <div class="col-8">
-          <div class="form-check form-switch">
-            <input class="form-check-input"
-                   type="checkbox"
-                   role="switch"
-                   id="includeSubfolders"
-                   name="includeSubfolders"
-                   title="Orientation"
-                   (change)="update()"
-                   [(ngModel)]="input.includeSubfolders">
-          </div>
-        </div>
-      </div>
 
       <div class="row">
         <div class="col-4">

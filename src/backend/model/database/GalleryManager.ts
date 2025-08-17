@@ -410,6 +410,7 @@ export class GalleryManager {
     if(session.projectionQuery) {
       const mQuery = connection.getRepository(MediaEntity)
         .createQueryBuilder('media')
+        .leftJoin('media.directory', 'directory')
         .where('media.directory = :id', {
           id: partialDirId
         })
