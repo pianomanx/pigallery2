@@ -5,6 +5,7 @@ import {SharingDTO} from '../../../../../src/common/entities/SharingDTO';
 import {UserEntity} from '../../../../../src/backend/model/database/enitites/UserEntity';
 import {UserDTO, UserRoles} from '../../../../../src/common/entities/UserDTO';
 import {DBTestHelper} from '../../../DBTestHelper';
+import {SearchQueryTypes, TextSearch} from '../../../../../src/common/entities/SearchQueryDTO';
 
 // to help WebStorm to handle the test cases
 declare let describe: any;
@@ -25,8 +26,7 @@ describe('SharingManager', (sqlHelper: DBTestHelper) => {
       id: null,
       name: 'test use',
       password: '',
-      role: UserRoles.User,
-      permissions: null
+      role: UserRoles.User
     });
 
     await SQLConnection.close();
@@ -48,11 +48,10 @@ describe('SharingManager', (sqlHelper: DBTestHelper) => {
     const sharing: SharingDTO = {
       id: null,
       sharingKey: 'testKey',
-      path: '/',
+      searchQuery: {text: '/', type: SearchQueryTypes.directory} as TextSearch,
       password: null,
       creator,
       expires: Date.now() + 1000,
-      includeSubfolders: true,
       timeStamp: Date.now()
     };
 
@@ -63,7 +62,6 @@ describe('SharingManager', (sqlHelper: DBTestHelper) => {
     expect(saved.timeStamp).to.equals(sharing.timeStamp);
     expect(saved.password).to.equals(sharing.password);
     expect(saved.expires).to.equals(sharing.expires);
-    expect(saved.includeSubfolders).to.equals(sharing.includeSubfolders);
   });
 
 
@@ -73,11 +71,10 @@ describe('SharingManager', (sqlHelper: DBTestHelper) => {
     const sharing: SharingDTO = {
       id: null,
       sharingKey: 'testKey',
-      path: '/',
+      searchQuery: {text: '/', type: SearchQueryTypes.directory} as TextSearch,
       password: null,
       creator,
       expires: Date.now() + 1000,
-      includeSubfolders: true,
       timeStamp: Date.now()
     };
 
@@ -98,27 +95,24 @@ describe('SharingManager', (sqlHelper: DBTestHelper) => {
     const sharing: SharingDTO = {
       id: null,
       sharingKey: 'testKey',
-      path: '/',
+      searchQuery: {text: '/', type: SearchQueryTypes.directory} as TextSearch,
       password: null,
       creator,
       expires: Date.now() + 1000,
-      includeSubfolders: true,
       timeStamp: Date.now()
     };
 
     const saved = await sm.createSharing(sharing);
     expect(saved.password).to.equals(sharing.password);
     expect(saved.expires).to.equals(sharing.expires);
-    expect(saved.includeSubfolders).to.equals(sharing.includeSubfolders);
 
     const update: SharingDTO = {
       id: saved.id,
       sharingKey: saved.sharingKey,
-      path: saved.path,
+      searchQuery: saved.searchQuery,
       password: null,
       creator,
       expires: Date.now() + 2000,
-      includeSubfolders: false,
       timeStamp: Date.now()
     };
     const updated = await sm.updateSharing(update, false);
@@ -128,7 +122,6 @@ describe('SharingManager', (sqlHelper: DBTestHelper) => {
     expect(updated.timeStamp).to.equals(sharing.timeStamp);
     expect(updated.password).to.equals(update.password);
     expect(updated.expires).to.equals(update.expires);
-    expect(updated.includeSubfolders).to.equals(update.includeSubfolders);
   });
 
 });
