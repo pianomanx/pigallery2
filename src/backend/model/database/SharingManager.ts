@@ -5,7 +5,7 @@ import {Config} from '../../../common/config/private/Config';
 import {PasswordHelper} from '../PasswordHelper';
 import {DeleteResult, SelectQueryBuilder} from 'typeorm';
 import {UserDTO} from '../../../common/entities/UserDTO';
-import {SearchQueryDTO} from '../../../common/entities/SearchQueryDTO';
+import {SearchQueryDTO, SearchQueryDTOUtils} from '../../../common/entities/SearchQueryDTO';
 
 export class SharingManager {
   private static async removeExpiredLink(): Promise<DeleteResult> {
@@ -44,7 +44,7 @@ export class SharingManager {
       .getRepository(SharingEntity)
       .createQueryBuilder('share')
       .leftJoinAndSelect('share.creator', 'creator')
-      .where('share.searchQuery = :query', {query: JSON.stringify(query)});
+      .where('share.searchQuery = :query', {query: SearchQueryDTOUtils.stringifyForComparison(query)});
     if (user) {
       q.where('share.creator = :user', {user: user.id});
     }
@@ -66,6 +66,9 @@ export class SharingManager {
     const connection = await SQLConnection.getConnection();
     if (sharing.password) {
       sharing.password = PasswordHelper.cryptPassword(sharing.password);
+    }
+    if ((sharing as any).searchQuery) {
+      (sharing as any).searchQuery = SearchQueryDTOUtils.sortQuery((sharing as any).searchQuery as SearchQueryDTO);
     }
     return connection.getRepository(SharingEntity).save(sharing);
   }
@@ -92,8 +95,8 @@ export class SharingManager {
     } else {
       sharing.password = PasswordHelper.cryptPassword(inSharing.password);
     }
-    // allow updating searchQuery
-    (sharing as any).searchQuery = (inSharing as any).searchQuery || (sharing as any).searchQuery;
+    // allow updating searchQuery and canonicalize it
+    sharing.searchQuery = SearchQueryDTOUtils.sortQuery(inSharing.searchQuery);
     sharing.expires = inSharing.expires;
 
     return connection.getRepository(SharingEntity).save(sharing);

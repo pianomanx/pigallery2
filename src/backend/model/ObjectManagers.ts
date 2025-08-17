@@ -317,7 +317,8 @@ export class ObjectManagers {
   }
 
   public createProjectionKey(q: SearchQueryDTO) {
-    return 'pr:' + crypto.createHash('md5').update(JSON.stringify(q)).digest('hex');
+    const canonical = SearchQueryDTOUtils.stringifyForComparison(q);
+    return 'pr:' + crypto.createHash('md5').update(canonical).digest('hex');
   }
 
   public async buildContext(user: ContextUser): Promise<SessionContext> {
