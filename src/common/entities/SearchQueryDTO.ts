@@ -141,6 +141,61 @@ export const SearchQueryDTOUtils = {
   },
   isValidQuery(query: SearchQueryDTO): boolean {
     return query && query.type !== undefined && !(query.type === SearchQueryTypes.any_text && !(query as TextSearch).text);
+  },
+  // Returns a new SearchQueryDTO where list-type subqueries are recursively sorted
+  // into a canonical order for equality checks. This does not change semantics.
+  sortQuery(queryIN: SearchQueryDTO): SearchQueryDTO {
+    // Canonicalize object keys recursively to make JSON order independent
+    const canonicalize = (value: any): any => {
+      if (Array.isArray(value)) {
+        return value.map((v) => canonicalize(v));
+      }
+      if (value && typeof value === 'object') {
+        const out: any = {};
+        const keys = Object.keys(value).sort();
+        for (const k of keys) {
+          const v = canonicalize((value as any)[k]);
+          if (v !== undefined) {
+            out[k] = v;
+          }
+        }
+        return out;
+      }
+      return value;
+    };
+
+    if (!queryIN || queryIN.type === undefined) {
+      return queryIN;
+    }
+    // Reorder list queries and canonicalize properties
+    if (queryIN.type === SearchQueryTypes.AND ||
+        queryIN.type === SearchQueryTypes.OR ||
+        queryIN.type === SearchQueryTypes.SOME_OF) {
+      const ql = queryIN as SearchListQuery;
+      const children = (ql.list || []).map((c) => SearchQueryDTOUtils.sortQuery(c));
+      // Stable key using JSON.stringify of already-sorted, property-canonicalized children
+      const withKeys = children.map((c) => ({ key: JSON.stringify(c), value: c }));
+      withKeys.sort((a, b) => a.key.localeCompare(b.key));
+      if (queryIN.type === SearchQueryTypes.SOME_OF) {
+        const so = queryIN as SomeOfSearchQuery;
+        const res: any = { type: queryIN.type };
+        if (so.min !== undefined) {
+          res.min = so.min;
+        }
+        res.list = withKeys.map((kv) => kv.value);
+        return canonicalize(res) as SearchQueryDTO;
+      } else {
+        const res: any = { type: queryIN.type };
+        res.list = withKeys.map((kv) => kv.value);
+        return canonicalize(res) as SearchQueryDTO;
+      }
+    }
+    // For non-list queries return with sorted properties to avoid order differences
+    return canonicalize(queryIN) as SearchQueryDTO;
+  },
+  // Stringify a query in canonical form for comparing or persistence
+  stringifyForComparison(queryIN: SearchQueryDTO): string {
+    return JSON.stringify(SearchQueryDTOUtils.sortQuery(queryIN));
   }
 };
 
