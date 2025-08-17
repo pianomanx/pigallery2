@@ -49,6 +49,8 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
   currentDir = '';
   currentQuery: SearchQueryDTO = null;
   sharingTarget = '';
+  currentMediaCount = 0;
+  currentMediaCountIsLowerBound = false;
   sharing: SharingDTO = null;
   contentSubscription: Subscription = null;
   readonly passwordRequired = Config.Sharing.passwordRequired;
@@ -88,10 +90,15 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
           this.currentDir = '';
           this.currentQuery = null;
           this.sharingTarget = '';
+          this.currentMediaCount = 0;
+          this.currentMediaCountIsLowerBound = false;
 
           if ((content as any).searchResult) {
-            this.currentQuery = (content as any).searchResult.searchQuery as SearchQueryDTO;
+            const sr = (content as any).searchResult;
+            this.currentQuery = sr.searchQuery as SearchQueryDTO;
             this.sharingTarget = $localize`Search query`;
+            this.currentMediaCount = (sr.media ? sr.media.length : 0);
+            this.currentMediaCountIsLowerBound = !!sr.resultOverflow;
           } else if (content.directory) {
             this.currentDir = Utils.concatUrls(
               content.directory.path,
@@ -103,6 +110,9 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
               matchType: TextSearchQueryMatchTypes.exact_match
             } as TextSearch;
             this.sharingTarget = this.currentDir;
+            // Prefer mediaCount, fallback to media length if needed
+            this.currentMediaCount = (typeof content.directory.mediaCount === 'number' ? content.directory.mediaCount : (content.directory.media ? content.directory.media.length : 0));
+            this.currentMediaCountIsLowerBound = false;
           }
 
           if (!this.enabled || !this.currentQuery) {
