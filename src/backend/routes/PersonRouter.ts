@@ -53,7 +53,7 @@ export class PersonRouter {
         [Config.Server.apiPath + '/person/:name/thumbnail'],
         // common part
         AuthenticationMWs.authenticate,
-        AuthenticationMWs.authorise(UserRoles.User),
+        AuthenticationMWs.authorise(Config.Faces.readAccessMinRole),
         VersionMWs.injectGalleryVersion,
 
         // specific part

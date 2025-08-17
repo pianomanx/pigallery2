@@ -97,9 +97,17 @@ export class FrameComponent {
 
   isFacesAvailable(): boolean {
     return (
-        Config.Faces.enabled &&
-        this.user.value &&
-        this.user.value.role >= Config.Faces.readAccessMinRole
+      Config.Faces.enabled &&
+      this.user.value &&
+      this.user.value.role >= Config.Faces.readAccessMinRole
+    );
+  }
+
+
+  isCustomLinksAvailable(): boolean {
+    return (
+      this.user.value &&
+      this.user.value.role >= UserRoles.User
     );
   }
 
@@ -126,7 +134,9 @@ export class FrameComponent {
   }
 
   isAlbumsAvailable(): boolean {
-    return Config.Album.enabled;
+    return Config.Album.enabled &&
+      this.user.value &&
+      this.user.value.role >= Config.Album.readAccessMinRole
   }
 
 
