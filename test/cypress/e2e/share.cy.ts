@@ -42,7 +42,7 @@ describe('Share', () => {
 
         cy.wait('@getSharedContent').then((interception) => {
           assert.isNotNull(interception.response.body, '1st API call has data');
-          assert.isNull(interception.response.body?.error, '1st API call has data');
+          assert.isNull(interception.response.body?.error, '1st API call has no error. got: ' + interception.response.body?.error);
         });
       });
 
@@ -71,7 +71,7 @@ describe('Share', () => {
 
         cy.wait('@getSharedContent').then((interception) => {
           assert.isNotNull(interception.response.body, '1st API call has data');
-          assert.isNull(interception.response.body?.error, '1st API call has data');
+          assert.isNull(interception.response.body?.error, '1st API call has no error. got: ' + interception.response.body?.error);
         });
       });
 
@@ -104,7 +104,7 @@ describe('Share', () => {
 
         cy.wait('@getSharedContent').then((interception) => {
           assert.isNotNull(interception.response.body, '1st API call has data');
-          assert.isNull(interception.response.body?.error, '1st API call has data');
+          assert.isNull(interception.response.body?.error, '1st API call has no error. got: ' + interception.response.body?.error);
         });
       });
   });
