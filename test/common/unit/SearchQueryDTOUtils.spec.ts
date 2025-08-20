@@ -3,16 +3,16 @@ import {
   ANDSearchQuery,
   ORSearchQuery,
   SearchQueryDTO,
-  SearchQueryDTOUtils,
   SearchQueryTypes,
   SomeOfSearchQuery,
   TextSearch,
   TextSearchQueryMatchTypes,
 } from '../../../src/common/entities/SearchQueryDTO';
+import { SearchQueryUtils } from '../../../src/common/SearchQueryUtils';
 
 const eq = (a: SearchQueryDTO, b: SearchQueryDTO) => {
-  const sa = SearchQueryDTOUtils.stringifyForComparison(a);
-  const sb = SearchQueryDTOUtils.stringifyForComparison(b);
+  const sa = SearchQueryUtils.stringifyForComparison(a);
+  const sb = SearchQueryUtils.stringifyForComparison(b);
   expect(sa).to.equal(sb);
 };
 
@@ -26,7 +26,7 @@ describe('SearchQueryDTOUtils.sortQuery', () => {
 
       eq(q1, q2);
 
-      const s = SearchQueryDTOUtils.sortQuery(q2) as ANDSearchQuery;
+      const s = SearchQueryUtils.sortQuery(q2) as ANDSearchQuery;
       expect((s.list[0] as TextSearch).text).to.equal('alpha');
       expect((s.list[1] as TextSearch).text).to.equal('bob');
     });
@@ -39,7 +39,7 @@ describe('SearchQueryDTOUtils.sortQuery', () => {
 
       eq(q1, q2);
 
-      const s = SearchQueryDTOUtils.sortQuery(q1) as ORSearchQuery;
+      const s = SearchQueryUtils.sortQuery(q1) as ORSearchQuery;
       expect(s.list.map((c) => (c as TextSearch).text)).to.deep.equal(['holidays', 'summer'].sort());
     });
   });
@@ -63,12 +63,12 @@ describe('SearchQueryDTOUtils.sortQuery', () => {
 
       eq(q1, q2);
 
-      const s = SearchQueryDTOUtils.sortQuery(q1) as SomeOfSearchQuery;
+      const s = SearchQueryUtils.sortQuery(q1) as SomeOfSearchQuery;
       expect(s.min).to.equal(2);
       expect(s.list).to.have.length(3);
       // Ensure all children are present with the same negate flags
-      const serializedChildren = s.list.map((c) => SearchQueryDTOUtils.stringifyForComparison(c));
-      const expected = [x1, x2, x3].map((c) => SearchQueryDTOUtils.stringifyForComparison(c));
+      const serializedChildren = s.list.map((c) => SearchQueryUtils.stringifyForComparison(c));
+      const expected = [x1, x2, x3].map((c) => SearchQueryUtils.stringifyForComparison(c));
       expect(serializedChildren.sort()).to.deep.equal(expected.sort());
 
       // Negate flag stayed on the same semantic child (person:y)
@@ -107,7 +107,7 @@ describe('SearchQueryDTOUtils.sortQuery', () => {
       eq(q1, q2);
 
       // Ensure values are preserved after sort
-      const s = SearchQueryDTOUtils.sortQuery(q1) as any;
+      const s = SearchQueryUtils.sortQuery(q1) as any;
       expect(s.distance).to.equal(5);
       expect(s.from.GPSData.latitude).to.equal(20.654321);
       expect(s.from.GPSData.longitude).to.equal(10.123456);

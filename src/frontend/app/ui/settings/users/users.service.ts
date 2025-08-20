@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {UserDTO} from '../../../../../common/entities/UserDTO';
 import {NetworkService} from '../../../model/network/network.service';
+import {UserSettingsDTO} from '../../../../../common/entities/UserSettingsDTO';
 
 @Injectable({
   providedIn: 'root'
@@ -26,6 +27,12 @@ export class UsersSettingsService {
   public updateRole(user: UserDTO): Promise<void> {
     return this.networkService.postJson('/user/' + user.id + '/role', {
       newRole: user.role,
+    });
+  }
+
+  public updateSettings(userId: number, settings: UserSettingsDTO): Promise<void> {
+    return this.networkService.postJson('/user/' + userId + '/settings', {
+      settings
     });
   }
 }

@@ -25,9 +25,9 @@ import {
   ServerPhotoConfig,
   ServerVideoConfig,
 } from '../../../common/config/private/PrivateConfig';
-import {SearchQueryParser} from '../../../common/SearchQueryParser';
 import {SearchQueryTypes, TextSearch,} from '../../../common/entities/SearchQueryDTO';
 import {Utils} from '../../../common/Utils';
+import {SearchQueryUtils} from '../../../common/SearchQueryUtils';
 import {JobRepository} from '../jobs/JobRepository';
 import {ConfigClassBuilder} from '../../../../node_modules/typeconfig/node';
 import {Config} from '../../../common/config/private/Config';
@@ -285,16 +285,7 @@ export class ConfigDiagnostics {
 
   static async testAlbumCoverConfig(settings: ServerAlbumCoverConfig): Promise<void> {
     Logger.debug(LOG_TAG, 'Testing cover config');
-    const sp = new SearchQueryParser();
-    if (
-      !Utils.equalsFilter(
-        sp.parse(sp.stringify(settings.SearchQuery)),
-        settings.SearchQuery
-      )
-    ) {
-      throw new Error('SearchQuery is not valid. Expected: ' + JSON.stringify(sp.parse(sp.stringify(settings.SearchQuery))) +
-        ' Got: ' + JSON.stringify(settings.SearchQuery));
-    }
+    SearchQueryUtils.validateSearchQuery(settings.SearchQuery, 'SearchQuery');
   }
 
   /**

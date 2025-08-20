@@ -3,6 +3,8 @@ import {UserEntity} from './enitites/UserEntity';
 import {SQLConnection} from './SQLConnection';
 import {PasswordHelper} from '../PasswordHelper';
 import {FindOptionsWhere} from 'typeorm';
+import {UserSettingsDTO} from '../../../common/entities/UserSettingsDTO';
+import {SearchQueryUtils} from '../../../common/SearchQueryUtils';
 
 export class UserManager {
 
@@ -26,6 +28,13 @@ export class UserManager {
 
   public async createUser(user: UserDTO): Promise<UserEntity> {
     const connection = await SQLConnection.getConnection();
+    // Validate search queries if provided
+    if (user.allowQuery) {
+      SearchQueryUtils.validateSearchQuery(user.allowQuery, 'User allowQuery');
+    }
+    if (user.blockQuery) {
+      SearchQueryUtils.validateSearchQuery(user.blockQuery, 'User blockQuery');
+    }
     user.password = PasswordHelper.cryptPassword(user.password);
     return connection.getRepository(UserEntity).save(user);
   }
@@ -41,6 +50,40 @@ export class UserManager {
     const userRepository = connection.getRepository(UserEntity);
     const user = await userRepository.findOneBy({id});
     user.role = newRole;
+    return userRepository.save(user);
+  }
+
+  public async updateSettings(id: number, settings: UserSettingsDTO): Promise<UserEntity> {
+    const connection = await SQLConnection.getConnection();
+    const userRepository = connection.getRepository(UserEntity);
+    const user = await userRepository.findOneBy({id});
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (typeof settings.overrideAllowBlockList !== 'undefined') {
+      user.overrideAllowBlockList = settings.overrideAllowBlockList;
+    }
+
+    if (typeof settings.allowQuery !== 'undefined') {
+      if (settings.allowQuery) {
+        SearchQueryUtils.validateSearchQuery(settings.allowQuery, 'User allowQuery');
+      }
+      user.allowQuery = settings.allowQuery ?? null;
+    }
+
+    if (typeof settings.blockQuery !== 'undefined') {
+      if (settings.blockQuery) {
+        SearchQueryUtils.validateSearchQuery(settings.blockQuery, 'User blockQuery');
+      }
+      user.blockQuery = settings.blockQuery ?? null;
+    }
+
+    if (settings.newPassword && settings.newPassword.length > 0) {
+      user.password = PasswordHelper.cryptPassword(settings.newPassword);
+    }
+
     return userRepository.save(user);
   }
 

@@ -17,10 +17,10 @@ import {SharingManager} from './database/SharingManager';
 import {IObjectManager} from './database/IObjectManager';
 import {ExtensionManager} from './extension/ExtensionManager';
 import {ContextUser, SessionContext} from './SessionContext';
-import {UserEntity} from './database/enitites/UserEntity';
-import {ANDSearchQuery, SearchQueryDTO, SearchQueryDTOUtils, SearchQueryTypes} from '../../common/entities/SearchQueryDTO';
+import {ANDSearchQuery, SearchQueryDTO,  SearchQueryTypes} from '../../common/entities/SearchQueryDTO';
 import {Config} from '../../common/config/private/Config';
 import {SharingEntity} from './database/enitites/SharingEntity';
+import {SearchQueryUtils} from '../../common/SearchQueryUtils';
 
 const LOG_TAG = '[ObjectManagers]';
 
@@ -280,15 +280,15 @@ export class ObjectManagers {
     let blockQuery = user.overrideAllowBlockList ? user.blockQuery : Config.Users.blockQuery;
     const allowQuery = user.overrideAllowBlockList ? user.allowQuery : Config.Users.allowQuery;
 
-    if (!SearchQueryDTOUtils.isValidQuery(allowQuery) && !SearchQueryDTOUtils.isValidQuery(blockQuery)) {
+    if (!SearchQueryUtils.isQueryEmpty(allowQuery) && !SearchQueryUtils.isQueryEmpty(blockQuery)) {
       return null;
     }
 
-    if (SearchQueryDTOUtils.isValidQuery(blockQuery)) {
-      blockQuery = SearchQueryDTOUtils.negate(blockQuery);
+    if (SearchQueryUtils.isQueryEmpty(blockQuery)) {
+      blockQuery = SearchQueryUtils.negate(blockQuery);
     }
-    let query = SearchQueryDTOUtils.isValidQuery(allowQuery) ? allowQuery : blockQuery;
-    if (SearchQueryDTOUtils.isValidQuery(allowQuery) && SearchQueryDTOUtils.isValidQuery(blockQuery)) {
+    let query = SearchQueryUtils.isQueryEmpty(allowQuery) ? allowQuery : blockQuery;
+    if (SearchQueryUtils.isQueryEmpty(allowQuery) && SearchQueryUtils.isQueryEmpty(blockQuery)) {
       query = {
         type: SearchQueryTypes.AND,
         list: [
@@ -317,7 +317,7 @@ export class ObjectManagers {
   }
 
   public createProjectionKey(q: SearchQueryDTO) {
-    const canonical = SearchQueryDTOUtils.stringifyForComparison(q);
+    const canonical = SearchQueryUtils.stringifyForComparison(q);
     return 'pr:' + crypto.createHash('md5').update(canonical).digest('hex');
   }
 
@@ -330,6 +330,9 @@ export class ObjectManagers {
       // Build the Brackets-based query
       context.projectionQuery = await ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(finalQuery);
       context.user.projectionKey = ObjectManagers.getInstance().createProjectionKey(finalQuery);
+      Logger.silly(LOG_TAG, 'Projection query: ' + JSON.stringify(context.projectionQuery));
+    }else{
+      context.user.projectionKey = 'pr:' + crypto.createHash('md5').update('No Key').digest('hex');
     }
     return context;
   }
