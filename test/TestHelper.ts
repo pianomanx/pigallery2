@@ -21,6 +21,8 @@ import {DirectoryBaseDTO, DirectoryPathDTO} from '../src/common/entities/Directo
 import {FileDTO} from '../src/common/entities/FileDTO';
 import {DiskManager} from '../src/backend/model/fileaccess/DiskManager';
 import * as path from 'path';
+import {Config} from '../src/common/config/private/Config';
+import {SortByTypes} from '../src/common/entities/SortingMethods';
 
 export class TestHelper {
 
@@ -307,8 +309,6 @@ export class TestHelper {
       path: DiskManager.pathFromParent({path: '', name: '.'}),
       cache: {
         mediaCount: 0,
-        youngestMedia: 10,
-        oldestMedia: 1000,
         cover: null,
         valid: false,
       },
@@ -359,7 +359,7 @@ export class TestHelper {
     return f;
   }
 
-  public static getRandomizedPhotoEntry(dir: DirectoryBaseDTO, forceStr: string = null, faces = 2): PhotoDTO {
+  public static getRandomizedPhotoEntry(dir: DirectoryBaseDTO, forceStr: string = null, faces = 2, rating?: number): PhotoDTO {
 
 
     const rndStr = (): string => {
@@ -399,11 +399,11 @@ export class TestHelper {
       cameraData: cd,
       positionData: pd,
       size: sd,
-      creationDate: Date.now() + ++TestHelper.creationCounter,
+      creationDate: Date.now() + ++TestHelper.creationCounter * (1000 * 60 * 10),
       creationDateOffset: '+01:00',
       fileSize: rndInt(10000),
       caption: rndStr(),
-      rating: rndInt(5) as any,
+      rating: rating ?? rndInt(5) as any
     };
 
 
@@ -419,21 +419,38 @@ export class TestHelper {
     }
 
     dir.media.push(p);
-    TestHelper.updateCover(dir);
+    TestHelper.updateDirCache(dir);
     return p;
   }
 
-  static updateCover(dir: DirectoryBaseDTO): void {
-    if (dir.media.length > 0) {
-      dir.cache.cover = dir.media.sort((a, b): number => b.metadata.creationDate - a.metadata.creationDate)[0];
+  static updateDirCache(dir: DirectoryBaseDTO): void {
+    let cover = null;
+    const sortedMedia = dir.media.slice().sort((a, b): number => b.metadata.creationDate - a.metadata.creationDate);
+    // prioritize the given dir.
+    const mediaForCover = dir.media.length > 0 ? dir.media.slice() : dir.directories.filter((d): CoverPhotoDTO => d.cache.cover).map((d): CoverPhotoDTO => d.cache.cover);
+
+    if (Config.AlbumCover.Sorting[0].method == SortByTypes.Rating) {
+      mediaForCover.sort((a, b): number => b.metadata.rating - a.metadata.rating);
     } else {
-      const filtered = dir.directories.filter((d): CoverPhotoDTO => d.cache.cover).map((d): CoverPhotoDTO => d.cache.cover);
-      if (filtered.length > 0) {
-        dir.cache.cover = filtered.sort((a, b): number => b.metadata.creationDate - a.metadata.creationDate)[0];
+      mediaForCover.sort((a, b): number => b.metadata.creationDate - a.metadata.creationDate);
+    }
+    cover = mediaForCover?.[0];
+
+
+    if (dir.cache) {
+      // Update cache counters and timestamp boundaries
+      dir.cache.mediaCount = sortedMedia.length;
+      if (sortedMedia.length > 0) {
+        dir.cache.youngestMedia = sortedMedia[0].metadata.creationDate;
+        dir.cache.oldestMedia = sortedMedia[sortedMedia.length - 1].metadata.creationDate;
       }
+      if (cover) {
+        dir.cache.cover = cover;
+      }
+      dir.cache.valid = true;
     }
     if (dir.parent) {
-      TestHelper.updateCover(dir.parent);
+      TestHelper.updateDirCache(dir.parent);
     }
 
   }

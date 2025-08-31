@@ -17,6 +17,9 @@ import {PhotoDTO} from '../../src/common/entities/PhotoDTO';
 import {Logger} from '../../src/backend/Logger';
 import {SessionContext} from '../../src/backend/model/SessionContext';
 import {SessionManager} from '../../src/backend/model/database/SessionManager';
+import {DirectoryEntity} from '../../src/backend/model/database/enitites/DirectoryEntity';
+import {MediaEntity} from '../../src/backend/model/database/enitites/MediaEntity';
+import {ProjectedDirectoryCacheEntity} from '../../src/backend/model/database/enitites/ProjectedDirectoryCacheEntity';
 
 declare let describe: any;
 const savedDescribe = describe;
@@ -165,7 +168,7 @@ export class DBTestHelper {
   }
 
   public async setUpTestGallery(): Promise<void> {
-    const directory: ParentDirectoryDTO = TestHelper.getDirectoryEntry();
+    const directory: ParentDirectoryDTO = TestHelper.getDirectoryEntry(null, '.');
     this.testGalleyEntities.subDir = TestHelper.getDirectoryEntry(directory, 'The Phantom Menace');
     this.testGalleyEntities.subDir2 = TestHelper.getDirectoryEntry(directory, 'Return of the Jedi');
     this.testGalleyEntities.p = TestHelper.getRandomizedPhotoEntry(directory, 'Photo1');
@@ -187,6 +190,15 @@ export class DBTestHelper {
     this.testGalleyEntities.p3.directory = this.testGalleyEntities.dir.directories[0];
     this.testGalleyEntities.p4 = (this.testGalleyEntities.dir.directories[1].media[0] as any);
     this.testGalleyEntities.p2.directory = this.testGalleyEntities.dir.directories[1];
+  }
+
+  public static async printDB() {
+    const conn = await SQLConnection.getConnection();
+    const dirs = await conn.getRepository(DirectoryEntity).createQueryBuilder('dir').getMany();
+    const dCache = await conn.getRepository(ProjectedDirectoryCacheEntity).createQueryBuilder('c').leftJoinAndSelect('c.cover', 'cover').getMany();
+    const media = await conn.getRepository(MediaEntity).createQueryBuilder('m').getMany();
+
+    return JSON.stringify({dirs, dCache, media}, null, 2);
   }
 
   private async initMySQL(): Promise<void> {

@@ -372,7 +372,15 @@ export class GalleryManager {
     row.cover = coverMedia as any;
     row.valid = true;
 
-    return await cacheRepo.save(row);
+    const ret =  await cacheRepo.save(row);
+    // we would not select these either
+    delete ret.projectionKey;
+    delete ret.directory;
+    delete ret.id;
+    if(ret.cover) {
+      delete ret.cover.id;
+    }
+    return ret;
   }
 
   protected async getDirIdAndTime(connection: Connection, name: string, path: string): Promise<{

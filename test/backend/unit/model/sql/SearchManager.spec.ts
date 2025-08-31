@@ -164,28 +164,28 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       return a.text.localeCompare(b.text);
     };
 
-    expect((await sm.autocomplete(new SessionContext(), 'tat', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'tat', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
       new AutoCompleteItem('Tatooine', SearchQueryTypes.position)]);
-    expect((await sm.autocomplete(new SessionContext(), 'star', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'star', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
       new AutoCompleteItem('star wars', SearchQueryTypes.keyword),
       new AutoCompleteItem('death star', SearchQueryTypes.keyword)]);
 
-    expect((await sm.autocomplete(new SessionContext(), 'wars', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'wars', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
       new AutoCompleteItem('star wars', SearchQueryTypes.keyword),
       new AutoCompleteItem('wars dir', SearchQueryTypes.directory)]);
 
-    expect((await sm.autocomplete(new SessionContext(), 'arch', SearchQueryTypes.any_text))).eql([
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'arch', SearchQueryTypes.any_text))).eql([
       new AutoCompleteItem('Research City', SearchQueryTypes.position)]);
 
     Config.Search.AutoComplete.ItemsPerCategory.maxItems = 99999;
-    expect((await sm.autocomplete(new SessionContext(), 'wa', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'wa', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
       new AutoCompleteItem('star wars', SearchQueryTypes.keyword),
       new AutoCompleteItem('Anakin Skywalker', SearchQueryTypes.person),
       new AutoCompleteItem('Luke Skywalker', SearchQueryTypes.person),
       new AutoCompleteItem('wars dir', SearchQueryTypes.directory)]);
 
     Config.Search.AutoComplete.ItemsPerCategory.maxItems = 1;
-    expect((await sm.autocomplete(new SessionContext(), 'a', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'a', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
       new AutoCompleteItem('Han Solo', SearchQueryTypes.person),
       new AutoCompleteItem('Han Solo\'s dice', SearchQueryTypes.caption),
       new AutoCompleteItem('Research City', SearchQueryTypes.position),
@@ -195,14 +195,14 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     Config.Search.AutoComplete.ItemsPerCategory.fileName = 5;
     Config.Search.AutoComplete.ItemsPerCategory.fileName = 5;
 
-    expect((await sm.autocomplete(new SessionContext(), 'sw', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'sw', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
       new AutoCompleteItem('sw1.jpg', SearchQueryTypes.file_name),
       new AutoCompleteItem('sw2.jpg', SearchQueryTypes.file_name),
       new AutoCompleteItem('sw3.jpg', SearchQueryTypes.file_name),
       new AutoCompleteItem('sw4.jpg', SearchQueryTypes.file_name),
       new AutoCompleteItem(v.name, SearchQueryTypes.file_name)]);
 
-    expect((await sm.autocomplete(new SessionContext(), v.name, SearchQueryTypes.any_text))).to.deep.equalInAnyOrder(
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, v.name, SearchQueryTypes.any_text))).to.deep.equalInAnyOrder(
       [new AutoCompleteItem(v.name, SearchQueryTypes.file_name)]);
 
   });
@@ -211,26 +211,26 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     const tmpDir: DirectoryBaseDTO = m.directory as DirectoryBaseDTO;
     const tmpM = tmpDir.media;
     const tmpD = tmpDir.directories;
-    const tmpP = tmpDir.cache.cover;
+    const tmpP = tmpDir.cache?.cover;
     const tmpMT = tmpDir.metaFile;
     delete tmpDir.directories;
     delete tmpDir.media;
-    delete tmpDir.cache.cover;
-    delete tmpDir.cache.valid;
+    delete tmpDir.cache?.cover;
+    delete tmpDir.cache?.valid;
     delete tmpDir.metaFile;
     const ret = Utils.clone(m);
     delete (ret.directory as DirectoryBaseDTO).lastScanned;
     delete (ret.directory as DirectoryBaseDTO).lastModified;
-    delete (ret.directory as DirectoryBaseDTO).cache.mediaCount;
-    delete (ret.directory as DirectoryBaseDTO).cache.youngestMedia;
-    delete (ret.directory as DirectoryBaseDTO).cache.oldestMedia;
+    delete (ret.directory as DirectoryBaseDTO).cache;
     if ((ret as PhotoDTO).metadata &&
       ((ret as PhotoDTO).metadata as PhotoMetadata).faces && !((ret as PhotoDTO).metadata as PhotoMetadata).faces.length) {
       delete ((ret as PhotoDTO).metadata as PhotoMetadata).faces;
     }
     tmpDir.directories = tmpD;
     tmpDir.media = tmpM;
-    tmpDir.cache.cover = tmpP;
+    if (tmpDir.cache) {
+      tmpDir.cache.cover = tmpP;
+    }
     tmpDir.metaFile = tmpMT;
     return ret;
   };
@@ -278,7 +278,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           {text: p2.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
       } as ANDSearchQuery;
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [],
@@ -290,7 +290,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         list: [{text: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
           {text: p.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
       } as ANDSearchQuery);
-      expect(await sm.search(new SessionContext(), query)).to.deep.equalInAnyOrder(removeDir({
+      expect(await sm.search(DBTestHelper.defaultSession, query)).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p],
@@ -300,7 +300,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       // make sure that this shows both photos. We need this the the rest of the tests
       query = ({text: 'a', type: SearchQueryTypes.person} as TextSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, p4],
@@ -319,7 +319,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         ]
       } as ANDSearchQuery);
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p],
@@ -338,7 +338,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           {text: 'Not a caption', type: SearchQueryTypes.caption} as TextSearch]
       } as ORSearchQuery;
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [],
@@ -350,7 +350,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         list: [{text: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
           {text: p2.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
       } as ORSearchQuery);
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2],
@@ -363,7 +363,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         list: [{text: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
           {text: p.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
       } as ORSearchQuery);
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p],
@@ -373,7 +373,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       // make sure that this shows both photos. We need this the the rest of the tests
       query = ({text: 'a', type: SearchQueryTypes.person} as TextSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, p4],
@@ -392,7 +392,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         ]
       } as ORSearchQuery);
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, p4],
@@ -412,7 +412,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         ]
       } as ORSearchQuery);
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, pFaceLess],
@@ -431,7 +431,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           {text: 'mp4', type: SearchQueryTypes.file_name} as TextSearch]
       } as SomeOfSearchQuery;
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, pFaceLess, p4, v],
@@ -446,7 +446,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           {text: 'Luke', type: SearchQueryTypes.person} as TextSearch]
       } as SomeOfSearchQuery);
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, p4],
@@ -457,7 +457,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       query.min = 2;
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, p4],
@@ -467,7 +467,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       query.min = 3;
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [],
@@ -484,7 +484,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           {text: 'Han', type: SearchQueryTypes.person} as TextSearch]
       } as SomeOfSearchQuery);
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2],
@@ -499,7 +499,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         const sm = new SearchManager();
 
         let query = {text: 'sw', type: SearchQueryTypes.any_text} as TextSearch;
-        expect(Utils.clone(await sm.search(new SessionContext(), {text: 'sw', type: SearchQueryTypes.any_text} as TextSearch)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, {text: 'sw', type: SearchQueryTypes.any_text} as TextSearch)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -510,7 +510,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
         query = ({text: 'sw', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
 
-        expect(removeDir(await sm.search(new SessionContext(), query)))
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -521,7 +521,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
         query = ({text: 'Boba', type: SearchQueryTypes.any_text} as TextSearch);
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -531,7 +531,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO), JSON.stringify(query));
 
         query = ({text: 'Boba', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
-        expect(removeDir(await sm.search(new SessionContext(), query)))
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -542,7 +542,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
         query = ({text: 'Boba', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
         // all should have faces
-        const sRet = await sm.search(new SessionContext(), query);
+        const sRet = await sm.search(DBTestHelper.defaultSession, query);
         for (const item of sRet.media) {
           if (item.id === pFaceLess.id) {
             continue;
@@ -558,7 +558,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.any_text,
           matchType: TextSearchQueryMatchTypes.exact_match
         } as TextSearch);
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -573,7 +573,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           matchType: TextSearchQueryMatchTypes.exact_match
         } as TextSearch);
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -589,7 +589,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
 
         const query = {text: 'Tatooine', type: SearchQueryTypes.position} as TextSearch;
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -609,7 +609,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           text: 'kie',
           type: SearchQueryTypes.keyword
         } as TextSearch;
-        expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [p2, pFaceLess],
@@ -622,7 +622,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.keyword
         } as TextSearch);
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [p, p2, pFaceLess, p4],
@@ -635,7 +635,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.keyword
         } as TextSearch);
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [],
@@ -649,7 +649,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.keyword
         } as TextSearch);
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [p, p2, pFaceLess, p4],
@@ -663,7 +663,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.keyword
         } as TextSearch);
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [pFaceLess],
@@ -683,7 +683,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.caption
         } as TextSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [p],
@@ -701,7 +701,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as TextSearch;
 
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [p, p2, pFaceLess, v, p4],
@@ -714,7 +714,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.file_name
         } as TextSearch);
 
-        expect(Utils.clone(await sm.search(new SessionContext(), {
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, {
           text: 'sw4',
           type: SearchQueryTypes.file_name
         } as TextSearch))).to.deep.equalInAnyOrder(removeDir({
@@ -735,7 +735,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.directory
         } as TextSearch;
 
-        expect(removeDir(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [p4],
@@ -748,7 +748,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.directory
         } as TextSearch);
 
-        expect(removeDir(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [p, p2, v, pFaceLess, p4],
@@ -763,7 +763,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as TextSearch);
 
 
-        expect(removeDir(await sm.search(new SessionContext(), {
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, {
           text: '/wars dir',
           matchType: TextSearchQueryMatchTypes.exact_match,
           type: SearchQueryTypes.directory
@@ -782,7 +782,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.directory
         } as TextSearch);
 
-        expect(removeDir(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [p4],
@@ -796,7 +796,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.directory
         } as TextSearch);
 
-        expect(removeDir(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [p4],
@@ -815,7 +815,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.person
         } as TextSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [p],
@@ -829,7 +829,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           matchType: TextSearchQueryMatchTypes.exact_match
         } as TextSearch);
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query))).to.deep.equalInAnyOrder(removeDir({
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [],
@@ -843,7 +843,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           matchType: TextSearchQueryMatchTypes.exact_match
         } as TextSearch);
 
-        expect(Utils.clone(await sm.search(new SessionContext(), {
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, {
           text: 'Boba Fett',
           type: SearchQueryTypes.person,
           matchType: TextSearchQueryMatchTypes.exact_match
@@ -865,7 +865,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       let query: any = {value: 0, type: SearchQueryTypes.to_date} as ToDateSearch;
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -878,7 +878,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         value: p2.metadata.creationDate, type: SearchQueryTypes.from_date
       } as FromDateSearch);
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -893,7 +893,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.from_date
       } as FromDateSearch);
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -907,7 +907,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.to_date
       } as ToDateSearch);
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -964,7 +964,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         };
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -980,7 +980,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         };
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -999,7 +999,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1016,7 +1016,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1033,7 +1033,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1049,7 +1049,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1068,7 +1068,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1086,7 +1086,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1104,7 +1104,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1121,7 +1121,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1140,7 +1140,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1157,7 +1157,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1174,7 +1174,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1190,7 +1190,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1207,7 +1207,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1225,7 +1225,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1241,7 +1241,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           type: SearchQueryTypes.date_pattern
         } as DatePatternSearch;
 
-        expect(Utils.clone(await sm.search(new SessionContext(), query)))
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1260,7 +1260,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       let query: MinRatingSearch | MaxRatingSearch = {value: 0, type: SearchQueryTypes.max_rating} as MaxRatingSearch;
 
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1270,7 +1270,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 5, type: SearchQueryTypes.max_rating} as MaxRatingSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1280,7 +1280,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 5, negate: true, type: SearchQueryTypes.max_rating} as MaxRatingSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1290,7 +1290,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 2, type: SearchQueryTypes.min_rating} as MinRatingSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1300,7 +1300,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 2, negate: true, type: SearchQueryTypes.min_rating} as MinRatingSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1317,7 +1317,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       let query: MinPersonCountSearch | MaxPersonCountSearch = {value: 0, type: SearchQueryTypes.max_person_count} as MaxPersonCountSearch;
 
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1327,7 +1327,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 20, type: SearchQueryTypes.max_person_count} as MaxPersonCountSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1337,7 +1337,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 20, negate: true, type: SearchQueryTypes.max_person_count} as MaxPersonCountSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1348,7 +1348,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
 
       query = ({value: 4, type: SearchQueryTypes.max_person_count} as MaxPersonCountSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1358,7 +1358,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 2, type: SearchQueryTypes.min_person_count} as MinPersonCountSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1368,7 +1368,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 5, type: SearchQueryTypes.min_person_count} as MinPersonCountSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1378,7 +1378,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 2, negate: true, type: SearchQueryTypes.min_person_count} as MinPersonCountSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1394,7 +1394,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       let query: MinResolutionSearch | MaxResolutionSearch =
         {value: 0, type: SearchQueryTypes.max_resolution} as MaxResolutionSearch;
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1404,7 +1404,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 1, type: SearchQueryTypes.max_resolution} as MaxResolutionSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1414,7 +1414,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 3, type: SearchQueryTypes.min_resolution} as MinResolutionSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1425,7 +1425,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
 
       query = ({value: 3, negate: true, type: SearchQueryTypes.min_resolution} as MinResolutionSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1435,7 +1435,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 3, negate: true, type: SearchQueryTypes.max_resolution} as MaxResolutionSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1454,7 +1454,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         landscape: false,
         type: SearchQueryTypes.orientation
       } as OrientationSearch;
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1467,7 +1467,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         landscape: true,
         type: SearchQueryTypes.orientation
       } as OrientationSearch);
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1496,7 +1496,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.distance
       } as DistanceSearch;
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1511,7 +1511,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.distance
       } as DistanceSearch);
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1527,7 +1527,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.distance
       } as DistanceSearch);
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1541,7 +1541,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.distance
       } as DistanceSearch);
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1556,7 +1556,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.distance
       } as DistanceSearch);
 
-      expect(Utils.clone(await sm.search(new SessionContext(), query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1633,7 +1633,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           text: t
         } as TextSearch))
       };
-      expect(removeDir(await sm.search(new SessionContext(), query)))
+      expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1660,7 +1660,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         text: subDir.name,
         type: SearchQueryTypes.any_text
       } as TextSearch;
-      expect(removeDir(await sm.search(new SessionContext(), query)))
+      expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [cloned],
@@ -1678,7 +1678,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.any_text,
         matchType: TextSearchQueryMatchTypes.exact_match
       } as TextSearch;
-      expect(removeDir(await sm.search(new SessionContext(), query)))
+      expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1700,7 +1700,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     } as TextSearch;
 
     // eslint-disable-next-line
-    expect(await sm.getNMedia(new SessionContext(), query, [{
+    expect(await sm.getNMedia(DBTestHelper.defaultSession, query, [{
       method: SortByTypes.Random,
       ascending: null
     }], 1, true)).to.deep.equalInAnyOrder([]);
@@ -1710,7 +1710,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       matchType: TextSearchQueryMatchTypes.exact_match,
       type: SearchQueryTypes.keyword
     } as TextSearch);
-    expect(Utils.clone(await sm.getNMedia(new SessionContext(), query, [{
+    expect(Utils.clone(await sm.getNMedia(DBTestHelper.defaultSession, query, [{
       method: SortByTypes.Random,
       ascending: null
     }], 1, true))).to.deep.equalInAnyOrder([searchifyMedia(pFaceLess)]);
@@ -1719,7 +1719,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
   describe('projectionQuery (session scoped filter)', () => {
     it('getCount should respect projectionQuery', async () => {
       const sm = new SearchManager();
-      const session = new SessionContext();
+      const session = DBTestHelper.defaultSession;
 
       const projQ = ({
         text: 'wookiees',
@@ -1731,8 +1731,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       const searchQ = {text: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
 
       // validate projection less count
-      expect(await sm.getCount(new SessionContext(), projQ)).to.equal(1);
-      expect(await sm.getCount(new SessionContext(), searchQ)).to.equal(4);
+      expect(await sm.getCount(DBTestHelper.defaultSession, projQ)).to.equal(1);
+      expect(await sm.getCount(DBTestHelper.defaultSession, searchQ)).to.equal(4);
 
       // test
       expect(await sm.getCount(session, searchQ)).to.equal(1);
@@ -1741,7 +1741,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
     it('getNMedia should respect projectionQuery', async () => {
       const sm = new SearchManager();
-      const session = new SessionContext();
+      const session = DBTestHelper.defaultSession;
 
       const projQ = ({
         text: 'wookiees',
@@ -1763,7 +1763,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
     it('autocomplete should respect projectionQuery', async () => {
       const sm = new SearchManager();
-      const session = new SessionContext();
+      const session = DBTestHelper.defaultSession;
 
       const projQ = ({
         text: 'wookiees',
@@ -1773,7 +1773,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
 
       // validate projection less count
-      expect((await sm.autocomplete(new SessionContext(), 'star', SearchQueryTypes.any_text)).length).to.equal(2);
+      expect((await sm.autocomplete(DBTestHelper.defaultSession, 'star', SearchQueryTypes.any_text)).length).to.equal(2);
 
       // test
       expect((await sm.autocomplete(session, 'star', SearchQueryTypes.any_text)).length).to.equal(1);
@@ -1785,7 +1785,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
     it('search should respect projectionQuery', async () => {
       const sm = new SearchManager();
-      const session = new SessionContext();
+      const session = DBTestHelper.defaultSession;
 
       const projQ = ({
         text: 'wookiees',
