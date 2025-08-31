@@ -211,26 +211,26 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     const tmpDir: DirectoryBaseDTO = m.directory as DirectoryBaseDTO;
     const tmpM = tmpDir.media;
     const tmpD = tmpDir.directories;
-    const tmpP = tmpDir.cover;
+    const tmpP = tmpDir.cache.cover;
     const tmpMT = tmpDir.metaFile;
     delete tmpDir.directories;
     delete tmpDir.media;
-    delete tmpDir.cover;
-    delete tmpDir.validCover;
+    delete tmpDir.cache.cover;
+    delete tmpDir.cache.valid;
     delete tmpDir.metaFile;
     const ret = Utils.clone(m);
     delete (ret.directory as DirectoryBaseDTO).lastScanned;
     delete (ret.directory as DirectoryBaseDTO).lastModified;
-    delete (ret.directory as DirectoryBaseDTO).mediaCount;
-    delete (ret.directory as DirectoryBaseDTO).youngestMedia;
-    delete (ret.directory as DirectoryBaseDTO).oldestMedia;
+    delete (ret.directory as DirectoryBaseDTO).cache.mediaCount;
+    delete (ret.directory as DirectoryBaseDTO).cache.youngestMedia;
+    delete (ret.directory as DirectoryBaseDTO).cache.oldestMedia;
     if ((ret as PhotoDTO).metadata &&
       ((ret as PhotoDTO).metadata as PhotoMetadata).faces && !((ret as PhotoDTO).metadata as PhotoMetadata).faces.length) {
       delete ((ret as PhotoDTO).metadata as PhotoMetadata).faces;
     }
     tmpDir.directories = tmpD;
     tmpDir.media = tmpM;
-    tmpDir.cover = tmpP;
+    tmpDir.cache.cover = tmpP;
     tmpDir.metaFile = tmpMT;
     return ret;
   };
@@ -238,7 +238,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
   const searchifyDir = (d: DirectoryBaseDTO): DirectoryBaseDTO => {
     const tmpM = d.media;
     const tmpD = d.directories;
-    const tmpP = d.cover;
+    const tmpP = d.cache.cover;
     const tmpMT = d.metaFile;
     delete d.directories;
     delete d.media;
@@ -246,7 +246,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     const ret = Utils.clone(d);
     d.directories = tmpD;
     d.media = tmpM;
-    d.cover = tmpP;
+    d.cache.cover = tmpP;
     d.metaFile = tmpMT;
     ret.isPartial = true;
     return ret;
@@ -1648,8 +1648,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       const sm = new SearchManager();
 
       const cloned = Utils.clone(searchifyDir(subDir));
-      cloned.validCover = true;
-      cloned.cover = {
+      cloned.cache.valid = true;
+      cloned.cache.cover = {
         directory: {
           name: subDir.name,
           path: subDir.path

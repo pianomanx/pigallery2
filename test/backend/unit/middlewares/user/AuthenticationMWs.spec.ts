@@ -24,7 +24,7 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
   before(sqlHelper.clearDB);
 
   beforeEach(async () => {
-    await ObjectManagers.reset();
+    await sqlHelper.initDB();
   });
 
 
@@ -87,16 +87,18 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
         params: {}
       };
       let called = 0;
-      const orig = ObjectManagers.getInstance().buildContext;
-      (ObjectManagers.getInstance() as any).buildContext = async (u: any) => {
+      const orig = ObjectManagers.getInstance().SessionManager.buildContext;
+      ObjectManagers.getInstance().SessionManager.buildContext = async (u: any) => {
         called++;
         expect(u).to.eql(user);
         return rebuiltContext;
       };
       let nextErr: any = 'not-called';
-      await AuthenticationMWs.authenticate(req, null as any, (err: any) => { nextErr = err; });
+      await AuthenticationMWs.authenticate(req, null as any, (err: any) => {
+        nextErr = err;
+      });
       // restore
-      (ObjectManagers.getInstance() as any).buildContext = orig;
+      ObjectManagers.getInstance().SessionManager.buildContext = orig;
 
       expect(nextErr).to.be.undefined;
       expect(called).to.eql(1);
@@ -114,15 +116,17 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
         params: {}
       };
       let called = 0;
-      const orig = ObjectManagers.getInstance().buildContext;
-      (ObjectManagers.getInstance() as any).buildContext = async (u: any) => {
+      const orig = ObjectManagers.getInstance().SessionManager.buildContext;
+      ObjectManagers.getInstance().SessionManager.buildContext = async (u: any) => {
         called++;
         expect(u).to.eql(user);
         return rebuiltContext;
       };
       let nextErr: any = 'not-called';
-      await AuthenticationMWs.authenticate(req, null as any, (err: any) => { nextErr = err; });
-      (ObjectManagers.getInstance() as any).buildContext = orig;
+      await AuthenticationMWs.authenticate(req, null as any, (err: any) => {
+        nextErr = err;
+      });
+      ObjectManagers.getInstance().SessionManager.buildContext = orig;
 
       expect(nextErr).to.be.undefined;
       expect(called).to.eql(1);
@@ -134,17 +138,19 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
       Config.Users.authenticationRequired = true;
       const user: any = {name: 'Guest', role: UserRoles.LimitedGuest, projectionKey: 'k2'};
       const originalContext: any = {user, projectionQuery: {ok: true}};
-      const req: any = { session: {context: originalContext}, query: {}, params: {} };
+      const req: any = {session: {context: originalContext}, query: {}, params: {}};
 
       let called = 0;
-      const orig = ObjectManagers.getInstance().buildContext;
-      (ObjectManagers.getInstance() as any).buildContext = async () => {
+      const orig = ObjectManagers.getInstance().SessionManager.buildContext;
+      (ObjectManagers.getInstance().SessionManager as any).buildContext = async () => {
         called++;
         return originalContext;
       };
       let nextErr: any = 'not-called';
-      await AuthenticationMWs.authenticate(req, null as any, (err: any) => { nextErr = err; });
-      (ObjectManagers.getInstance() as any).buildContext = orig;
+      await AuthenticationMWs.authenticate(req, null as any, (err: any) => {
+        nextErr = err;
+      });
+      (ObjectManagers.getInstance().SessionManager as any).buildContext = orig;
 
       expect(nextErr).to.be.undefined;
       expect(called).to.eql(0);
@@ -239,7 +245,7 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
 
   describe('login', () => {
     beforeEach(async () => {
-      await ObjectManagers.reset();
+      await sqlHelper.initDB();
     });
 
     describe('should call input ErrorDTO next on missing...', () => {
@@ -341,7 +347,7 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
         query: {},
         params: {}
       };
-      const testUser = 'test user' as any;
+      const testUser = 'test user';
       const testContext = {user: testUser};
 
       const next: any = (err: ErrorDTO) => {
@@ -359,7 +365,7 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
         findOne: (filter: never) => {
           return Promise.resolve(testUser);
         }
-      } as UserManager;
+      } as any;
 
       // Add SearchManager mock to avoid errors in buildContext
       ObjectManagers.getInstance().SearchManager = {
@@ -367,6 +373,13 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
           return Promise.resolve(null);
         }
       } as any;
+
+      // @ts-ignore
+      ObjectManagers.getInstance().SessionManager.buildContext = async (user: any) => {
+        expect(user).to.be.eql(testUser);
+        return testContext;
+      };
+
 
 
       AuthenticationMWs.login(req, null, next);
@@ -419,7 +432,7 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
 
 
       // @ts-ignore
-      ObjectManagers.getInstance().buildContext = async (user: any) => {
+      ObjectManagers.getInstance().SessionManager.buildContext = async (user: any) => {
         expect(user).to.be.eql(testUser);
         return testContext;
       };
@@ -484,7 +497,7 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
       } as any;
 
       // @ts-ignore
-      ObjectManagers.getInstance().buildContext = async (user: any) => {
+      ObjectManagers.getInstance().SessionManager.buildContext = async (user: any) => {
         expect(user).to.be.eql(testUser);
         return testContext;
       };
@@ -557,7 +570,7 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
       } as any;
 
       // @ts-ignore
-      ObjectManagers.getInstance().buildContext = async (user: any) => {
+      ObjectManagers.getInstance().SessionManager.buildContext = async (user: any) => {
         expect(user).to.deep.include({
           name: testUser.name,
           role: testUser.role
@@ -673,7 +686,9 @@ describe('Authentication middleware', (sqlHelper: DBTestHelper) => {
     it('should deny (403) on error thrown by GalleryManager.authoriseMetaFile', async () => {
       const req = buildReq('/some/dir/notes.md');
       (ObjectManagers.getInstance() as any).GalleryManager = {
-        authoriseMetaFile: async () => { throw new Error('db error'); }
+        authoriseMetaFile: async () => {
+          throw new Error('db error');
+        }
       } as any;
       const result = await run(req);
       expect(result).to.eql(403);

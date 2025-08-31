@@ -111,7 +111,7 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
             } as TextSearch;
             this.sharingTarget = this.currentDir;
             // Prefer mediaCount, fallback to media length if needed
-            this.currentMediaCount = (typeof content.directory.mediaCount === 'number' ? content.directory.mediaCount : (content.directory.media ? content.directory.media.length : 0));
+            this.currentMediaCount = (typeof content.directory.cache?.mediaCount === 'number' ? content.directory.cache?.mediaCount : (content.directory.media ? content.directory.media.length : 0));
             this.currentMediaCountIsLowerBound = false;
           }
 

@@ -42,11 +42,11 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
     const tmpDir: ParentDirectoryDTO = m.directory as ParentDirectoryDTO;
     const tmpM = tmpDir.media;
     const tmpD = tmpDir.directories;
-    const tmpP = tmpDir.cover;
+    const tmpP = tmpDir.cache.cover;
     const tmpMT = tmpDir.metaFile;
     delete tmpDir.directories;
     delete tmpDir.media;
-    delete tmpDir.cover;
+    delete tmpDir.cache.cover;
     delete tmpDir.metaFile;
     const ret = Utils.clone(m);
     delete ret.id;
@@ -54,7 +54,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
     delete ret.metadata;
     tmpDir.directories = tmpD;
     tmpDir.media = tmpM;
-    tmpDir.cover = tmpP;
+    tmpDir.cache.cover = tmpP;
     tmpDir.metaFile = tmpMT;
     return ret;
   };

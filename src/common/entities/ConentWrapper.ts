@@ -254,15 +254,15 @@ export class ContentWrapper {
   }
 
   private static packDirectory(cw: ContentWrapper, dir: DirectoryBaseDTO | SearchResultDTO, isSearchResult = false): void {
-    if ((dir as DirectoryBaseDTO).cover) {
-      (dir as DirectoryBaseDTO).cover.directory = {
-        path: (dir as DirectoryBaseDTO).cover.directory.path,
-        name: (dir as DirectoryBaseDTO).cover.directory.name,
+    if ((dir as DirectoryBaseDTO).cache?.cover) {
+      (dir as DirectoryBaseDTO).cache.cover.directory = {
+        path: (dir as DirectoryBaseDTO).cache.cover.directory.path,
+        name: (dir as DirectoryBaseDTO).cache.cover.directory.name,
       } as DirectoryPathDTO;
 
       // make sure that it is not the same object as one of the photo in the media[]
       // as the next foreach would remove the directory
-      (dir as DirectoryBaseDTO).cover = Utils.clone((dir as DirectoryBaseDTO).cover);
+      (dir as DirectoryBaseDTO).cache.cover = Utils.clone((dir as DirectoryBaseDTO).cache.cover);
     }
 
     if (dir.media) {
@@ -287,7 +287,13 @@ export class ContentWrapper {
       }
     }
 
-    delete (dir as DirectoryBaseDTO).validCover; // should not go to the client side;
+    // should not go to the client side
+    delete (dir as DirectoryBaseDTO).cache?.cover?.id;
+    delete (dir as DirectoryBaseDTO).cache?.id;
+    delete (dir as DirectoryBaseDTO).cache?.projectionKey; // client already knows its projectionKey
+    delete (dir as DirectoryBaseDTO).cache?.valid;
+
+    Utils.removeNullOrEmptyObj(dir);
   }
 
   private static deMapify(cw: ContentWrapper, media: FileDTO, isSearchResult: boolean): void {

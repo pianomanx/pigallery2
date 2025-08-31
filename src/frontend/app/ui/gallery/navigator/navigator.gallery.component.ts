@@ -137,7 +137,7 @@ export class GalleryNavigatorComponent {
           } else {
             arr.push({
               name: this.RootFolderName,
-              route: user.role <= UserRoles.LimitedGuest // it's basically a sharing. they should not just navigate wherever
+              route: user.role > UserRoles.LimitedGuest // it's basically a sharing. they should not just navigate wherever
                   ? '/'
                   : null,
             });
@@ -151,7 +151,7 @@ export class GalleryNavigatorComponent {
             } else {
               arr.push({
                 name,
-                route: user.role <= UserRoles.LimitedGuest // it's basically a sharing. they should not just navigate wherever
+                route: user.role > UserRoles.LimitedGuest // it's basically a sharing. they should not just navigate wherever
                     ? route
                     : null,
               });
@@ -191,7 +191,7 @@ export class GalleryNavigatorComponent {
   get ItemCount(): number {
     const c = this.contentLoaderService.content.value;
     return c.directory
-        ? c.directory.mediaCount
+        ? c.directory.cache?.mediaCount
         : c.searchResult
             ? c.searchResult.media.length
             : 0;

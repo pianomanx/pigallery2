@@ -77,8 +77,8 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   });
 
   const setPartial = (dir: DirectoryBaseDTO) => {
-    if (!dir.cover && dir.media && dir.media.length > 0) {
-      dir.cover = dir.media[0];
+    if (!dir.cache.cover && dir.media && dir.media.length > 0) {
+      dir.cache.cover = dir.media[0];
     }
     dir.isPartial = true;
     delete dir.directories;
@@ -95,11 +95,11 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   const indexifyReturn = (dir: DirectoryBaseDTO): DirectoryBaseDTO => {
     const d = Utils.clone(dir);
 
-    delete d.cover;
+    delete d.cache.cover;
     if (d.directories) {
       for (const subD of d.directories) {
-        if (subD.cover) {
-          delete subD.cover.metadata;
+        if (subD.cache.cover) {
+          delete subD.cache.cover.metadata;
         }
       }
     }
@@ -112,8 +112,11 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
     dir.media.forEach((media: MediaDTO) => {
       delete media.id;
     });
-    if (dir.cover) {
-      delete dir.cover.id;
+    if (dir.cache) {
+      delete dir.cache.id;
+    }
+    if (dir.cache.cover) {
+      delete dir.cache.cover.id;
     }
     if (dir.metaFile) {
       if (dir.metaFile.length === 0) {
@@ -136,7 +139,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   it('should support case sensitive file names', async () => {
     const gm = new GalleryManagerTest();
     const im = new IndexingManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     const parent = TestHelper.getRandomizedDirectoryEntry();
     const p1 = TestHelper.getRandomizedPhotoEntry(parent, 'Photo1');
@@ -160,7 +163,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
 
   it('should stop indexing on empty folder', async () => {
     const gm = new GalleryManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     ProjectPath.reset();
     ProjectPath.ImageFolder = path.join(__dirname, '/../../../assets');
@@ -170,7 +173,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
       await ObjectManagers.getInstance().IndexingManager.SavingReady;
     }
 
-    const directoryPath = GalleryManager.parseRelativeDirePath(
+    const directoryPath = GalleryManager.parseRelativeDirPath(
       '.'
     );
     const conn = await SQLConnection.getConnection();
@@ -203,7 +206,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   it('should support case sensitive directory', async () => {
     const gm = new GalleryManagerTest();
     const im = new IndexingManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     const parent = TestHelper.getRandomizedDirectoryEntry(null, 'parent');
     const subDir1 = TestHelper.getRandomizedDirectoryEntry(parent, 'subDir');
@@ -231,7 +234,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   it('should support case sensitive directory path', async () => {
     const gm = new GalleryManagerTest();
     const im = new IndexingManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     const parent1 = TestHelper.getRandomizedDirectoryEntry(null, 'parent');
     const parent2 = TestHelper.getRandomizedDirectoryEntry(null, 'PARENT');
@@ -272,7 +275,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   it('should support emoji in names', async () => {
     const gm = new GalleryManagerTest();
     const im = new IndexingManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     const parent = TestHelper.getRandomizedDirectoryEntry(null, 'parent dir 😀');
     const p1 = TestHelper.getRandomizedPhotoEntry(parent, 'Photo1');
@@ -296,7 +299,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   it('should select cover', async () => {
     const selectDirectory = async (gmTest: GalleryManagerTest, dir: DirectoryBaseDTO): Promise<ParentDirectoryDTO> => {
       const conn = await SQLConnection.getConnection();
-      const session = new SessionContext();
+      const session = DBTestHelper.defaultSession;
       const selected = await gmTest.getParentDirFromId(conn, session,
         (await gmTest.getDirIdAndTime(conn, dir.name, dir.path)).id);
 
@@ -353,7 +356,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   it('should save parent after child', async () => {
     const gm = new GalleryManagerTest();
     const im = new IndexingManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     const parent = TestHelper.getRandomizedDirectoryEntry(null, 'parentDir');
     const p1 = TestHelper.getRandomizedPhotoEntry(parent, 'Photo1');
@@ -364,7 +367,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
     sp1.metadata.rating = 5;
     const sp2 = TestHelper.getRandomizedPhotoEntry(subDir, 'subPhoto2', 0);
     sp2.metadata.rating = 3;
-    subDir.cover = sp1;
+    subDir.cache = {cover: sp1} as any;
     Config.AlbumCover.Sorting = [new ClientSortingConfig(SortByTypes.Rating, false)];
 
     DirectoryDTOUtils.removeReferences(subDir);
@@ -392,7 +395,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   it('should save root parent after child', async () => {
     const gm = new GalleryManagerTest();
     const im = new IndexingManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     const parent = TestHelper.getRandomizedDirectoryEntry(null, '.');
     const p1 = TestHelper.getRandomizedPhotoEntry(parent, 'Photo1');
@@ -403,7 +406,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
     sp1.metadata.rating = 5;
     const sp2 = TestHelper.getRandomizedPhotoEntry(subDir, 'subPhoto2', 0);
     sp2.metadata.rating = 3;
-    subDir.cover = sp1;
+    subDir.cache = {cover: sp1} as any;
     Config.AlbumCover.Sorting = [new ClientSortingConfig(SortByTypes.Rating, false)];
 
 
@@ -430,7 +433,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   it('should save parent directory', async () => {
     const gm = new GalleryManagerTest();
     const im = new IndexingManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     const parent = TestHelper.getRandomizedDirectoryEntry();
     const p1 = TestHelper.getRandomizedPhotoEntry(parent, 'Photo1');
@@ -441,7 +444,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
     sp1.metadata.rating = 5;
     const sp2 = TestHelper.getRandomizedPhotoEntry(subDir, 'subPhoto2', 0);
     sp2.metadata.rating = 3;
-    subDir.cover = sp1;
+    subDir.cache = {cover: sp1} as any;
     Config.AlbumCover.Sorting = [new ClientSortingConfig(SortByTypes.Rating, false)];
 
     DirectoryDTOUtils.removeReferences(parent);
@@ -462,7 +465,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   it('should save photos with extreme parameters', async () => {
     const gm = new GalleryManagerTest();
     const im = new IndexingManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     const parent = TestHelper.getRandomizedDirectoryEntry();
     const p1 = TestHelper.getRandomizedPhotoEntry(parent, 'Photo1');
@@ -497,7 +500,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   it('should skip meta files', async () => {
     const gm = new GalleryManagerTest();
     const im = new IndexingManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     const parent = TestHelper.getRandomizedDirectoryEntry();
     const p1 = TestHelper.getRandomizedPhotoEntry(parent, 'Photo1');
@@ -526,7 +529,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   it('should update sub directory', async () => {
     const gm = new GalleryManagerTest();
     const im = new IndexingManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     const parent = TestHelper.getRandomizedDirectoryEntry();
     parent.name = 'parent';
@@ -563,7 +566,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
     const conn = await SQLConnection.getConnection();
     const gm = new GalleryManagerTest();
     const im = new IndexingManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
     Config.MetaFile.gpx = true;
     Config.MetaFile.markdown = true;
     Config.MetaFile.pg2conf = true;
@@ -576,7 +579,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
     sp1.metadata.rating = 5;
     const sp2 = TestHelper.getRandomizedPhotoEntry(subDir, 'subPhoto2', 1);
     sp2.metadata.rating = 3;
-    subDir.cover = sp1;
+    subDir.cache = {cover: sp1} as any;
     Config.AlbumCover.Sorting = [new ClientSortingConfig(SortByTypes.Rating, false)];
 
     DirectoryDTOUtils.removeReferences(parent);
@@ -592,7 +595,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
     DirectoryDTOUtils.removeReferences(selected);
     removeIds(selected);
     setPartial(subDir);
-    parent.directories.forEach(d => delete (d.cover.metadata as any).faces);
+    parent.directories.forEach(d => delete (d.cache?.cover.metadata as any).faces);
     delete sp1.metadata.faces;
     delete sp2.metadata.faces;
     expect(Utils.clone(Utils.removeNullOrEmptyObj(selected)))
@@ -602,7 +605,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   it('should reset DB', async () => {
     const gm = new GalleryManagerTest();
     const im = new IndexingManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     const parent = TestHelper.getRandomizedDirectoryEntry();
     const p1 = TestHelper.getRandomizedPhotoEntry(parent, 'Photo1');
@@ -630,7 +633,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
     const conn = await SQLConnection.getConnection();
     const gm = new GalleryManagerTest();
     const im = new IndexingManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     Config.MetaFile.gpx = true;
     Config.MetaFile.markdown = true;
@@ -659,7 +662,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
     ProjectPath.ImageFolder = path.join(__dirname, '/../../../assets');
     const im = new IndexingManagerTest();
     const gm = new GalleryManagerTest();
-    const session = new SessionContext();
+    const session = DBTestHelper.defaultSession;
 
     const d = await DiskManager.scanDirectory('/');
 
@@ -706,7 +709,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
       // @ts-ignore
       fs.statSync = () => ({ctime: new Date(dirTime), mtime: new Date(dirTime)});
       const gm = new GalleryManagerTest();
-      const session = new SessionContext();
+      const session = DBTestHelper.defaultSession;
       gm.getDirIdAndTime = () => {
         return Promise.resolve(indexedTime as any);
       };

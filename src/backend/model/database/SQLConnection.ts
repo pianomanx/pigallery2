@@ -23,6 +23,7 @@ import {SavedSearchEntity} from './enitites/album/SavedSearchEntity';
 import {NotificationManager} from '../NotifocationManager';
 import {PersonJunctionTable} from './enitites/PersonJunctionTable';
 import {MDFileEntity} from './enitites/MDFileEntity';
+import { ProjectedDirectoryCacheEntity } from './enitites/ProjectedDirectoryCacheEntity';
 
 const LOG_TAG = '[SQLConnection]';
 
@@ -59,6 +60,8 @@ export class SQLConnection {
     AlbumBaseEntity,
     SavedSearchEntity,
     VersionEntity,
+    // projection-aware cache entries
+    ProjectedDirectoryCacheEntity
   ];
 
   private static connection: Connection = null;
@@ -176,7 +179,8 @@ export class SQLConnection {
       currentTables = (await conn.query('SELECT name FROM sqlite_master  WHERE type=\'table\''))
         .map((r: { name: string }) => r.name);
     } else {
-      currentTables = (await conn.query(`SELECT table_name FROM information_schema.tables ` +
+      currentTables = (await conn.query(`SELECT table_name
+                                         FROM information_schema.tables ` +
         `WHERE table_schema = '${Config.Database.mysql.database}'`))
         .map((r: { table_name: string }) => r.table_name);
     }

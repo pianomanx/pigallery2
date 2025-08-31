@@ -1,21 +1,22 @@
 /* eslint-disable no-unused-expressions,@typescript-eslint/no-unused-expressions */
 import {expect} from 'chai';
-import {ObjectManagers} from '../../../../src/backend/model/ObjectManagers';
-import {UserEntity} from '../../../../src/backend/model/database/enitites/UserEntity';
-import {ANDSearchQuery, SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes} from '../../../../src/common/entities/SearchQueryDTO';
-import {UserRoles} from '../../../../src/common/entities/UserDTO';
+import {ObjectManagers} from '../../../../../src/backend/model/ObjectManagers';
+import {UserEntity} from '../../../../../src/backend/model/database/enitites/UserEntity';
+import {ANDSearchQuery, SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes} from '../../../../../src/common/entities/SearchQueryDTO';
+import {UserRoles} from '../../../../../src/common/entities/UserDTO';
 import {Brackets} from 'typeorm';
-import {DBTestHelper} from '../../DBTestHelper';
-import {SharingEntity} from '../../../../src/backend/model/database/enitites/SharingEntity';
+import {DBTestHelper} from '../../../DBTestHelper';
+import {SharingEntity} from '../../../../../src/backend/model/database/enitites/SharingEntity';
+import {SessionManager} from '../../../../../src/backend/model/database/SessionManager';
 
 declare let describe: any;
 declare const it: any;
 declare const beforeEach: any;
 declare const afterEach: any;
 const tmpDescribe = describe;
-describe = DBTestHelper.describe(); // fake it os IDE plays nicely (recognize the test)
+describe = DBTestHelper.describe(); // fake it so the IDE plays nicely (recognize the test)
 
-describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
+describe('SessionManager', (sqlHelper: DBTestHelper) => {
   describe = tmpDescribe;
   describe('buildContext', () => {
 
@@ -28,13 +29,14 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
 
     it('should create a basic context with user and no queries', async () => {
       // Create a basic user with no queries
+      const sm = new SessionManager();
       const user = new UserEntity();
       user.id = 1;
       user.name = 'testuser';
       user.role = UserRoles.Admin;
 
       // Create the context
-      const context = await ObjectManagers.getInstance().buildContext(user);
+      const context = await sm.buildContext(user);
 
       // Verify the context
       expect(context).to.not.be.null;
@@ -43,6 +45,8 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
     });
 
     it('should create a context with allowQuery and set projectionQuery', async () => {
+      // Create a basic user with no queries
+      const sm = new SessionManager();
       // Create a user with allowQuery
       const user = new UserEntity();
       user.id = 2;
@@ -66,7 +70,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       } as any;
 
       // Create the context
-      const context = await ObjectManagers.getInstance().buildContext(user);
+      const context = await sm.buildContext(user);
 
       // Verify the context
       expect(context).to.not.be.null;
@@ -76,6 +80,8 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
     });
 
     it('should create a context with blockQuery, negate it, and set projectionQuery', async () => {
+      // Create a basic user with no queries
+      const sm = new SessionManager();
       // Create a user with blockQuery
       const user = new UserEntity();
       user.id = 3;
@@ -104,7 +110,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       } as any;
 
       // Create the context
-      const context = await ObjectManagers.getInstance().buildContext(user);
+      const context = await sm.buildContext(user);
 
       // Verify the context
       expect(context).to.not.be.null;
@@ -116,6 +122,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
     });
 
     it('should create a context with both allowQuery and blockQuery, combine them with AND', async () => {
+      const sm = new SessionManager();
       // Create a user with both allowQuery and blockQuery
       const user = new UserEntity();
       user.id = 4;
@@ -162,7 +169,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       } as any;
 
       // Create the context
-      const context = await ObjectManagers.getInstance().buildContext(user);
+      const context = await sm.buildContext(user);
 
       // Verify the context
       expect(context).to.not.be.null;
@@ -174,6 +181,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
     });
 
     it('should generate consistent projectionKey for the same query', async () => {
+      const sm = new SessionManager();
       // Create two identical users with the same query
       const user1 = new UserEntity();
       user1.id = 5;
@@ -205,8 +213,8 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
       } as any;*/
 
       // Create the contexts
-      const context1 = await ObjectManagers.getInstance().buildContext(user1);
-      const context2 = await ObjectManagers.getInstance().buildContext(user2);
+      const context1 = await sm.buildContext(user1);
+      const context2 = await sm.buildContext(user2);
 
       // Verify both users have the same projectionKey despite being different users
       expect(context1.user.projectionKey).to.be.a('string').and.not.empty;
@@ -224,6 +232,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
     afterEach(sqlHelper.clearDB);
 
     it('should return sharing.searchQuery unchanged when creator has no allow/block query', async () => {
+      const sm = new SessionManager();
       const creator = new UserEntity();
       creator.id = 10;
       creator.name = 'creator1';
@@ -238,11 +247,12 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
         matchType: TextSearchQueryMatchTypes.exact_match
       } as TextSearch;
 
-      const result = ObjectManagers.getInstance().buildAllowListForSharing(sharing);
+      const result = sm.buildAllowListForSharing(sharing);
       expect(result).to.be.eql(sharing.searchQuery);
     });
 
     it('should AND creator allowQuery with sharing.searchQuery', async () => {
+      const sm = new SessionManager();
       const creator = new UserEntity();
       creator.id = 11;
       creator.name = 'creator2';
@@ -262,7 +272,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
         matchType: TextSearchQueryMatchTypes.exact_match
       } as TextSearch;
 
-      const result = ObjectManagers.getInstance().buildAllowListForSharing(sharing) as ANDSearchQuery;
+      const result = sm.buildAllowListForSharing(sharing) as ANDSearchQuery;
       expect(result.type).to.be.eql(SearchQueryTypes.AND);
       expect(result.list).to.have.lengthOf(2);
       expect(result.list[0]).to.be.eql(creator.allowQuery);
@@ -270,6 +280,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
     });
 
     it('should AND creator (allow AND negated block) with sharing.searchQuery', async () => {
+      const sm = new SessionManager();
       const creator = new UserEntity();
       creator.id = 12;
       creator.name = 'creator3';
@@ -295,7 +306,7 @@ describe('ObjectManagers', (sqlHelper: DBTestHelper) => {
         matchType: TextSearchQueryMatchTypes.exact_match
       } as TextSearch;
 
-      const result = ObjectManagers.getInstance().buildAllowListForSharing(sharing) as ANDSearchQuery;
+      const result = sm.buildAllowListForSharing(sharing) as ANDSearchQuery;
       expect(result.type).to.be.eql(SearchQueryTypes.AND);
       expect(result.list).to.have.lengthOf(2);
       const creatorQuery = result.list[0] as ANDSearchQuery;

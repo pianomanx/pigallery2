@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import * as crypto from 'crypto';
 import {SQLConnection} from './database/SQLConnection';
 import {Logger} from '../Logger';
 import {LocationManager} from './database/LocationManager';
@@ -16,15 +15,13 @@ import {PersonManager} from './database/PersonManager';
 import {SharingManager} from './database/SharingManager';
 import {IObjectManager} from './database/IObjectManager';
 import {ExtensionManager} from './extension/ExtensionManager';
-import {ContextUser, SessionContext} from './SessionContext';
-import {ANDSearchQuery, SearchQueryDTO,  SearchQueryTypes} from '../../common/entities/SearchQueryDTO';
-import {Config} from '../../common/config/private/Config';
-import {SharingEntity} from './database/enitites/SharingEntity';
-import {SearchQueryUtils} from '../../common/SearchQueryUtils';
+import {ProjectedCacheManager} from './database/ProjectedCacheManager';
+import {SessionManager} from './database/SessionManager';
 
 const LOG_TAG = '[ObjectManagers]';
 
 export class ObjectManagers {
+
   private static instance: ObjectManagers = null;
 
   private readonly managers: IObjectManager[];
@@ -40,6 +37,8 @@ export class ObjectManagers {
   private locationManager: LocationManager;
   private albumManager: AlbumManager;
   private extensionManager: ExtensionManager;
+  private projectedCacheManager: ProjectedCacheManager;
+  private sessionManager: SessionManager;
   private initDone = false;
 
   constructor() {
@@ -105,6 +104,8 @@ export class ObjectManagers {
     this.JobManager = new JobManager();
     this.LocationManager = new LocationManager();
     this.ExtensionManager = new ExtensionManager();
+    this.ProjectedCacheManager = new ProjectedCacheManager();
+    this.SessionManager = new SessionManager();
 
     for (const manager of ObjectManagers.getInstance().managers) {
       if (manager === ObjectManagers.getInstance().versionManager) {
@@ -186,10 +187,10 @@ export class ObjectManagers {
 
   set CoverManager(value: CoverManager) {
     if (this.coverManager) {
-      this.managers.splice(this.managers.indexOf(this.coverManager), 1);
+      this.managers.splice(this.managers.indexOf(this.coverManager as IObjectManager), 1);
     }
     this.coverManager = value;
-    this.managers.push(this.coverManager);
+    this.managers.push(this.coverManager as IObjectManager);
   }
 
   get IndexingManager(): IndexingManager {
@@ -276,64 +277,27 @@ export class ObjectManagers {
     this.managers.push(this.extensionManager as IObjectManager);
   }
 
-  private getQueryForUser(user: ContextUser) {
-    let blockQuery = user.overrideAllowBlockList ? user.blockQuery : Config.Users.blockQuery;
-    const allowQuery = user.overrideAllowBlockList ? user.allowQuery : Config.Users.allowQuery;
-
-    if (!SearchQueryUtils.isQueryEmpty(allowQuery) && !SearchQueryUtils.isQueryEmpty(blockQuery)) {
-      return null;
-    }
-
-    if (SearchQueryUtils.isQueryEmpty(blockQuery)) {
-      blockQuery = SearchQueryUtils.negate(blockQuery);
-    }
-    let query = SearchQueryUtils.isQueryEmpty(allowQuery) ? allowQuery : blockQuery;
-    if (SearchQueryUtils.isQueryEmpty(allowQuery) && SearchQueryUtils.isQueryEmpty(blockQuery)) {
-      query = {
-        type: SearchQueryTypes.AND,
-        list: [
-          allowQuery,
-          blockQuery
-        ]
-      } as ANDSearchQuery;
-    }
-    return query;
-
+  get ProjectedCacheManager(): ProjectedCacheManager {
+    return this.projectedCacheManager;
   }
 
-  public buildAllowListForSharing(sharing: SharingEntity): SearchQueryDTO {
-    const creatorQuery = this.getQueryForUser(sharing.creator);
-    let finalQuery = sharing.searchQuery;
-    if (creatorQuery) {
-      finalQuery = {
-        type: SearchQueryTypes.AND,
-        list: [
-          creatorQuery,
-          sharing.searchQuery
-        ]
-      } as ANDSearchQuery;
+  set ProjectedCacheManager(value: ProjectedCacheManager) {
+    if (this.projectedCacheManager) {
+      this.managers.splice(this.managers.indexOf(this.projectedCacheManager as IObjectManager), 1);
     }
-    return finalQuery;
+    this.projectedCacheManager = value;
+    this.managers.push(this.projectedCacheManager as IObjectManager);
+  }
+  get SessionManager(): SessionManager {
+    return this.sessionManager;
   }
 
-  public createProjectionKey(q: SearchQueryDTO) {
-    const canonical = SearchQueryUtils.stringifyForComparison(q);
-    return 'pr:' + crypto.createHash('md5').update(canonical).digest('hex');
-  }
-
-  public async buildContext(user: ContextUser): Promise<SessionContext> {
-    const context = new SessionContext();
-    context.user = user;
-    let finalQuery = this.getQueryForUser(user);
-
-    if (finalQuery) {
-      // Build the Brackets-based query
-      context.projectionQuery = await ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(finalQuery);
-      context.user.projectionKey = ObjectManagers.getInstance().createProjectionKey(finalQuery);
-      Logger.silly(LOG_TAG, 'Projection query: ' + JSON.stringify(context.projectionQuery));
-    }else{
-      context.user.projectionKey = 'pr:' + crypto.createHash('md5').update('No Key').digest('hex');
+  set SessionManager(value: SessionManager) {
+    if (this.sessionManager) {
+      this.managers.splice(this.managers.indexOf(this.sessionManager as IObjectManager), 1);
     }
-    return context;
+    this.sessionManager = value;
+    this.managers.push(this.sessionManager as IObjectManager);
   }
+
 }

@@ -24,6 +24,7 @@ import {MDFileEntity} from './enitites/MDFileEntity';
 import {MDFileDTO} from '../../../common/entities/MDFileDTO';
 import {DiskManager} from '../fileaccess/DiskManager';
 import {SessionContext} from '../SessionContext';
+import {ProjectedDirectoryCacheEntity} from './enitites/ProjectedDirectoryCacheEntity';
 
 const LOG_TAG = '[IndexingManager]';
 
@@ -240,6 +241,7 @@ export class IndexingManager {
     scannedDirectory: ParentDirectoryDTO
   ): Promise<number> {
     const directoryRepository = connection.getRepository(DirectoryEntity);
+    const projDirCacheRep = connection.getRepository(ProjectedDirectoryCacheEntity);
 
     const currentDir: DirectoryEntity = await directoryRepository
       .createQueryBuilder('directory')
@@ -252,19 +254,13 @@ export class IndexingManager {
       // Updated parent dir (if it was in the DB previously)
       currentDir.lastModified = scannedDirectory.lastModified;
       currentDir.lastScanned = scannedDirectory.lastScanned;
-      currentDir.mediaCount = scannedDirectory.mediaCount;
-      currentDir.youngestMedia = scannedDirectory.youngestMedia;
-      currentDir.oldestMedia = scannedDirectory.oldestMedia;
       await directoryRepository.save(currentDir);
       return currentDir.id;
     } else {
       return (
         await directoryRepository.insert({
-          mediaCount: scannedDirectory.mediaCount,
           lastModified: scannedDirectory.lastModified,
           lastScanned: scannedDirectory.lastScanned,
-          youngestMedia: scannedDirectory.youngestMedia,
-          oldestMedia: scannedDirectory.oldestMedia,
           name: scannedDirectory.name,
           path: scannedDirectory.path,
         } as DirectoryEntity)

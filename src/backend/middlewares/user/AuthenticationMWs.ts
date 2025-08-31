@@ -24,13 +24,13 @@ export class AuthenticationMWs {
         name: UserRoles[Config.Users.unAuthenticatedUserRole],
         role: Config.Users.unAuthenticatedUserRole,
       } as UserDTO;
-      req.session.context = await ObjectManagers.getInstance().buildContext(user);
+      req.session.context = await ObjectManagers.getInstance().SessionManager.buildContext(user);
       return next();
     }
     try {
       const user = await AuthenticationMWs.getSharingUser(req);
       if (user) {
-        req.session.context = await ObjectManagers.getInstance().buildContext(user);
+        req.session.context = await ObjectManagers.getInstance().SessionManager.buildContext(user);
         return next();
       }
       // eslint-disable-next-line no-empty
@@ -50,7 +50,7 @@ export class AuthenticationMWs {
         name: UserRoles[Config.Users.unAuthenticatedUserRole],
         role: Config.Users.unAuthenticatedUserRole,
       } as UserDTO;
-      req.session.context = await ObjectManagers.getInstance().buildContext(user);
+      req.session.context = await ObjectManagers.getInstance().SessionManager.buildContext(user);
       return next();
     }
 
@@ -58,7 +58,7 @@ export class AuthenticationMWs {
     if (typeof req.session.context !== 'undefined') {
       // fix context. projectionQuery gets lost in the session between calls
       if (req.session?.context && req.session.context?.user?.projectionKey && (!req.session.context?.projectionQuery || Object.keys(req.session.context?.projectionQuery || {}).length === 0)) {
-          req.session.context = await ObjectManagers.getInstance().buildContext(req.session.context.user);
+          req.session.context = await ObjectManagers.getInstance().SessionManager.buildContext(req.session.context.user);
       }
       return next();
     }
@@ -66,7 +66,7 @@ export class AuthenticationMWs {
     try {
       const user = await AuthenticationMWs.getSharingUser(req);
       if (user) {
-        req.session.context = await ObjectManagers.getInstance().buildContext(user);
+        req.session.context = await ObjectManagers.getInstance().SessionManager.buildContext(user);
         return next();
       }
     } catch (err) {
@@ -208,9 +208,9 @@ export class AuthenticationMWs {
         role: UserRoles.LimitedGuest,
         usedSharingKey: sharing.sharingKey,
         overrideAllowBlockList: true,
-        allowQuery: ObjectManagers.getInstance().buildAllowListForSharing(sharing)
+        allowQuery: ObjectManagers.getInstance().SessionManager.buildAllowListForSharing(sharing)
       } as ContextUser;
-      req.session.context = await ObjectManagers.getInstance().buildContext(user);
+      req.session.context = await ObjectManagers.getInstance().SessionManager.buildContext(user);
       return next();
     } catch (err) {
       return next(new ErrorDTO(ErrorCodes.GENERAL_ERROR, null, err));
@@ -261,7 +261,7 @@ export class AuthenticationMWs {
         })
       );
       delete user.password;
-      req.session.context = await ObjectManagers.getInstance().buildContext(user);
+      req.session.context = await ObjectManagers.getInstance().SessionManager.buildContext(user);
       if (req.body.loginCredential.rememberMe) {
         req.sessionOptions.expires = new Date(
           Date.now() + Config.Server.sessionTimeout
@@ -313,7 +313,7 @@ export class AuthenticationMWs {
         role: UserRoles.LimitedGuest,
         usedSharingKey: sharing.sharingKey,
         overrideAllowBlockList: true,
-        allowQuery: ObjectManagers.getInstance().buildAllowListForSharing(sharing)
+        allowQuery: ObjectManagers.getInstance().SessionManager.buildAllowListForSharing(sharing)
       } as ContextUser;
     }
     return null;

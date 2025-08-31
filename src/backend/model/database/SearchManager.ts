@@ -343,7 +343,8 @@ export class SearchManager {
           .getRepository(DirectoryEntity)
           .createQueryBuilder('directory')
           .where(this.buildWhereQuery(dirQuery, true))
-          .leftJoinAndSelect('directory.cover', 'cover')
+          .leftJoinAndSelect('directory.cache', 'cache', 'cache.projectionKey = :pk AND cache.value = 1', {pk: session.user.projectionKey})
+          .leftJoinAndSelect('cache.cover', 'cover')
           .leftJoinAndSelect('cover.directory', 'coverDirectory')
           .limit(Config.Search.maxDirectoryResult + 1)
           .select([
@@ -357,7 +358,7 @@ export class SearchManager {
         // setting covers
         if (result.directories) {
           for (const item of result.directories) {
-            await ObjectManagers.getInstance().GalleryManager.fillCoverForSubDir(connection, item as DirectoryEntity);
+            await ObjectManagers.getInstance().GalleryManager.fillCacheForSubDir(connection, session, item as DirectoryEntity);
           }
         }
         if (
@@ -1017,7 +1018,7 @@ export class SearchManager {
           textParam
         );
 
-        const directoryPath = GalleryManager.parseRelativeDirePath(dirPathStr);
+        const directoryPath = GalleryManager.parseRelativeDirPath(dirPathStr);
         q[whereFN](
           new Brackets((dq): unknown => {
             textParam['dirName' + queryId] = createMatchString(

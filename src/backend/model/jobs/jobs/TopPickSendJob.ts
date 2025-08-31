@@ -92,7 +92,7 @@ export class TopPickSendJob extends Job<{
       let session = new SessionContext();
       if (this.config.mediaPick[i].creatorId) {
         const u = await ObjectManagers.getInstance().UserManager.findOne({id: this.config.mediaPick[i].creatorId});
-        session = await ObjectManagers.getInstance().buildContext(u);
+        session = await ObjectManagers.getInstance().SessionManager.buildContext(u);
       }
       const media = await ObjectManagers.getInstance().SearchManager
         .getNMedia(session, this.config.mediaPick[i].searchQuery, this.config.mediaPick[i].sortBy, this.config.mediaPick[i].pick);

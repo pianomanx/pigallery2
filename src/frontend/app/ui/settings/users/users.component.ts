@@ -140,27 +140,13 @@ export class UsersComponent implements OnInit {
     this.editModal.show();
   }
 
-  private isEmptyQuery(q: SearchQueryDTO | null | undefined): boolean {
-    if (!q) {
-      return true;
-    }
-    return q.type === SearchQueryTypes.any_text && (q as TextSearch).text === '';
-  }
 
   async saveEditUser(): Promise<void> {
     try {
-      if (this.editSettings.overrideAllowBlockList) {
-        const allowEmpty = this.isEmptyQuery(this.editSettings.allowQuery);
-        const blockEmpty = this.isEmptyQuery(this.editSettings.blockQuery);
-        if (allowEmpty && blockEmpty) {
-          this.notification.error($localize`Please set at least one of Allowed or Blocked query`, $localize`Validation error`);
-          return;
-        }
-      }
 
       // Save role if changed
       if (this.editUser.role !== this.editOriginalUser?.role) {
-        if(!this.canModifyRole(this.editOriginalUser)){
+        if (!this.canModifyRole(this.editOriginalUser)) {
           this.notification.error($localize`Can't modify user role`);
           return;
         }

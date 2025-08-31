@@ -1,0 +1,91 @@
+import * as crypto from 'crypto';
+import {ContextUser, SessionContext} from '../SessionContext';
+import {SearchQueryUtils} from '../../../common/SearchQueryUtils';
+import {Config} from '../../../common/config/private/Config';
+import {ANDSearchQuery, SearchQueryDTO, SearchQueryTypes} from '../../../common/entities/SearchQueryDTO';
+import {SharingEntity} from './enitites/SharingEntity';
+import {ObjectManagers} from '../ObjectManagers';
+import {Logger} from '../../Logger';
+
+const LOG_TAG = '[SessionManager]';
+
+export class SessionManager {
+
+  public static readonly NO_PROJECTION_KEY = 'pr:' + crypto.createHash('md5').update('No Key').digest('hex');
+
+  private getQueryForUser(user: ContextUser) {
+    let blockQuery = user.overrideAllowBlockList ? user.blockQuery : Config.Users.blockQuery;
+    const allowQuery = user.overrideAllowBlockList ? user.allowQuery : Config.Users.allowQuery;
+
+    if (!SearchQueryUtils.isQueryEmpty(allowQuery) && !SearchQueryUtils.isQueryEmpty(blockQuery)) {
+      return null;
+    }
+
+    if (SearchQueryUtils.isQueryEmpty(blockQuery)) {
+      blockQuery = SearchQueryUtils.negate(blockQuery);
+    }
+    let query = SearchQueryUtils.isQueryEmpty(allowQuery) ? allowQuery : blockQuery;
+    if (SearchQueryUtils.isQueryEmpty(allowQuery) && SearchQueryUtils.isQueryEmpty(blockQuery)) {
+      query = {
+        type: SearchQueryTypes.AND,
+        list: [
+          allowQuery,
+          blockQuery
+        ]
+      } as ANDSearchQuery;
+    }
+    return query;
+
+  }
+
+  public buildAllowListForSharing(sharing: SharingEntity): SearchQueryDTO {
+    const creatorQuery = this.getQueryForUser(sharing.creator);
+    let finalQuery = sharing.searchQuery;
+    if (creatorQuery) {
+      finalQuery = {
+        type: SearchQueryTypes.AND,
+        list: [
+          creatorQuery,
+          sharing.searchQuery
+        ]
+      } as ANDSearchQuery;
+    }
+    return finalQuery;
+  }
+
+  public createProjectionKey(q: SearchQueryDTO) {
+    const canonical = SearchQueryUtils.stringifyForComparison(q);
+    return 'pr:' + crypto.createHash('md5').update(canonical).digest('hex');
+  }
+
+  public async buildContext(user: ContextUser): Promise<SessionContext> {
+    const context = new SessionContext();
+    context.user = user;
+    context.user.projectionKey = SessionManager.NO_PROJECTION_KEY;
+    let finalQuery = this.getQueryForUser(user);
+
+    if (finalQuery) {
+      // Build the Brackets-based query
+      context.projectionQuery = await ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(finalQuery);
+      context.user.projectionKey = this.createProjectionKey(finalQuery);
+      Logger.silly(LOG_TAG, 'Projection query: ' + JSON.stringify(context.projectionQuery));
+    }
+    return context;
+  }
+
+  async getAvailableUserSessions(): Promise<SessionContext[]> {
+    // List all users and build a session context for each
+    const users = await ObjectManagers.getInstance().UserManager.find({} as any);
+    const sessions: SessionContext[] = [];
+    for (const u of users as unknown as ContextUser[]) {
+      try {
+        const ctx = await this.buildContext(u);
+        sessions.push(ctx);
+      } catch (e) {
+        // Log and continue on individual user context build failure to ensure we return other sessions
+        Logger.warn(LOG_TAG, 'Failed to build session context for user id=' + (u as any)?.id + ': ' + (e as Error)?.message);
+      }
+    }
+    return sessions;
+  }
+}

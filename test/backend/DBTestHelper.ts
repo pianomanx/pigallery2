@@ -16,6 +16,7 @@ import {VideoDTO} from '../../src/common/entities/VideoDTO';
 import {PhotoDTO} from '../../src/common/entities/PhotoDTO';
 import {Logger} from '../../src/backend/Logger';
 import {SessionContext} from '../../src/backend/model/SessionContext';
+import {SessionManager} from '../../src/backend/model/database/SessionManager';
 
 declare let describe: any;
 const savedDescribe = describe;
@@ -78,6 +79,7 @@ export class DBTestHelper {
     p3: null,
     p4: null
   };
+  public static readonly defaultSession: SessionContext = {user: {projectionKey: SessionManager.NO_PROJECTION_KEY}} as any;
 
   constructor(public dbType: DatabaseType) {
   }
@@ -126,14 +128,13 @@ export class DBTestHelper {
     }
 
     const gm = new GalleryManagerTest();
-    const session = new SessionContext();
 
-    const dir = await gm.getParentDirFromId(connection, session,
+    const dir = await gm.getParentDirFromId(connection, this.defaultSession,
       (await gm.getDirIdAndTime(connection, directory.name, path.join(directory.path, path.sep))).id);
 
     const populateDir = async (d: DirectoryBaseDTO) => {
       for (let i = 0; i < d.directories.length; i++) {
-        d.directories[i] = await gm.getParentDirFromId(connection, session,
+        d.directories[i] = await gm.getParentDirFromId(connection, this.defaultSession,
           (await gm.getDirIdAndTime(connection, d.directories[i].name,
             path.join(DiskManager.pathFromParent(d), path.sep))).id);
         await populateDir(d.directories[i]);

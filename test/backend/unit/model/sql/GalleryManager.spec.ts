@@ -64,7 +64,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
 
     it('should return all media when no projection query is provided', async () => {
       // Setup a session with no projection query
-      const session = new SessionContext();
+      const session = DBTestHelper.defaultSession
 
 
       // Get the directory contents without any filtering using our directory's name and path
@@ -87,7 +87,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
         text: 'photo1', // We've named our test photo specifically with this pattern
         matchType: TextSearchQueryMatchTypes.like
       };
-      const session = await ObjectManagers.getInstance().buildContext({
+      const session = await ObjectManagers.getInstance().SessionManager.buildContext({
         allowQuery: searchQuery,
         overrideAllowBlockList: true
       } as any);
@@ -121,7 +121,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
       };
 
 
-      const session = await ObjectManagers.getInstance().buildContext({
+      const session = await ObjectManagers.getInstance().SessionManager.buildContext({
         allowQuery: searchQuery,
         overrideAllowBlockList: true
       } as any);
@@ -372,7 +372,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
           text: 'photo1',
           matchType: TextSearchQueryMatchTypes.like,
         };
-        const session = await ObjectManagers.getInstance().buildContext({
+        const session = await ObjectManagers.getInstance().SessionManager.buildContext({
           allowQuery: searchQuery,
           overrideAllowBlockList: true,
         } as any);
@@ -394,7 +394,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
           text: 'photo1',
           matchType: TextSearchQueryMatchTypes.like,
         };
-        const session = await ObjectManagers.getInstance().buildContext({
+        const session = await ObjectManagers.getInstance().SessionManager.buildContext({
           allowQuery: searchQuery,
           overrideAllowBlockList: true,
         } as any);
@@ -412,7 +412,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
           text: 'photo1',
           matchType: TextSearchQueryMatchTypes.like,
         };
-        const session = await ObjectManagers.getInstance().buildContext({
+        const session = await ObjectManagers.getInstance().SessionManager.buildContext({
           allowQuery: searchQuery,
           overrideAllowBlockList: true,
         } as any);
@@ -437,7 +437,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
           text: 'photo1',
           matchType: TextSearchQueryMatchTypes.like,
         };
-        const session = await ObjectManagers.getInstance().buildContext({
+        const session = await ObjectManagers.getInstance().SessionManager.buildContext({
           allowQuery: searchQuery,
           overrideAllowBlockList: true,
         } as any);
@@ -453,7 +453,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
           text: 'photo1',
           matchType: TextSearchQueryMatchTypes.like,
         };
-        const session = await ObjectManagers.getInstance().buildContext({
+        const session = await ObjectManagers.getInstance().SessionManager.buildContext({
           allowQuery: searchQuery,
           overrideAllowBlockList: true,
         } as any);

@@ -92,7 +92,7 @@ export class UserMWs {
         if (req.session.context.user && (req.session.context.user as any).usedSharingKey) {
           newUser.usedSharingKey = (req.session.context.user as any).usedSharingKey;
         }
-        req.session.context = await ObjectManagers.getInstance().buildContext(newUser);
+        req.session.context = await ObjectManagers.getInstance().SessionManager.buildContext(newUser);
       }
       return next();
     } catch (err) {
@@ -129,7 +129,9 @@ export class UserMWs {
             id: updatedUser.id
           })
         );
-        req.session.context = await ObjectManagers.getInstance().buildContext(user);
+        req.session.context = await ObjectManagers.getInstance().SessionManager.buildContext(user);
+        //clean up after a change
+        await ObjectManagers.getInstance().ProjectedCacheManager.cleanupNonExistingProjections();
       }
       return next();
     } catch (err) {

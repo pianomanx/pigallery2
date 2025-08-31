@@ -15,11 +15,12 @@ import {DuplicatesDTO} from '../../../common/entities/DuplicatesDTO';
 import {ReIndexingSensitivity} from '../../../common/config/private/PrivateConfig';
 import {DiskManager} from '../fileaccess/DiskManager';
 import {SessionContext} from '../SessionContext';
+import {ProjectedDirectoryCacheEntity} from './enitites/ProjectedDirectoryCacheEntity';
 
 const LOG_TAG = '[GalleryManager]';
 
 export class GalleryManager {
-  public static parseRelativeDirePath(relativeDirectoryName: string): {
+  public static parseRelativeDirPath(relativeDirectoryName: string): {
     name: string;
     parent: string;
   } {
@@ -38,7 +39,7 @@ export class GalleryManager {
     knownLastModified?: number,
     knownLastScanned?: number
   ): Promise<ParentDirectoryDTO> {
-    const directoryPath = GalleryManager.parseRelativeDirePath(
+    const directoryPath = GalleryManager.parseRelativeDirPath(
       relativeDirectoryName
     );
 
@@ -50,12 +51,12 @@ export class GalleryManager {
       // Return as soon as possible without touching the original data source (hdd)
       // See https://github.com/bpatrik/pigallery2/issues/613
       if (
-        knownLastModified &&
-        knownLastScanned &&
-        Config.Indexing.reIndexingSensitivity ===
-        ReIndexingSensitivity.never
+        Config.Indexing.reIndexingSensitivity === ReIndexingSensitivity.never
       ) {
-        return null;
+        if (knownLastModified && knownLastScanned) {
+          return null;
+        }
+        return await this.getParentDirFromId(connection, session, dir.id);
       }
 
       const stat = fs.statSync(
@@ -65,51 +66,36 @@ export class GalleryManager {
 
       // If it seems that the content did not change, do not work on it
       if (
-        knownLastModified &&
-        knownLastScanned &&
+        knownLastModified && knownLastScanned &&
         lastModified === knownLastModified &&
         dir.lastScanned === knownLastScanned
       ) {
         if (
-          Config.Indexing.reIndexingSensitivity ===
-          ReIndexingSensitivity.low
+          Config.Indexing.reIndexingSensitivity === ReIndexingSensitivity.low
         ) {
           return null;
         }
         if (
-          Date.now() - dir.lastScanned <=
-          Config.Indexing.cachedFolderTimeout &&
-          Config.Indexing.reIndexingSensitivity ===
-          ReIndexingSensitivity.medium
+          Date.now() - dir.lastScanned <= Config.Indexing.cachedFolderTimeout &&
+          Config.Indexing.reIndexingSensitivity === ReIndexingSensitivity.medium
         ) {
           return null;
         }
       }
 
       if (dir.lastModified !== lastModified) {
-        Logger.silly(
-          LOG_TAG,
-          'Reindexing reason: lastModified mismatch: known: ' +
-          dir.lastModified +
-          ', current:' +
-          lastModified
-        );
+        Logger.silly(LOG_TAG, 'Reindexing reason: lastModified mismatch: known: ' + dir.lastModified + ', current:' + lastModified);
         if (session?.projectionQuery) {
           // Need to wait for save, then return a DB-based result with projection
-          await ObjectManagers.getInstance().IndexingManager.indexDirectory(
-            relativeDirectoryName,
-            true
-          );
+          await ObjectManagers.getInstance().IndexingManager.indexDirectory(relativeDirectoryName, true);
           return await this.getParentDirFromId(connection, session, dir.id);
         } else {
           const ret =
-            await ObjectManagers.getInstance().IndexingManager.indexDirectory(
-              relativeDirectoryName
-            );
+            await ObjectManagers.getInstance().IndexingManager.indexDirectory(relativeDirectoryName);
           for (const subDir of ret.directories) {
-            if (!subDir.cover) {
+            if (!subDir.cache.cover) {
               // if subdirectories do not have photos, so cannot show a cover, try getting one from DB
-              await this.fillCoverForSubDir(connection, subDir);
+              await this.fillCacheForSubDir(connection, session, subDir);
             }
           }
           return ret;
@@ -118,22 +104,13 @@ export class GalleryManager {
 
       // not indexed since a while, index it lazily
       if (
-        (Date.now() - dir.lastScanned >
-          Config.Indexing.cachedFolderTimeout &&
-          Config.Indexing.reIndexingSensitivity >=
-          ReIndexingSensitivity.medium) ||
-        Config.Indexing.reIndexingSensitivity >=
-        ReIndexingSensitivity.high
+        (Date.now() - dir.lastScanned > Config.Indexing.cachedFolderTimeout &&
+          Config.Indexing.reIndexingSensitivity >= ReIndexingSensitivity.medium) ||
+        Config.Indexing.reIndexingSensitivity >= ReIndexingSensitivity.high
       ) {
         // on the fly reindexing
-
-        Logger.silly(
-          LOG_TAG,
-          'lazy reindexing reason: cache timeout: lastScanned: ' +
-          (Date.now() - dir.lastScanned) +
-          'ms ago, cachedFolderTimeout:' +
-          Config.Indexing.cachedFolderTimeout
-        );
+        Logger.silly(LOG_TAG, 'lazy reindexing reason: cache timeout: lastScanned: ' + (Date.now() - dir.lastScanned) +
+          'ms ago, cachedFolderTimeout:' + Config.Indexing.cachedFolderTimeout);
         ObjectManagers.getInstance()
           .IndexingManager.indexDirectory(relativeDirectoryName)
           .catch(console.error);
@@ -153,9 +130,7 @@ export class GalleryManager {
       const dir = await this.getDirIdAndTime(connection, directoryPath.name, directoryPath.parent);
       return await this.getParentDirFromId(connection, session, dir.id);
     }
-    return ObjectManagers.getInstance().IndexingManager.indexDirectory(
-      relativeDirectoryName
-    );
+    return ObjectManagers.getInstance().IndexingManager.indexDirectory(relativeDirectoryName);
   }
 
   async countDirectories(): Promise<number> {
@@ -307,7 +282,7 @@ export class GalleryManager {
   public async selectDirStructure(
     relativeDirectoryName: string
   ): Promise<DirectoryEntity> {
-    const directoryPath = GalleryManager.parseRelativeDirePath(
+    const directoryPath = GalleryManager.parseRelativeDirPath(
       relativeDirectoryName
     );
     const connection = await SQLConnection.getConnection();
@@ -326,19 +301,78 @@ export class GalleryManager {
   /**
    * Sets cover for the directory and caches it in the DB
    */
-  public async fillCoverForSubDir(
+  public async fillCacheForSubDir(
     connection: Connection,
+    session: SessionContext,
     dir: SubDirectoryDTO
   ): Promise<void> {
-    if (!dir.validCover) {
-      dir.cover =
-        await ObjectManagers.getInstance().CoverManager.setAndGetCoverForDirectory(
-          dir
-        );
+    if (!dir.cache?.valid) {
+      dir.cache = await this.setAndGetCacheForDirectory(connection, session, dir);
     }
 
     dir.media = [];
     dir.isPartial = true;
+  }
+
+  public async setAndGetCacheForDirectory(
+    connection: Connection,
+    session: SessionContext,
+    dir: {
+      id: number;
+      name: string;
+      path: string;
+    }): Promise<ProjectedDirectoryCacheEntity> {
+    // Compute aggregates under the current projection (if any)
+    const mediaRepo = connection.getRepository(MediaEntity);
+    const baseQb = mediaRepo
+      .createQueryBuilder('media')
+      .innerJoin('media.directory', 'directory')
+      .where('directory.id = :dir', {dir: dir.id});
+
+    if (session?.projectionQuery) {
+      baseQb.andWhere(session.projectionQuery);
+    }
+
+    const agg = await baseQb
+      .select([
+        'COUNT(*) as mediaCount',
+        'MIN(media.metadata.creationDate) as oldest',
+        'MAX(media.metadata.creationDate) as youngest',
+      ])
+      .getRawOne();
+
+    const mediaCount: number = agg?.mediaCount != null ? parseInt(agg.mediaCount as any, 10) : 0;
+    const oldestMedia: number = agg?.oldest != null ? parseInt(agg.oldest as any, 10) : null;
+    const youngestMedia: number = agg?.youngest != null ? parseInt(agg.youngest as any, 10) : null;
+
+    // Compute cover respecting projection
+    const coverMedia = await ObjectManagers.getInstance().CoverManager.getCoverForDirectory(session, dir);
+
+    const cacheRepo = connection.getRepository(ProjectedDirectoryCacheEntity);
+
+    // Find existing cache row by (projectionKey, directory)
+    const projectionKey = session?.user?.projectionKey;
+
+    let row = await cacheRepo
+      .createQueryBuilder('pdc')
+      .leftJoin('pdc.directory', 'd')
+      .where('pdc.projectionKey = :pk AND d.id = :dir', {pk: projectionKey, dir: dir.id})
+      .getOne();
+
+    if (!row) {
+      row = new ProjectedDirectoryCacheEntity();
+      row.projectionKey = projectionKey;
+      // Avoid fetching the full directory graph; assign relation by id only
+      row.directory = {id: dir.id} as any;
+    }
+
+    row.mediaCount = mediaCount || 0;
+    row.oldestMedia = oldestMedia ?? null;
+    row.youngestMedia = youngestMedia ?? null;
+    row.cover = coverMedia as any;
+    row.valid = true;
+
+    return await cacheRepo.save(row);
   }
 
   protected async getDirIdAndTime(connection: Connection, name: string, path: string): Promise<{
@@ -366,7 +400,16 @@ export class GalleryManager {
     partialDirId: number
   ): Promise<ParentDirectoryDTO> {
 
-
+    const select = [
+      'directory',
+      'directories',
+      'cover.name',
+      'coverDirectory.name',
+      'coverDirectory.path',
+      'dcover.name',
+      'dcoverDirectory.name',
+      'dcoverDirectory.path',
+    ];
     const query = connection
       .getRepository(DirectoryEntity)
       .createQueryBuilder('directory')
@@ -374,17 +417,26 @@ export class GalleryManager {
         id: partialDirId
       })
       .leftJoinAndSelect('directory.directories', 'directories')
-      .leftJoinAndSelect('directories.cover', 'cover')
+      .leftJoinAndSelect('directory.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: session.user.projectionKey})
+      .leftJoinAndSelect('cache.cover', 'cover')
       .leftJoinAndSelect('cover.directory', 'coverDirectory')
+
+      .leftJoinAndSelect('directories.cache', 'dcache', 'dcache.projectionKey = :pk AND dcache.valid = 1', {pk: session.user.projectionKey})
+      .leftJoinAndSelect('dcache.cover', 'dcover')
+      .leftJoinAndSelect('dcover.directory', 'dcoverDirectory')
+
       .select([
         'directory',
         'directories',
         'cover.name',
         'coverDirectory.name',
         'coverDirectory.path',
+        'dcover.name',
+        'dcoverDirectory.name',
+        'dcoverDirectory.path',
       ]);
 
-    if(!session.projectionQuery) {
+    if (!session.projectionQuery) {
       query.leftJoinAndSelect('directory.media', 'media');
     }
 
@@ -397,28 +449,37 @@ export class GalleryManager {
     ) {
       query.leftJoinAndSelect('directory.metaFile', 'metaFile');
     }
+    try {
+      const dir = await query.getOne();
 
-    const dir = await query.getOne();
-    if (dir.directories) {
-      for (const item of dir.directories) {
-        await this.fillCoverForSubDir(connection, item);
+      if (!dir.cache?.valid) {
+        dir.cache = await this.setAndGetCacheForDirectory(connection, session, dir);
       }
-    }
 
-    // TODO: transform projection query to plain SQL query (String) and
-    //  use it as leftJoinAndSelect on the dir query for performance improvement
-    if(session.projectionQuery) {
-      const mQuery = connection.getRepository(MediaEntity)
-        .createQueryBuilder('media')
-        .leftJoin('media.directory', 'directory')
-        .where('media.directory = :id', {
-          id: partialDirId
-        })
-        .andWhere(session.projectionQuery);
-      dir.media = await mQuery.getMany();
-    }
+      if (dir.directories) {
+        for (const item of dir.directories) {
+          await this.fillCacheForSubDir(connection, session, item);
+        }
+      }
 
-    return dir;
+      // TODO: transform projection query to plain SQL query (String) and
+      //  use it as leftJoinAndSelect on the dir query for performance improvement
+      if (session.projectionQuery) {
+        const mQuery = connection.getRepository(MediaEntity)
+          .createQueryBuilder('media')
+          .leftJoin('media.directory', 'directory')
+          .where('media.directory = :id', {
+            id: partialDirId
+          })
+          .andWhere(session.projectionQuery);
+        dir.media = await mQuery.getMany();
+      }
+      return dir;
+    } catch (e) {
+      Logger.error(LOG_TAG, 'Failed to get parent directory: ' + e);
+      Logger.debug(LOG_TAG, query.getQuery());
+      throw e;
+    }
   }
 
   async authoriseMedia(session: SessionContext, mediaPath: string) {
