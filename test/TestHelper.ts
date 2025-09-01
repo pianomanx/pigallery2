@@ -424,46 +424,53 @@ export class TestHelper {
   }
 
   static updateDirCache(dir: DirectoryBaseDTO): void {
-    let cover = null;
-    // in some case DirectoryDTOUtils.removeReferences removes this reference. Let's make sure it's always there
-    dir.media.forEach((m) => m.directory = dir);
+    // Ensure back-references are intact (removeReferences() may null them)
+    dir.media.forEach((m) => (m.directory = dir));
 
-    const sortedMedia = dir.media.slice().sort((a, b): number => b.metadata.creationDate - a.metadata.creationDate);
+    // Sort media by creation time (newest first) for cache boundaries
+    const sortedByDate = dir.media
+      .slice()
+      .sort((a, b): number => b.metadata.creationDate - a.metadata.creationDate);
 
+    // Build candidate list for album cover
+    // Prefer media from this directory; otherwise, use covers from subdirectories
+    const mediaForCover: CoverPhotoDTO[] =
+      dir.media.length > 0
+        ? (dir.media as CoverPhotoDTO[]).slice()
+        : dir.directories
+            .filter((d): boolean => !!d.cache?.cover)
+            .map((d): CoverPhotoDTO => {
+              // Make sure cover has correct directory reference
+              d.cache.cover.directory = d;
+              return d.cache.cover;
+            });
 
-    // prioritize the given dir.
-    const mediaForCover = dir.media.length > 0 ?
-      dir.media.slice() :
-      dir.directories.filter((d): CoverPhotoDTO => d.cache.cover).map((d): CoverPhotoDTO => {
-        // in some case DirectoryDTOUtils.removeReferences removes this reference. Let's make sure it's always there
-        d.cache.cover.directory = d;
-        return d.cache.cover;
-      });
+    // Sort cover candidates by configured method
+    const sortBy = Config.AlbumCover.Sorting[0].method;
+    mediaForCover.sort((a, b): number =>
+      sortBy == SortByTypes.Rating
+        ? (b.metadata.rating || 0) - (a.metadata.rating || 0)
+        : b.metadata.creationDate - a.metadata.creationDate
+    );
+    const cover = mediaForCover?.[0] || null;
 
-    if (Config.AlbumCover.Sorting[0].method == SortByTypes.Rating) {
-      mediaForCover.sort((a, b): number => b.metadata.rating - a.metadata.rating);
-    } else {
-      mediaForCover.sort((a, b): number => b.metadata.creationDate - a.metadata.creationDate);
-    }
-    cover = mediaForCover?.[0];
-
-
+    // Update directory cache
     if (dir.cache) {
-      // Update cache counters and timestamp boundaries
-      dir.cache.mediaCount = sortedMedia.length;
-      if (sortedMedia.length > 0) {
-        dir.cache.youngestMedia = sortedMedia[0].metadata.creationDate;
-        dir.cache.oldestMedia = sortedMedia[sortedMedia.length - 1].metadata.creationDate;
+      dir.cache.mediaCount = sortedByDate.length;
+      if (sortedByDate.length > 0) {
+        dir.cache.youngestMedia = sortedByDate[0].metadata.creationDate;
+        dir.cache.oldestMedia = sortedByDate[sortedByDate.length - 1].metadata.creationDate;
       }
       if (cover) {
         dir.cache.cover = cover;
       }
       dir.cache.valid = true;
     }
+
+    // Propagate cache update upward
     if (dir.parent) {
       TestHelper.updateDirCache(dir.parent);
     }
-
   }
 
 
