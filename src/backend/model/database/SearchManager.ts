@@ -358,15 +358,12 @@ export class SearchManager {
           ])
           .getMany();
 
-        console.log(result.directories.map(d=>d.cache));
-        console.log(result.directories.map(d=>d.cache.cover));
         // setting covers
         if (result.directories) {
           for (const item of result.directories) {
             await ObjectManagers.getInstance().GalleryManager.fillCacheForSubDir(connection, session, item as DirectoryEntity);
           }
         }
-        console.log(result.directories.map(d=>d.cache.cover));
         if (
           result.directories.length > Config.Search.maxDirectoryResult
         ) {

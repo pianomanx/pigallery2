@@ -65,7 +65,7 @@ class SearchManagerTest extends SearchManager {
 describe('SearchManager', (sqlHelper: DBTestHelper) => {
   describe = tmpDescribe;
   /**
-   * dir
+   * dir  <-- root: '.'
    * |- v
    * |- p
    * |- p2
@@ -171,8 +171,11 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       new AutoCompleteItem('death star', SearchQueryTypes.keyword)]);
 
     expect((await sm.autocomplete(DBTestHelper.defaultSession, 'wars', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
-      new AutoCompleteItem('star wars', SearchQueryTypes.keyword),
-      new AutoCompleteItem('wars dir', SearchQueryTypes.directory)]);
+      new AutoCompleteItem('star wars', SearchQueryTypes.keyword)]);
+
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'phantom', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+      new AutoCompleteItem('phantom menace', SearchQueryTypes.keyword),
+      new AutoCompleteItem('The Phantom Menace', SearchQueryTypes.directory)]);
 
     expect((await sm.autocomplete(DBTestHelper.defaultSession, 'arch', SearchQueryTypes.any_text))).eql([
       new AutoCompleteItem('Research City', SearchQueryTypes.position)]);
@@ -181,8 +184,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     expect((await sm.autocomplete(DBTestHelper.defaultSession, 'wa', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
       new AutoCompleteItem('star wars', SearchQueryTypes.keyword),
       new AutoCompleteItem('Anakin Skywalker', SearchQueryTypes.person),
-      new AutoCompleteItem('Luke Skywalker', SearchQueryTypes.person),
-      new AutoCompleteItem('wars dir', SearchQueryTypes.directory)]);
+      new AutoCompleteItem('Luke Skywalker', SearchQueryTypes.person)]);
 
     Config.Search.AutoComplete.ItemsPerCategory.maxItems = 1;
     expect((await sm.autocomplete(DBTestHelper.defaultSession, 'a', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
@@ -190,7 +192,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       new AutoCompleteItem('Han Solo\'s dice', SearchQueryTypes.caption),
       new AutoCompleteItem('Research City', SearchQueryTypes.position),
       new AutoCompleteItem('death star', SearchQueryTypes.keyword),
-      new AutoCompleteItem('wars dir', SearchQueryTypes.directory)]);
+      new AutoCompleteItem('The Phantom Menace', SearchQueryTypes.directory)]);
     Config.Search.AutoComplete.ItemsPerCategory.maxItems = 5;
     Config.Search.AutoComplete.ItemsPerCategory.fileName = 5;
     Config.Search.AutoComplete.ItemsPerCategory.fileName = 5;
@@ -261,6 +263,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
   describe('advanced search', async () => {
     afterEach(async () => {
+      Config.loadSync();
       Config.Search.listDirectories = false;
       Config.Search.listMetafiles = false;
     });
@@ -631,7 +634,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO));
 
         query = ({
-          text: 'han',
+          text: 'han s',
           type: SearchQueryTypes.keyword
         } as TextSearch);
 
@@ -744,7 +747,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO), JSON.stringify(query));
 
         query = ({
-          text: 'wars dir',
+          text: '.',
           type: SearchQueryTypes.directory
         } as TextSearch);
 
@@ -757,17 +760,13 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO), JSON.stringify(query));
 
         query = ({
-          text: '/wars dir',
+          text: '.',
           matchType: TextSearchQueryMatchTypes.exact_match,
           type: SearchQueryTypes.directory
         } as TextSearch);
 
 
-        expect(removeDir(await sm.search(DBTestHelper.defaultSession, {
-          text: '/wars dir',
-          matchType: TextSearchQueryMatchTypes.exact_match,
-          type: SearchQueryTypes.directory
-        } as TextSearch))).to.deep.equalInAnyOrder(removeDir({
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [p, p2, v],
@@ -777,7 +776,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
 
         query = ({
-          text: '/wars dir/Return of the Jedi',
+          text: '/Return of the Jedi',
           //    matchType: TextSearchQueryMatchTypes.like,
           type: SearchQueryTypes.directory
         } as TextSearch);
@@ -791,7 +790,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO), JSON.stringify(query));
 
         query = ({
-          text: '/wars dir/Return of the Jedi',
+          text: '/Return of the Jedi',
           matchType: TextSearchQueryMatchTypes.exact_match,
           type: SearchQueryTypes.directory
         } as TextSearch);
@@ -924,6 +923,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       let sm: SearchManager;
 
       before(async () => {
+        Config.loadSync();
         await sqlHelper.clearDB();
         await setUpSqlDB();
         p5 = TestHelper.getBasePhotoEntry(subDir2, 'p5-23h-ago.jpg');
@@ -1719,13 +1719,13 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
   describe('projectionQuery (session scoped filter)', () => {
     it('getCount should respect projectionQuery', async () => {
       const sm = new SearchManager();
-      const session = DBTestHelper.defaultSession;
 
       const projQ = ({
         text: 'wookiees',
         matchType: TextSearchQueryMatchTypes.exact_match,
         type: SearchQueryTypes.keyword
       } as TextSearch);
+      const session = Utils.clone(DBTestHelper.defaultSession);
       session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
 
       const searchQ = {text: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
@@ -1741,13 +1741,13 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
     it('getNMedia should respect projectionQuery', async () => {
       const sm = new SearchManager();
-      const session = DBTestHelper.defaultSession;
 
       const projQ = ({
         text: 'wookiees',
         matchType: TextSearchQueryMatchTypes.exact_match,
         type: SearchQueryTypes.keyword
       } as TextSearch);
+      const session = Utils.clone(DBTestHelper.defaultSession);
       session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
 
       const searchQ = {text: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
@@ -1763,17 +1763,17 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
     it('autocomplete should respect projectionQuery', async () => {
       const sm = new SearchManager();
-      const session = DBTestHelper.defaultSession;
 
       const projQ = ({
         text: 'wookiees',
         matchType: TextSearchQueryMatchTypes.exact_match,
         type: SearchQueryTypes.keyword
       } as TextSearch);
+      const session = Utils.clone(DBTestHelper.defaultSession);
       session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
 
       // validate projection less count
-      expect((await sm.autocomplete(DBTestHelper.defaultSession, 'star', SearchQueryTypes.any_text)).length).to.equal(2);
+      expect((await sm.autocomplete(DBTestHelper.defaultSession, 'phantom', SearchQueryTypes.any_text)).length).to.equal(2);
 
       // test
       expect((await sm.autocomplete(session, 'star', SearchQueryTypes.any_text)).length).to.equal(1);
@@ -1785,13 +1785,13 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
     it('search should respect projectionQuery', async () => {
       const sm = new SearchManager();
-      const session = DBTestHelper.defaultSession;
 
       const projQ = ({
         text: 'wookiees',
         matchType: TextSearchQueryMatchTypes.exact_match,
         type: SearchQueryTypes.keyword
       } as TextSearch);
+      const session = Utils.clone(DBTestHelper.defaultSession);
       session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
 
       const searchQ = {text: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;

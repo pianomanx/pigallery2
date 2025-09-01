@@ -218,9 +218,9 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
 
     const parent = TestHelper.getRandomizedDirectoryEntry(null, 'parent');
     const subDir1 = TestHelper.getRandomizedDirectoryEntry(parent, 'subDir');
-    const p1 = TestHelper.getRandomizedPhotoEntry(subDir1, 'subPhoto1', 0);
+    const p1 = TestHelper.getRandomizedPhotoEntry(subDir1, 'subPhoto1', 0, 5);
     const subDir2 = TestHelper.getRandomizedDirectoryEntry(parent, 'SUBDIR');
-    const p2 = TestHelper.getRandomizedPhotoEntry(subDir2, 'subPhoto2', 0);
+    const p2 = TestHelper.getRandomizedPhotoEntry(subDir2, 'subPhoto2', 0,3);
 
 
     DirectoryDTOUtils.removeReferences(parent);

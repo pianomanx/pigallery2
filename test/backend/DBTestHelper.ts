@@ -82,7 +82,9 @@ export class DBTestHelper {
     p3: null,
     p4: null
   };
-  public static readonly defaultSession: SessionContext = {user: {projectionKey: SessionManager.NO_PROJECTION_KEY}} as any;
+  public static get defaultSession(): SessionContext {
+    return {user: {projectionKey: SessionManager.NO_PROJECTION_KEY}} as any;
+  }
 
   constructor(public dbType: DatabaseType) {
   }

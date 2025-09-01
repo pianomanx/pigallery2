@@ -30,7 +30,7 @@ export class TestHelper {
 
   public static readonly TMP_DIR = path.join(__dirname, './tmp');
 
-  public static getDirectoryEntry(parent: DirectoryBaseDTO = null, name = 'wars dir'): DirectoryEntity {
+  public static getDirectoryEntry(parent: DirectoryBaseDTO = null, name = '.'): DirectoryEntity {
 
     const dir = new DirectoryEntity();
     dir.name = name;
@@ -175,7 +175,7 @@ export class TestHelper {
     const p = TestHelper.getPhotoEntry(dir);
 
     p.metadata.caption = 'Han Solo\'s dice';
-    p.metadata.keywords = ['Boba Fett', 'star wars', 'Anakin', 'death star'];
+    p.metadata.keywords = ['Boba Fett', 'star wars', 'Anakin', 'death star', 'phantom menace'];
     p.metadata.positionData.city = 'Mos Eisley';
     p.metadata.positionData.country = 'Tatooine';
     p.name = 'sw1.jpg';
