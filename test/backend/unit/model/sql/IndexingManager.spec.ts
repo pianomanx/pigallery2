@@ -538,13 +538,13 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
     const p1 = TestHelper.getRandomizedPhotoEntry(parent);
     const subDir = TestHelper.getRandomizedDirectoryEntry(parent, 'subDir');
     subDir.name = 'subDir';
-    const sp1 = TestHelper.getRandomizedPhotoEntry(subDir, 'subPhoto1');
+    const sp1 = TestHelper.getRandomizedPhotoEntry(subDir, 'subPhoto1',5);
 
     DirectoryDTOUtils.removeReferences(parent);
     await im.saveToDB(Utils.clone(parent) as ParentDirectoryDTO);
 
-    const sp2 = TestHelper.getRandomizedPhotoEntry(subDir, 'subPhoto2');
-    const sp3 = TestHelper.getRandomizedPhotoEntry(subDir, 'subPhoto3');
+    const sp2 = TestHelper.getRandomizedPhotoEntry(subDir, 'subPhoto2',2);
+    const sp3 = TestHelper.getRandomizedPhotoEntry(subDir, 'subPhoto3',3);
 
     DirectoryDTOUtils.removeReferences(subDir);
     await im.saveToDB(Utils.clone(subDir) as ParentDirectoryDTO);

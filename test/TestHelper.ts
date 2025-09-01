@@ -425,9 +425,20 @@ export class TestHelper {
 
   static updateDirCache(dir: DirectoryBaseDTO): void {
     let cover = null;
+    // in some case DirectoryDTOUtils.removeReferences removes this reference. Let's make sure it's always there
+    dir.media.forEach((m) => m.directory = dir);
+
     const sortedMedia = dir.media.slice().sort((a, b): number => b.metadata.creationDate - a.metadata.creationDate);
+
+
     // prioritize the given dir.
-    const mediaForCover = dir.media.length > 0 ? dir.media.slice() : dir.directories.filter((d): CoverPhotoDTO => d.cache.cover).map((d): CoverPhotoDTO => d.cache.cover);
+    const mediaForCover = dir.media.length > 0 ?
+      dir.media.slice() :
+      dir.directories.filter((d): CoverPhotoDTO => d.cache.cover).map((d): CoverPhotoDTO => {
+        // in some case DirectoryDTOUtils.removeReferences removes this reference. Let's make sure it's always there
+        d.cache.cover.directory = d;
+        return d.cache.cover;
+      });
 
     if (Config.AlbumCover.Sorting[0].method == SortByTypes.Rating) {
       mediaForCover.sort((a, b): number => b.metadata.rating - a.metadata.rating);
