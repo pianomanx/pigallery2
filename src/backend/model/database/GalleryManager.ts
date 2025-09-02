@@ -307,80 +307,11 @@ export class GalleryManager {
     dir: SubDirectoryDTO
   ): Promise<void> {
     if (!dir.cache?.valid) {
-      dir.cache = await this.setAndGetCacheForDirectory(connection, session, dir);
+      dir.cache = await ObjectManagers.getInstance().ProjectedCacheManager.setAndGetCacheForDirectory(connection, session, dir);
     }
 
     dir.media = [];
     dir.isPartial = true;
-  }
-
-  public async setAndGetCacheForDirectory(
-    connection: Connection,
-    session: SessionContext,
-    dir: {
-      id: number;
-      name: string;
-      path: string;
-    }): Promise<ProjectedDirectoryCacheEntity> {
-    // Compute aggregates under the current projection (if any)
-    const mediaRepo = connection.getRepository(MediaEntity);
-    const baseQb = mediaRepo
-      .createQueryBuilder('media')
-      .innerJoin('media.directory', 'directory')
-      .where('directory.id = :dir', {dir: dir.id});
-
-    if (session?.projectionQuery) {
-      baseQb.andWhere(session.projectionQuery);
-    }
-
-    const agg = await baseQb
-      .select([
-        'COUNT(*) as mediaCount',
-        'MIN(media.metadata.creationDate) as oldest',
-        'MAX(media.metadata.creationDate) as youngest',
-      ])
-      .getRawOne();
-
-    const mediaCount: number = agg?.mediaCount != null ? parseInt(agg.mediaCount as any, 10) : 0;
-    const oldestMedia: number = agg?.oldest != null ? parseInt(agg.oldest as any, 10) : null;
-    const youngestMedia: number = agg?.youngest != null ? parseInt(agg.youngest as any, 10) : null;
-
-    // Compute cover respecting projection
-    const coverMedia = await ObjectManagers.getInstance().CoverManager.getCoverForDirectory(session, dir);
-
-    const cacheRepo = connection.getRepository(ProjectedDirectoryCacheEntity);
-
-    // Find existing cache row by (projectionKey, directory)
-    const projectionKey = session?.user?.projectionKey;
-
-    let row = await cacheRepo
-      .createQueryBuilder('pdc')
-      .leftJoin('pdc.directory', 'd')
-      .where('pdc.projectionKey = :pk AND d.id = :dir', {pk: projectionKey, dir: dir.id})
-      .getOne();
-
-    if (!row) {
-      row = new ProjectedDirectoryCacheEntity();
-      row.projectionKey = projectionKey;
-      // Avoid fetching the full directory graph; assign relation by id only
-      row.directory = {id: dir.id} as any;
-    }
-
-    row.mediaCount = mediaCount || 0;
-    row.oldestMedia = oldestMedia ?? null;
-    row.youngestMedia = youngestMedia ?? null;
-    row.cover = coverMedia as any;
-    row.valid = true;
-
-    const ret =  await cacheRepo.save(row);
-    // we would not select these either
-    delete ret.projectionKey;
-    delete ret.directory;
-    delete ret.id;
-    if(ret.cover) {
-      delete ret.cover.id;
-    }
-    return ret;
   }
 
   protected async getDirIdAndTime(connection: Connection, name: string, path: string): Promise<{
@@ -461,7 +392,7 @@ export class GalleryManager {
       const dir = await query.getOne();
 
       if (!dir.cache?.valid) {
-        dir.cache = await this.setAndGetCacheForDirectory(connection, session, dir);
+        dir.cache = await ObjectManagers.getInstance().ProjectedCacheManager.setAndGetCacheForDirectory(connection, session, dir);
       }
 
       if (dir.directories) {

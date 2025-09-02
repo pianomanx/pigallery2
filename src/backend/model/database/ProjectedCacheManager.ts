@@ -1,4 +1,4 @@
-import {Brackets} from 'typeorm';
+import {Brackets, Connection} from 'typeorm';
 import {SQLConnection} from './SQLConnection';
 import {ProjectedDirectoryCacheEntity} from './enitites/ProjectedDirectoryCacheEntity';
 import {DirectoryEntity} from './enitites/DirectoryEntity';
@@ -12,6 +12,8 @@ import {ExtensionDecorator} from '../extension/ExtensionDecorator';
 import {Logger} from '../../Logger';
 import {SessionManager} from './SessionManager';
 import * as path from 'path';
+import {SessionContext} from '../SessionContext';
+import {MediaEntity} from './enitites/MediaEntity';
 
 const LOG_TAG = '[ProjectedCacheManager]';
 
@@ -123,4 +125,72 @@ export class ProjectedCacheManager implements IObjectManager {
       .where('projectionKey NOT IN (:...keys)', {keys})
       .execute();
   }
+
+
+  public async setAndGetCacheForDirectory(connection: Connection, session: SessionContext, dir: {
+    id: number,
+    name: string,
+    path: string
+  }): Promise<ProjectedDirectoryCacheEntity> {
+    // Compute aggregates under the current projection (if any)
+    const mediaRepo = connection.getRepository(MediaEntity);
+    const baseQb = mediaRepo
+      .createQueryBuilder('media')
+      .innerJoin('media.directory', 'directory')
+      .where('directory.id = :dir', {dir: dir.id});
+
+    if (session?.projectionQuery) {
+      baseQb.andWhere(session.projectionQuery);
+    }
+
+    const agg = await baseQb
+      .select([
+        'COUNT(*) as mediaCount',
+        'MIN(media.metadata.creationDate) as oldest',
+        'MAX(media.metadata.creationDate) as youngest',
+      ])
+      .getRawOne();
+
+    const mediaCount: number = agg?.mediaCount != null ? parseInt(agg.mediaCount as any, 10) : 0;
+    const oldestMedia: number = agg?.oldest != null ? parseInt(agg.oldest as any, 10) : null;
+    const youngestMedia: number = agg?.youngest != null ? parseInt(agg.youngest as any, 10) : null;
+
+    // Compute cover respecting projection
+    const coverMedia = await ObjectManagers.getInstance().CoverManager.getCoverForDirectory(session, dir);
+
+    const cacheRepo = connection.getRepository(ProjectedDirectoryCacheEntity);
+
+    // Find existing cache row by (projectionKey, directory)
+    const projectionKey = session?.user?.projectionKey;
+
+    let row = await cacheRepo
+      .createQueryBuilder('pdc')
+      .leftJoin('pdc.directory', 'd')
+      .where('pdc.projectionKey = :pk AND d.id = :dir', {pk: projectionKey, dir: dir.id})
+      .getOne();
+
+    if (!row) {
+      row = new ProjectedDirectoryCacheEntity();
+      row.projectionKey = projectionKey;
+      // Avoid fetching the full directory graph; assign relation by id only
+      row.directory = {id: dir.id} as any;
+    }
+
+    row.mediaCount = mediaCount || 0;
+    row.oldestMedia = oldestMedia ?? null;
+    row.youngestMedia = youngestMedia ?? null;
+    row.cover = coverMedia as any;
+    row.valid = true;
+
+    const ret = await cacheRepo.save(row);
+    // we would not select these either
+    delete ret.projectionKey;
+    delete ret.directory;
+    delete ret.id;
+    if (ret.cover) {
+      delete ret.cover.id;
+    }
+    return ret;
+  }
+
 }

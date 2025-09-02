@@ -76,7 +76,7 @@ export class AlbumCoverFillingJob extends Job {
 
     const conn = await SQLConnection.getConnection();
     for (const session of this.availableSessions) {
-      await ObjectManagers.getInstance().GalleryManager.setAndGetCacheForDirectory(
+      await ObjectManagers.getInstance().ProjectedCacheManager.setAndGetCacheForDirectory(
         conn,
         session,
         directory
