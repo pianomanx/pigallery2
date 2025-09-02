@@ -309,6 +309,7 @@ export class TestHelper {
       path: DiskManager.pathFromParent({path: '', name: '.'}),
       cache: {
         mediaCount: 0,
+        recursiveMediaCount: 0,
         cover: null,
         valid: false,
       },
@@ -457,6 +458,7 @@ export class TestHelper {
     // Update directory cache
     if (dir.cache) {
       dir.cache.mediaCount = sortedByDate.length;
+      dir.cache.recursiveMediaCount = dir.directories.reduce((acc, d) => acc + d.cache.mediaCount, 0) + sortedByDate.length;
       if (sortedByDate.length > 0) {
         dir.cache.youngestMedia = sortedByDate[0].metadata.creationDate;
         dir.cache.oldestMedia = sortedByDate[sortedByDate.length - 1].metadata.creationDate;

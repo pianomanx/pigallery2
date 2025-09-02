@@ -352,6 +352,7 @@ export class SearchManager {
             'cache.oldestMedia',
             'cache.youngestMedia',
             'cache.mediaCount',
+            'cache.recursiveMediaCount',
             'cover.name',
             'coverDirectory.name',
             'coverDirectory.path',
@@ -364,6 +365,8 @@ export class SearchManager {
             await ObjectManagers.getInstance().GalleryManager.fillCacheForSubDir(connection, session, item as DirectoryEntity);
           }
         }
+        // do not show empty directories in search results
+        result.directories = result.directories.filter(d => d.cache.recursiveMediaCount > 0);
         if (
           result.directories.length > Config.Search.maxDirectoryResult
         ) {

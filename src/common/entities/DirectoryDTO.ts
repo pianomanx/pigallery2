@@ -13,6 +13,7 @@ export interface DirectoryCacheDTO {
   projectionKey?: string;
   directory?: DirectoryBaseDTO;
   mediaCount: number;
+  recursiveMediaCount?: number;
   youngestMedia?: number;
   oldestMedia?: number;
   cover?: CoverPhotoDTO;

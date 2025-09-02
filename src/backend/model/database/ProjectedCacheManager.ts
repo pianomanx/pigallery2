@@ -14,6 +14,8 @@ import {SessionManager} from './SessionManager';
 import * as path from 'path';
 import {SessionContext} from '../SessionContext';
 import {MediaEntity} from './enitites/MediaEntity';
+import {Config} from '../../../common/config/private/Config';
+import {DatabaseType} from '../../../common/config/private/PrivateConfig';
 
 const LOG_TAG = '[ProjectedCacheManager]';
 
@@ -155,6 +157,30 @@ export class ProjectedCacheManager implements IObjectManager {
     const oldestMedia: number = agg?.oldest != null ? parseInt(agg.oldest as any, 10) : null;
     const youngestMedia: number = agg?.youngest != null ? parseInt(agg.youngest as any, 10) : null;
 
+    // Compute recursive media count under projection (includes children) using single SQL query
+    const recQb = mediaRepo
+      .createQueryBuilder('media')
+      .innerJoin('media.directory', 'directory')
+      .where(
+        new Brackets(q => {
+          q.where('directory.id = :dir', {dir: dir.id});
+          if (Config.Database.type === DatabaseType.mysql) {
+            q.orWhere('directory.path like :path || \'%\'' , {path: DiskManager.pathFromParent(dir)});
+          } else {
+            q.orWhere('directory.path GLOB :path', {
+              path: DiskManager.pathFromParent(dir).replaceAll('[', '[[]') + '*',
+            });
+          }
+        })
+      );
+
+    if (session?.projectionQuery) {
+      recQb.andWhere(session.projectionQuery);
+    }
+    const aggRec = await recQb.select(['COUNT(*) as cnt']).getRawOne();
+    const recursiveMediaCount = aggRec?.cnt != null ? parseInt(aggRec.cnt as any, 10) : 0;
+
+
     // Compute cover respecting projection
     const coverMedia = await ObjectManagers.getInstance().CoverManager.getCoverForDirectory(session, dir);
 
@@ -177,6 +203,7 @@ export class ProjectedCacheManager implements IObjectManager {
     }
 
     row.mediaCount = mediaCount || 0;
+    row.recursiveMediaCount = recursiveMediaCount || 0;
     row.oldestMedia = oldestMedia ?? null;
     row.youngestMedia = youngestMedia ?? null;
     row.cover = coverMedia as any;

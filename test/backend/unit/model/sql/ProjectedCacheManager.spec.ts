@@ -207,6 +207,8 @@ describe('ProjectedCacheManager', (sqlHelper: DBTestHelper) => {
       let row = await getCacheRow(subDir);
       expect(row!.cover!).to.deep.equal(saved!.cover!);
       expect(row!.cover!).to.deep.equal(coverify(p2));
+      expect(row!.mediaCount).to.equal(4);
+      expect(row!.recursiveMediaCount).to.equal(4);
 
       // Date desc only -> expect pFaceLess (latest by date even with no faces)
       Config.AlbumCover.Sorting = [new ClientSortingConfig(SortByTypes.Date, false)];
@@ -240,6 +242,7 @@ describe('ProjectedCacheManager', (sqlHelper: DBTestHelper) => {
       row = await getCacheRow(dir);
       expect(row!.cover!).to.deep.equal(saved!.cover!);
       expect(row!.cover!).to.deep.equal(coverify(v));
+      expect(row!.recursiveMediaCount).to.equal(5);
     });
 
     it('should get cover for directory with search filter', async () => {
@@ -282,6 +285,8 @@ describe('ProjectedCacheManager', (sqlHelper: DBTestHelper) => {
       let row2 = await getCacheRow(subDir2);
       expect(row2!.cover!).to.deep.equal(saved!.cover!);
       expect(row2!.cover!).to.deep.equal(coverify(p4));
+      expect(row2!.mediaCount).to.equal(1);
+      expect(row2!.recursiveMediaCount).to.equal(1);
     });
   });
 
