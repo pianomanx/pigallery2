@@ -6,7 +6,7 @@ import {ObjectManagers} from '../ObjectManagers';
 import {UserEntity} from './enitites/UserEntity';
 import {SharingEntity} from './enitites/SharingEntity';
 import {IObjectManager} from './IObjectManager';
-import {ParentDirectoryDTO} from '../../../common/entities/DirectoryDTO';
+import {DirectoryBaseDTO, ParentDirectoryDTO} from '../../../common/entities/DirectoryDTO';
 import {DiskManager} from '../fileaccess/DiskManager';
 import {ExtensionDecorator} from '../extension/ExtensionDecorator';
 import {Logger} from '../../Logger';

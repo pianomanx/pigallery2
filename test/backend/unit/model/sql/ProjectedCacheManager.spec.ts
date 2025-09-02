@@ -7,7 +7,7 @@ import {ProjectedDirectoryCacheEntity} from '../../../../../src/backend/model/da
 import {SessionManager} from '../../../../../src/backend/model/database/SessionManager';
 import {DiskManager} from '../../../../../src/backend/model/fileaccess/DiskManager';
 import {TestHelper} from '../../../../TestHelper';
-import {ParentDirectoryDTO, SubDirectoryDTO} from '../../../../../src/common/entities/DirectoryDTO';
+import {DirectoryBaseDTO, ParentDirectoryDTO, SubDirectoryDTO} from '../../../../../src/common/entities/DirectoryDTO';
 import {PhotoDTO} from '../../../../../src/common/entities/PhotoDTO';
 import {VideoDTO} from '../../../../../src/common/entities/VideoDTO';
 import {Config} from '../../../../../src/common/config/private/Config';
@@ -15,6 +15,8 @@ import {ClientSortingConfig} from '../../../../../src/common/config/public/Clien
 import {SortByTypes} from '../../../../../src/common/entities/SortingMethods';
 import {SearchQueryTypes, TextSearch} from '../../../../../src/common/entities/SearchQueryDTO';
 import {ObjectManagers} from '../../../../../src/backend/model/ObjectManagers';
+import {MediaDTO} from '../../../../../src/common/entities/MediaDTO';
+import {Utils} from '../../../../../src/common/Utils';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const chai = require('chai');
@@ -118,7 +120,7 @@ describe('ProjectedCacheManager', (sqlHelper: DBTestHelper) => {
     let p4: PhotoDTO;
 
     const buildDeterministicGallery = async () => {
-      const directory: ParentDirectoryDTO = TestHelper.getDirectoryEntry(null, 'éűáúőóüöÉŰÚŐÓÜÖ[]^[[]]][asd]');
+      const directory: ParentDirectoryDTO = TestHelper.getDirectoryEntry(null, '.');
       subDir = TestHelper.getDirectoryEntry(directory, 'The Phantom Menace');
       subDir2 = TestHelper.getDirectoryEntry(directory, 'Return of the Jedi');
       p = TestHelper.getPhotoEntry1(subDir);
@@ -171,61 +173,115 @@ describe('ProjectedCacheManager', (sqlHelper: DBTestHelper) => {
     });
     afterEach(sqlHelper.clearDB);
 
-    const getCacheRow = async (d: {id: number}) => {
+    const getCacheRow = async (d: { id: number }) => {
       return await connection.getRepository(ProjectedDirectoryCacheEntity)
         .createQueryBuilder('pdc')
-        .leftJoinAndSelect('pdc.cover', 'cover')
-        .leftJoin('pdc.directory', 'd')
-        .where('d.id = :dir AND pdc.projectionKey = :pk', {dir: d.id, pk: SessionManager.NO_PROJECTION_KEY})
+        .leftJoin('pdc.cover', 'cover')
+        .leftJoin('cover.directory', 'cd')
+        .where('pdc.directoryId = :dir AND pdc.projectionKey = :pk', {dir: d.id, pk: SessionManager.NO_PROJECTION_KEY})
+        .select(['pdc', 'cd.name', 'cd.path', 'cover.name'])
         .getOne();
+    };
+
+    const coverify = (mIn: MediaDTO) => {
+      const tmpDir = mIn.directory as any;
+      delete mIn.directory;
+      const m = Utils.clone(mIn);
+      mIn.directory = tmpDir;
+      m.directory = {
+        name: mIn.directory.name,
+        path: mIn.directory.path,
+      } as DirectoryBaseDTO;
+      delete m.metadata;
+      delete m.id;
+      return m;
     };
 
     it('should sort directory cover', async () => {
       // Rating desc, then Date desc -> expect p2 for subDir
-      await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {id: subDir.id, name: subDir.name, path: subDir.path});
+      let saved = await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {
+        id: subDir.id,
+        name: subDir.name,
+        path: subDir.path
+      });
       let row = await getCacheRow(subDir);
-      expect(row!.cover!.id).to.equal(p2.id);
+      expect(row!.cover!).to.deep.equal(saved!.cover!);
+      expect(row!.cover!).to.deep.equal(coverify(p2));
 
       // Date desc only -> expect pFaceLess (latest by date even with no faces)
       Config.AlbumCover.Sorting = [new ClientSortingConfig(SortByTypes.Date, false)];
-      await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {id: subDir.id, name: subDir.name, path: subDir.path});
+      saved = await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {
+        id: subDir.id,
+        name: subDir.name,
+        path: subDir.path
+      });
       row = await getCacheRow(subDir);
-      expect(row!.cover!.name).to.equal(pFaceLess.name);
+      expect(row!.cover!).to.deep.equal(saved!.cover!);
+      expect(row!.cover!).to.deep.equal(coverify(pFaceLess));
 
       // Rating desc only on root -> expect highest rated across subs => p4
       Config.AlbumCover.Sorting = [new ClientSortingConfig(SortByTypes.Rating, false)];
-      await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {id: dir.id, name: dir.name, path: dir.path});
+      saved = await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {
+        id: dir.id,
+        name: dir.name,
+        path: dir.path
+      });
       row = await getCacheRow(dir);
-      expect(row!.cover!.name).to.equal(p4.name);
+      expect(row!.cover!).to.deep.equal(saved!.cover!);
+      expect(row!.cover!).to.deep.equal(coverify(p4));
 
       // Name asc on root -> expect first by name (video v)
       Config.AlbumCover.Sorting = [new ClientSortingConfig(SortByTypes.Name, false)];
-      await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {id: dir.id, name: dir.name, path: dir.path});
+      saved = await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {
+        id: dir.id,
+        name: dir.name,
+        path: dir.path
+      });
       row = await getCacheRow(dir);
-      expect(row!.cover!.name).to.equal(v.name);
+      expect(row!.cover!).to.deep.equal(saved!.cover!);
+      expect(row!.cover!).to.deep.equal(coverify(v));
     });
 
     it('should get cover for directory with search filter', async () => {
       // Under subDir with search queries
       Config.AlbumCover.SearchQuery = {type: SearchQueryTypes.any_text, text: 'Boba'} as TextSearch;
-      await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {id: subDir.id, name: subDir.name, path: subDir.path});
+      let saved = await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {
+        id: subDir.id,
+        name: subDir.name,
+        path: subDir.path
+      });
       let row = await getCacheRow(subDir);
-      expect(row!.cover!.id).to.equal(p.id);
+      expect(row!.cover!).to.deep.equal(coverify(p));
 
       Config.AlbumCover.SearchQuery = {type: SearchQueryTypes.any_text, text: 'Derem'} as TextSearch;
-      await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {id: subDir.id, name: subDir.name, path: subDir.path});
+      saved = await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {
+        id: subDir.id,
+        name: subDir.name,
+        path: subDir.path
+      });
       row = await getCacheRow(subDir);
-      expect(row!.cover!.id).to.equal(p2.id);
+      expect(row!.cover!).to.deep.equal(saved!.cover!);
+      expect(row!.cover!).to.deep.equal(coverify(p2));
 
       // Root cover should be selected from subDir by same query outcome
-      await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {id: dir.id, name: dir.name, path: dir.path});
+      saved = await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {
+        id: dir.id,
+        name: dir.name,
+        path: dir.path
+      });
       let rootRow = await getCacheRow(dir);
-      expect(rootRow!.cover!.id).to.equal(p2.id);
+      expect(rootRow!.cover!).to.deep.equal(saved!.cover!);
+      expect(rootRow!.cover!).to.deep.equal(coverify(p2));
 
       // SubDir2 should resolve to p4
-      await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {id: subDir2.id, name: subDir2.name, path: subDir2.path});
+      saved = await pcm.setAndGetCacheForDirectory(connection, DBTestHelper.defaultSession as any, {
+        id: subDir2.id,
+        name: subDir2.name,
+        path: subDir2.path
+      });
       let row2 = await getCacheRow(subDir2);
-      expect(row2!.cover!.id).to.equal(p4.id);
+      expect(row2!.cover!).to.deep.equal(saved!.cover!);
+      expect(row2!.cover!).to.deep.equal(coverify(p4));
     });
   });
 
