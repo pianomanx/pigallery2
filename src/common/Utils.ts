@@ -29,9 +29,11 @@ export class Utils {
     if (typeof obj !== 'object' || obj == null) {
       return obj;
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if((obj as any)._____removeNullOrEmptyObjvisiting){
       throw new Error('Recursive call detected');
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (obj as any)._____removeNullOrEmptyObjvisiting = true;
     const keys = Object.keys(obj);
     for (const key of keys) {
@@ -45,6 +47,7 @@ export class Utils {
         delete obj[key];
       }
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (obj as any)._____removeNullOrEmptyObjvisiting;
     return obj;
   }

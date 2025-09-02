@@ -14,7 +14,7 @@ const upTime = new Date().toISOString();
 const isTesting = process.env['NODE_ENV'] == true || ['afterEach', 'after', 'beforeEach', 'before', 'describe', 'it']
   .every((fn) => (global as any)[fn] instanceof Function);
 if (isTesting) {
-  console.log('Running in testing mode');
+  console.log('Running Config in testing mode');
 }
 
 @ConfigClass<IConfigClass<TAGS> & ServerConfig>({
