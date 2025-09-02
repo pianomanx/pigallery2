@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import {NextFunction, Request, Response} from 'express';
 import {ErrorCodes, ErrorDTO} from '../../../common/entities/Error';
-import {ContentWrapper} from '../../../common/entities/ConentWrapper';
+import {ContentWrapper} from '../../../common/entities/ContentWrapper';
 import {DirectoryPathDTO, ParentDirectoryDTO, SubDirectoryDTO,} from '../../../common/entities/DirectoryDTO';
 import {ProjectPath} from '../../ProjectPath';
 import {Config} from '../../../common/config/private/Config';

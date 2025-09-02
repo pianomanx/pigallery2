@@ -220,7 +220,10 @@ export class ContentWrapper {
       if (m.directory) {
         if (isSearchResult) {
           // keep the directory for search result
-          delete (m.directory as DirectoryBaseDTO).id;
+          m.directory = {
+            path: (m.directory as DirectoryBaseDTO).path,
+            name: (m.directory as DirectoryBaseDTO).name,
+          } as DirectoryPathDTO;
         } else {
           // for gallery listing, photos belong to one directory,
           // this can be deleted as the directory know its child
@@ -260,7 +263,7 @@ export class ContentWrapper {
         name: (dir as DirectoryBaseDTO).cache.cover.directory.name,
       } as DirectoryPathDTO;
 
-      // make sure that it is not the same object as one of the photo in the media[]
+      // make sure that it is a different object as one of the photo in the media[]
       // as the next foreach would remove the directory
       (dir as DirectoryBaseDTO).cache.cover = Utils.clone((dir as DirectoryBaseDTO).cache.cover);
     }
@@ -282,12 +285,14 @@ export class ContentWrapper {
     }
     if (dir.directories) {
       for (let i = 0; i < dir.directories.length; ++i) {
-        ContentWrapper.packDirectory(cw, dir.directories[i]);
+        // first remove the parent otherwise it will be a infinite recursion
         delete dir.directories[i].parent;
+        ContentWrapper.packDirectory(cw, dir.directories[i]);
       }
     }
 
     // should not go to the client side
+    delete (dir as DirectoryBaseDTO).cache?.directory; // client know its directory
     delete (dir as DirectoryBaseDTO).cache?.cover?.id;
     delete (dir as DirectoryBaseDTO).cache?.id;
     delete (dir as DirectoryBaseDTO).cache?.projectionKey; // client already knows its projectionKey

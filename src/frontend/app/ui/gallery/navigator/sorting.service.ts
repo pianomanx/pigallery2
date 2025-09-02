@@ -8,7 +8,7 @@ import {PG2ConfMap} from '../../../../../common/PG2ConfMap';
 import {PhotoDTO} from '../../../../../common/entities/PhotoDTO';
 import {map, switchMap} from 'rxjs/operators';
 import {SeededRandomService} from '../../../model/seededRandom.service';
-import {ContentWrapper} from '../../../../../common/entities/ConentWrapper';
+import {ContentWrapper} from '../../../../../common/entities/ContentWrapper';
 import {SubDirectoryDTO} from '../../../../../common/entities/DirectoryDTO';
 import {MediaDTO} from '../../../../../common/entities/MediaDTO';
 import {FileDTO} from '../../../../../common/entities/FileDTO';

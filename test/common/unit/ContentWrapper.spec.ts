@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {ContentWrapper} from '../../../src/common/entities/ConentWrapper';
+import {ContentWrapper} from '../../../src/common/entities/ContentWrapper';
 import {TestHelper} from '../../TestHelper';
 import {DirectoryPathDTO, ParentDirectoryDTO} from '../../../src/common/entities/DirectoryDTO';
 import {SearchResultDTO} from '../../../src/common/entities/SearchResultDTO';
@@ -37,6 +37,9 @@ describe('ContentWrapper', () => {
       if (m.missingThumbnails === 0) {
         delete m.missingThumbnails;
       }
+    }
+    if(!(content.directories?.length >0)){
+      delete content.directories;
     }
     for (let i = 0; i < content.metaFile.length; ++i) {
       delete content.metaFile[i].id;

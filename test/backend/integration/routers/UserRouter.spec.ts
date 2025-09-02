@@ -28,6 +28,7 @@ describe('UserRouter', () => {
     id: 1,
     name: 'test',
     password: 'test',
+    projectionKey: DBTestHelper.defaultSession.user.projectionKey,
     role: UserRoles.User
   };
   const {password, ...expectedUser} = testUser;
@@ -168,6 +169,7 @@ describe('UserRouter', () => {
 
       const expectedGuestUser = {
         name: UserRoles[Config.Users.unAuthenticatedUserRole],
+        projectionKey: DBTestHelper.defaultSession.user.projectionKey,
         role: Config.Users.unAuthenticatedUserRole
       } as UserDTO;
 

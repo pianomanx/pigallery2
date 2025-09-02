@@ -1,7 +1,7 @@
 import {Component, Input, OnDestroy, OnInit, TemplateRef} from '@angular/core';
 import {Utils} from '../../../../../common/Utils';
 import {ShareService} from '../share.service';
-import {ContentWrapper} from '../../../../../common/entities/ConentWrapper';
+import {ContentWrapper} from '../../../../../common/entities/ContentWrapper';
 import {SharingDTO} from '../../../../../common/entities/SharingDTO';
 import {Config} from '../../../../../common/config/public/Config';
 import {NotificationService} from '../../../model/notification.service';

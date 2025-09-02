@@ -5,7 +5,7 @@ import {NextFunction, Request, Response} from 'express';
 import {ErrorCodes, ErrorDTO} from '../../common/entities/Error';
 import {ParentDirectoryDTO,} from '../../common/entities/DirectoryDTO';
 import {ObjectManagers} from '../model/ObjectManagers';
-import {ContentWrapper} from '../../common/entities/ConentWrapper';
+import {ContentWrapper} from '../../common/entities/ContentWrapper';
 import {ProjectPath} from '../ProjectPath';
 import {Config} from '../../common/config/private/Config';
 import {MediaDTO, MediaDTOUtils} from '../../common/entities/MediaDTO';
