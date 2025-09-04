@@ -35,7 +35,6 @@ import {Config} from '../../../../../src/common/config/private/Config';
 import {SearchQueryParser} from '../../../../../src/common/SearchQueryParser';
 import {FileDTO} from '../../../../../src/common/entities/FileDTO';
 import {SortByTypes} from '../../../../../src/common/entities/SortingMethods';
-import {SessionContext} from '../../../../../src/backend/model/SessionContext';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
@@ -1669,6 +1668,44 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
     });
+
+
+    it('search result should not return recursively empty directory', async () => {
+      Config.Search.listDirectories = true;
+      const sm = new SearchManager();
+      const session = await ObjectManagers.getInstance().SessionManager.buildContext({
+        allowQuery: {text: 'YOU WONT FIND IT', type: SearchQueryTypes.keyword} as TextSearch,
+        overrideAllowBlockList: true
+      } as any);
+
+      let query = {
+        text: subDir.name,
+        type: SearchQueryTypes.any_text
+      } as TextSearch;
+      expect(removeDir(await sm.search(session, query)))
+        .to.deep.equalInAnyOrder(removeDir({
+        searchQuery: query,
+        directories: [],
+        media: [],
+        metaFile: [],
+        resultOverflow: false
+      } as SearchResultDTO));
+
+
+       query = {
+        text: dir.name,
+        type: SearchQueryTypes.any_text
+      } as TextSearch;
+      expect(removeDir(await sm.search(session, query)))
+        .to.deep.equalInAnyOrder(removeDir({
+        searchQuery: query,
+        directories: [],
+        media: [],
+        metaFile: [],
+        resultOverflow: false
+      } as SearchResultDTO));
+    });
+
     it('search result should return meta files', async () => {
       Config.Search.listMetafiles = true;
       const sm = new SearchManager();
@@ -1689,7 +1726,6 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     });
 
   });
-
 
   it('should get random photo', async () => {
     const sm = new SearchManager();
