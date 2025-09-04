@@ -68,7 +68,11 @@ export class SessionManager {
       // Build the Brackets-based query
       context.projectionQuery = await ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(finalQuery);
       context.user.projectionKey = this.createProjectionKey(finalQuery);
-      Logger.silly(LOG_TAG, 'Projection query: ' + JSON.stringify(context.projectionQuery));
+      if (SearchQueryUtils.isQueryEmpty(finalQuery)) {
+        Logger.silly(LOG_TAG, 'Empty Projection query.');
+      } else {
+        Logger.silly(LOG_TAG, 'Projection query: ' + JSON.stringify(finalQuery));
+      }
     }
     return context;
   }

@@ -37,6 +37,22 @@ export class UsersComponent implements OnInit {
   public newPassword = '';
   public editOriginalUser: UserDTO = null;
 
+  // Confirm password fields for validation
+  public newUserPasswordConfirm: string = '';
+  public confirmNewPassword: string = '';
+
+  get newUserPasswordsMismatch(): boolean {
+    return !!this.newUser?.password && this.newUserPasswordConfirm !== this.newUser.password;
+  }
+
+  get editPasswordsMismatch(): boolean {
+    // Only consider mismatch if at least one of them is non-empty
+    if (!this.newPassword && !this.confirmNewPassword) {
+      return false;
+    }
+    return this.newPassword !== this.confirmNewPassword;
+  }
+
   constructor(
     private authService: AuthenticationService,
     private navigation: NavigationService,
@@ -96,11 +112,17 @@ export class UsersComponent implements OnInit {
 
   initNewUser(): void {
     this.newUser = {role: UserRoles.User} as UserDTO;
+    this.newUserPasswordConfirm = '';
     this.childModal.show();
   }
 
   async addNewUser(): Promise<void> {
     try {
+      // prevent if passwords mismatch
+      if (this.newUserPasswordsMismatch) {
+        this.notification.error($localize`Passwords do not match`, $localize`User creation error!`);
+        return;
+      }
       await this.userSettings.createUser(this.newUser);
       await this.getUsersList();
       this.childModal.hide();
@@ -128,15 +150,16 @@ export class UsersComponent implements OnInit {
   async openEditUser(user: UserDTO): Promise<void> {
     await this.getUsersList();
     const fresh = this.users.find(u => u.id === user.id) || user;
-    this.editUser = {...fresh};
+    this.editUser = { ...fresh };
     this.editOriginalUser = Utils.clone(this.editUser);
-    const defaultQuery: SearchQueryDTO = {type: SearchQueryTypes.any_text, text: ''} as TextSearch;
+    const defaultQuery: SearchQueryDTO = { type: SearchQueryTypes.any_text, text: '' } as TextSearch;
     this.editSettings = {
       overrideAllowBlockList: fresh.overrideAllowBlockList ?? false,
       allowQuery: fresh.allowQuery ?? defaultQuery,
       blockQuery: fresh.blockQuery ?? defaultQuery
     } as UserSettingsDTO;
     this.newPassword = '';
+    this.confirmNewPassword = '';
     this.editModal.show();
   }
 
@@ -151,6 +174,12 @@ export class UsersComponent implements OnInit {
           return;
         }
         await this.userSettings.updateRole(this.editUser);
+      }
+
+      // Check password confirmation for edit
+      if (this.editPasswordsMismatch) {
+        this.notification.error($localize`Passwords do not match`, $localize`Could not save user settings`);
+        return;
       }
 
       const settings: UserSettingsDTO = {
