@@ -144,3 +144,58 @@ describe('SearchQueryDTOUtils.sortQuery', () => {
     });
   });
 });
+
+
+// Added tests to cover validateSearchQuery behavior with negate:false
+// The validation should not fail merely because a negate:false property exists, even deeply nested.
+
+describe('SearchQueryDTOUtils.validateSearchQuery with negate:false', () => {
+  const assertValid = (q: SearchQueryDTO) => {
+    expect(() => SearchQueryUtils.validateSearchQuery(q, 'SearchQuery')).to.not.throw();
+  };
+
+  it('should validate a top-level leaf with negate:false', () => {
+    const q: TextSearch = {type: SearchQueryTypes.person, text: 'alice', negate: false};
+    assertValid(q);
+  });
+
+  it('should validate an AND with a child having negate:false', () => {
+    const q: ANDSearchQuery = {
+      type: SearchQueryTypes.AND,
+      list: [
+        {type: SearchQueryTypes.person, text: 'bob', negate: false} as TextSearch,
+        {type: SearchQueryTypes.keyword, text: 'k'} as TextSearch,
+      ],
+    };
+    assertValid(q);
+  });
+
+  it('should validate nested OR inside AND where a grandchild has negate:false', () => {
+    const q: ANDSearchQuery = {
+      type: SearchQueryTypes.AND,
+      list: [
+        {
+          type: SearchQueryTypes.OR,
+          list: [
+            {type: SearchQueryTypes.directory, text: '/a', negate: false} as TextSearch,
+            {type: SearchQueryTypes.caption, text: 'c'} as TextSearch,
+          ],
+        } as ORSearchQuery,
+        {type: SearchQueryTypes.file_name, text: 'IMG'} as TextSearch,
+      ],
+    };
+    assertValid(q);
+  });
+
+  it('should validate SOME_OF with negate:false child and min set', () => {
+    const q: SomeOfSearchQuery = {
+      type: SearchQueryTypes.SOME_OF,
+      min: 1,
+      list: [
+        {type: SearchQueryTypes.keyword, text: 'x', negate: false} as TextSearch,
+        {type: SearchQueryTypes.person, text: 'y'} as TextSearch,
+      ],
+    };
+    assertValid(q);
+  });
+});

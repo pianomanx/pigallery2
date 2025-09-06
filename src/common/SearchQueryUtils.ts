@@ -110,19 +110,44 @@ export const SearchQueryUtils = {
     if (!query) {
       return;
     }
+
+    // Recursively strip negate:false so that optional false flags do not break validation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const stripFalseNegate = (val: any): any => {
+      if (Array.isArray(val)) {
+        return val.map((v) => stripFalseNegate(v));
+      }
+      if (val && typeof val === 'object') {
+        const out: Record<string, unknown> = {};
+        for (const k of Object.keys(val)) {
+          const v = stripFalseNegate(val[k]);
+          if (k === 'negate' && v === false) {
+            // drop negate:false
+            continue;
+          }
+          // keep everything else, including negate:true and undefined-handled by equalsFilter
+          out[k] = v;
+        }
+        return out;
+      }
+      return val;
+    };
+
     const sp = new SearchQueryParser();
     try {
       const parsed = sp.parse(sp.stringify(query));
-      if (!Utils.equalsFilter(parsed, query)) {
+      const normParsed = stripFalseNegate(parsed) as SearchQueryDTO;
+      const normQuery = stripFalseNegate(query) as SearchQueryDTO;
+      if (!Utils.equalsFilter(normParsed, normQuery)) {
         throw new Error(
-          `${what} is not valid. Expected: ${JSON.stringify(parsed)} Got: ${JSON.stringify(query)}`
+          `${what} is not valid. Expected: ${JSON.stringify(parsed)} to equal: ${JSON.stringify(query)}`
         );
       }
     } catch (e) {
-      if (e && e.message && e.message.startsWith(what)) {
+      if (e && (e as Error).message && (e as Error).message.startsWith(what)) {
         throw e;
       }
-      throw new Error(`${what} is not valid. ${e?.message ?? e}`);
+      throw new Error(`${what} is not valid. ${(e as Error)?.message ?? e}`);
     }
   }
 };
