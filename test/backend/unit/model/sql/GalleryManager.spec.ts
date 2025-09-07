@@ -64,7 +64,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
 
     it('should return all media when no projection query is provided', async () => {
       // Setup a session with no projection query
-      const session = DBTestHelper.defaultSession
+      const session = DBTestHelper.defaultSession;
 
 
       // Get the directory contents without any filtering using our directory's name and path
@@ -142,7 +142,33 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
 
     });
 
+    it('blocks child directory when blockQuery contains normal directory search', async () => {
+      const root = sqlHelper.testGalleyEntities.dir;
+      const child = sqlHelper.testGalleyEntities.subDir;
+
+      const blockQuery = {
+        type: SearchQueryTypes.directory,
+        matchType: TextSearchQueryMatchTypes.like,
+        text: child.name
+      } as any;
+
+      const session = await ObjectManagers.getInstance().SessionManager.buildContext({
+        blockQuery,
+        overrideAllowBlockList: true
+      } as any);
+
+      const dirInfo = await galleryManager.getDirIdAndTime(connection, root.name, root.path);
+      const directory = await galleryManager.getParentDirFromId(connection, session, dirInfo.id);
+
+      expect(((await galleryManager.getParentDirFromId(connection, DBTestHelper.defaultSession, dirInfo.id)).directories || [])
+        .map(d => d.name)).to.include(child.name);
+      expect(((await galleryManager.getParentDirFromId(connection, session, dirInfo.id)).directories || [])
+        .map(d => d.name)).to.not.include(child.name);
+
+    });
   });
+
+
   describe('GalleryManager.listDirectory - reindexing severities and projection behavior', () => {
     const origStatSync = fs.statSync;
 

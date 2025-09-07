@@ -12,6 +12,7 @@ import {Utils} from './Utils';
 
 export const SearchQueryUtils = {
   negate: (query: SearchQueryDTO): SearchQueryDTO => {
+    query = Utils.clone(query)
     switch (query.type) {
       case SearchQueryTypes.AND:
         query.type = SearchQueryTypes.OR;

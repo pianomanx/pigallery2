@@ -15,7 +15,6 @@ import {DuplicatesDTO} from '../../../common/entities/DuplicatesDTO';
 import {ReIndexingSensitivity} from '../../../common/config/private/PrivateConfig';
 import {DiskManager} from '../fileaccess/DiskManager';
 import {SessionContext} from '../SessionContext';
-import {ProjectedDirectoryCacheEntity} from './enitites/ProjectedDirectoryCacheEntity';
 
 const LOG_TAG = '[GalleryManager]';
 
@@ -339,16 +338,6 @@ export class GalleryManager {
     partialDirId: number
   ): Promise<ParentDirectoryDTO> {
 
-    const select = [
-      'directory',
-      'directories',
-      'cover.name',
-      'coverDirectory.name',
-      'coverDirectory.path',
-      'dcover.name',
-      'dcoverDirectory.name',
-      'dcoverDirectory.path',
-    ];
     const query = connection
       .getRepository(DirectoryEntity)
       .createQueryBuilder('directory')
@@ -375,6 +364,12 @@ export class GalleryManager {
         'dcoverDirectory.path',
       ]);
 
+    // search does not return a directory if that is recursively having 0 media
+    // gallery listing should otherwise, we won't be able to trigger lazy indexing
+    // this behavior lets us explicitly hid a directory if it is explicitly blocked
+    if(session.projectionQueryForSubDir) {
+      query.andWhere(session.projectionQueryForSubDir);
+    }
     if (!session.projectionQuery) {
       query.leftJoinAndSelect('directory.media', 'media');
     }

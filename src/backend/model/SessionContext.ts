@@ -6,6 +6,7 @@ export class SessionContext {
   user: ContextUser;
   // New structured projection with prebuilt SQL and params
   projectionQuery?: Brackets;
+  projectionQueryForSubDir?: Brackets; // only the directory part of the query, where it filters 'directories' instead of 'directory' aliases
   hasDirectoryProjection: boolean;
 }
 

@@ -6,6 +6,7 @@ import {ANDSearchQuery, SearchQueryDTO, SearchQueryTypes} from '../../../common/
 import {SharingEntity} from './enitites/SharingEntity';
 import {ObjectManagers} from '../ObjectManagers';
 import {Logger} from '../../Logger';
+import {Utils} from '../../../common/Utils';
 
 const LOG_TAG = '[SessionManager]';
 
@@ -68,6 +69,9 @@ export class SessionManager {
       // Build the Brackets-based query
       context.projectionQuery = await ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(finalQuery);
       context.hasDirectoryProjection = ObjectManagers.getInstance().SearchManager.hasDirectoryQuery(finalQuery);
+      if (context.hasDirectoryProjection) {
+        context.projectionQueryForSubDir = await ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(finalQuery, true, {directory: 'directories'});
+      }
       context.user.projectionKey = this.createProjectionKey(finalQuery);
       if (SearchQueryUtils.isQueryEmpty(finalQuery)) {
         Logger.silly(LOG_TAG, 'Empty Projection query.');

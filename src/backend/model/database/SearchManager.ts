@@ -478,11 +478,13 @@ export class SearchManager {
   }
 
   public async prepareAndBuildWhereQuery(
-    queryIN: SearchQueryDTO,
-    directoryOnly = false
-  ): Promise<Brackets> {
-    const query = await this.prepareQuery(queryIN);
-    return this.buildWhereQuery(query, directoryOnly);
+    queryIN: SearchQueryDTO, directoryOnly = false,
+    aliases: { [key: string]: string } = {}): Promise<Brackets> {
+    let query = await this.prepareQuery(queryIN);
+    if (directoryOnly) {
+      query = this.filterDirectoryQuery(query);
+    }
+    return this.buildWhereQuery(query, directoryOnly, aliases);
   }
 
   public async prepareQuery(queryIN: SearchQueryDTO): Promise<SearchQueryDTO> {
@@ -496,11 +498,13 @@ export class SearchManager {
    * Builds the SQL Where query from search query
    * @param query input search query
    * @param directoryOnly Only builds directory related queries
+   * @param aliases for SQL alias mapping
    * @private
    */
   public buildWhereQuery(
     query: SearchQueryDTO,
-    directoryOnly = false
+    directoryOnly = false,
+    aliases: { [key: string]: string } = {}
   ): Brackets {
     const queryId = (query as SearchQueryDTOWithID).queryId;
     switch (query.type) {
@@ -1039,10 +1043,10 @@ export class SearchManager {
           new RegExp('\\\\', 'g'),
           '/'
         );
-
+        const alias = aliases['directory'] ?? 'directory';
         textParam['fullPath' + queryId] = createMatchString(dirPathStr);
         q[whereFN](
-          `directory.path ${LIKE} :fullPath${queryId} COLLATE ` + SQL_COLLATE,
+          `${alias}.path ${LIKE} :fullPath${queryId} COLLATE ` + SQL_COLLATE,
           textParam
         );
 
@@ -1053,7 +1057,7 @@ export class SearchManager {
               directoryPath.name
             );
             dq[whereFNRev](
-              `directory.name ${LIKE} :dirName${queryId} COLLATE ${SQL_COLLATE}`,
+              `${alias}.name ${LIKE} :dirName${queryId} COLLATE ${SQL_COLLATE}`,
               textParam
             );
             if (dirPathStr.includes('/')) {
@@ -1061,7 +1065,7 @@ export class SearchManager {
                 directoryPath.parent
               );
               dq[whereFNRev](
-                `directory.path ${LIKE} :parentName${queryId} COLLATE ${SQL_COLLATE}`,
+                `${alias}.path ${LIKE} :parentName${queryId} COLLATE ${SQL_COLLATE}`,
                 textParam
               );
             }
