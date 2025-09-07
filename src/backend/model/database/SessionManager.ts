@@ -67,6 +67,7 @@ export class SessionManager {
     if (finalQuery) {
       // Build the Brackets-based query
       context.projectionQuery = await ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(finalQuery);
+      context.hasDirectoryProjection = ObjectManagers.getInstance().SearchManager.hasDirectoryQuery(finalQuery);
       context.user.projectionKey = this.createProjectionKey(finalQuery);
       if (SearchQueryUtils.isQueryEmpty(finalQuery)) {
         Logger.silly(LOG_TAG, 'Empty Projection query.');

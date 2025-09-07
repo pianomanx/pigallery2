@@ -141,7 +141,7 @@ export class ProjectedCacheManager implements IObjectManager {
       .innerJoin('media.directory', 'directory')
       .where('directory.id = :dir', {dir: dir.id});
 
-    if (session?.projectionQuery) {
+    if (session.projectionQuery) {
       baseQb.andWhere(session.projectionQuery);
     }
 
@@ -174,7 +174,7 @@ export class ProjectedCacheManager implements IObjectManager {
         })
       );
 
-    if (session?.projectionQuery) {
+    if (session.projectionQuery) {
       recQb.andWhere(session.projectionQuery);
     }
     const aggRec = await recQb.select(['COUNT(*) as cnt']).getRawOne();

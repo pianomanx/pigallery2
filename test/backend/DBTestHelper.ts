@@ -43,7 +43,7 @@ class GalleryManagerTest extends GalleryManager {
 
 }
 
-const LOG_TAG = 'DBTestHelper';
+const LOG_TAG = '[DBTestHelper]';
 
 export class DBTestHelper {
 

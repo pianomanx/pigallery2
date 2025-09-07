@@ -88,9 +88,14 @@ export class SearchManager {
         .where('media.metadata.keywords LIKE :textKW COLLATE ' + SQL_COLLATE, {
           textKW: '%' + text + '%',
         });
+
       if (session.projectionQuery) {
+        if (session.hasDirectoryProjection) {
+          q.leftJoin('media.directory', 'directory');
+        }
         q.andWhere(session.projectionQuery);
       }
+
       q.limit(Config.Search.AutoComplete.ItemsPerCategory.keyword);
       (await q.getRawMany())
         .map(
@@ -163,7 +168,11 @@ export class SearchManager {
         );
       });
       q.where(b);
+
       if (session.projectionQuery) {
+        if (session.hasDirectoryProjection) {
+          q.leftJoin('media.directory', 'directory');
+        }
         q.andWhere(session.projectionQuery);
       }
 
@@ -207,7 +216,11 @@ export class SearchManager {
           text: '%' + text + '%',
         });
 
+
       if (session.projectionQuery) {
+        if (session.hasDirectoryProjection) {
+          q.leftJoin('media.directory', 'directory');
+        }
         q.andWhere(session.projectionQuery);
       }
       q.limit(
@@ -236,6 +249,9 @@ export class SearchManager {
         );
 
       if (session.projectionQuery) {
+        if (session.hasDirectoryProjection) {
+          q.leftJoin('media.directory', 'directory');
+        }
         q.andWhere(session.projectionQuery);
       }
       q.limit(
@@ -255,20 +271,26 @@ export class SearchManager {
       type === SearchQueryTypes.any_text ||
       type === SearchQueryTypes.directory
     ) {
+      const dirs = await directoryRepository
+        .createQueryBuilder('directory')
+        .leftJoinAndSelect('directory.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: session.user.projectionKey})
+        .where('directory.name LIKE :text COLLATE ' + SQL_COLLATE, {
+          text: '%' + text + '%',
+        })
+        .andWhere('(cache.recursiveMediaCount > 0 OR cache.id is NULL)')
+        .limit(
+          Config.Search.AutoComplete.ItemsPerCategory.directory
+        )
+        .getMany();
+      // fill cache as we need it for this autocomplete search
+      for (const dir of dirs) {
+        if (!dir.cache?.valid) {
+          dir.cache = await ObjectManagers.getInstance().ProjectedCacheManager.setAndGetCacheForDirectory(connection, session, dir);
+        }
+      }
       partialResult.push(
         this.encapsulateAutoComplete(
-          (
-            await directoryRepository
-              .createQueryBuilder('dir')
-              .select('DISTINCT(dir.name)')
-              .where('dir.name LIKE :text COLLATE ' + SQL_COLLATE, {
-                text: '%' + text + '%',
-              })
-              .limit(
-                Config.Search.AutoComplete.ItemsPerCategory.directory
-              )
-              .getRawMany()
-          ).map((r) => r.name),
+          dirs.filter(d => d.cache.valid && d.cache.recursiveMediaCount > 0).map((r) => r.name),
           SearchQueryTypes.directory
         )
       );
@@ -1274,8 +1296,22 @@ export class SearchManager {
     return queryIN;
   }
 
+
+  public hasDirectoryQuery(query: SearchQueryDTO): boolean {
+    switch (query.type) {
+      case SearchQueryTypes.AND:
+      case SearchQueryTypes.OR:
+      case SearchQueryTypes.SOME_OF:
+        return (query as SearchListQuery).list.some(q => this.hasDirectoryQuery(q));
+      case SearchQueryTypes.any_text:
+      case SearchQueryTypes.directory:
+        return true;
+    }
+    return false;
+  }
+
   /**
-   * Returns only those part of a query tree that only contains directory related search queries
+   * Returns only those parts of a query tree that only contains directory-related search queries
    */
   private filterDirectoryQuery(query: SearchQueryDTO): SearchQueryDTO {
     switch (query.type) {

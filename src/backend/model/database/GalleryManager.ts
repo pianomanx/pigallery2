@@ -355,11 +355,11 @@ export class GalleryManager {
       .where('directory.id = :id', {
         id: partialDirId
       })
-      .leftJoinAndSelect('directory.directories', 'directories')
       .leftJoinAndSelect('directory.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: session.user.projectionKey})
       .leftJoinAndSelect('cache.cover', 'cover')
       .leftJoinAndSelect('cover.directory', 'coverDirectory')
 
+      .leftJoinAndSelect('directory.directories', 'directories')
       .leftJoinAndSelect('directories.cache', 'dcache', 'dcache.projectionKey = :pk AND dcache.valid = 1', {pk: session.user.projectionKey})
       .leftJoinAndSelect('dcache.cover', 'dcover')
       .leftJoinAndSelect('dcover.directory', 'dcoverDirectory')
