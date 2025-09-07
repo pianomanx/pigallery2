@@ -6,7 +6,7 @@ import {SQLConnection} from './SQLConnection';
 import {PhotoEntity} from './enitites/PhotoEntity';
 import {ProjectPath} from '../../ProjectPath';
 import {Config} from '../../../common/config/private/Config';
-import {Connection} from 'typeorm';
+import {Brackets, Connection} from 'typeorm';
 import {MediaEntity} from './enitites/MediaEntity';
 import {VideoEntity} from './enitites/VideoEntity';
 import {Logger} from '../../Logger';
@@ -368,7 +368,11 @@ export class GalleryManager {
     // gallery listing should otherwise, we won't be able to trigger lazy indexing
     // this behavior lets us explicitly hid a directory if it is explicitly blocked
     if(session.projectionQueryForSubDir) {
-      query.andWhere(session.projectionQueryForSubDir);
+      query.andWhere(new Brackets(q=>{
+        q.where(session.projectionQueryForSubDir);
+        // also select directories when they have no child dirs.
+        q.orWhere('directories.id is NULL');
+      }));
     }
     if (!session.projectionQuery) {
       query.leftJoinAndSelect('directory.media', 'media');
@@ -411,7 +415,7 @@ export class GalleryManager {
       return dir;
     } catch (e) {
       Logger.error(LOG_TAG, 'Failed to get parent directory: ' + e);
-      Logger.debug(LOG_TAG, query.getQuery());
+      Logger.debug(LOG_TAG, query.getQuery(), query.getParameters());
       throw e;
     }
   }
