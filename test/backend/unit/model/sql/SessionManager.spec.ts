@@ -121,8 +121,8 @@ describe('SessionManager', (sqlHelper: DBTestHelper) => {
       expect(context.user).to.be.eql(user);
       expect(context.projectionQuery).to.be.eql(mockProjectionQuery);
       expect(context.user.projectionKey).to.be.a('string').and.not.empty;
-      // Verify the blockQuery was negated
-      expect((user.blockQuery as TextSearch).negate).to.be.true;
+      // Verify the blockQuery was not changed
+      expect((user.blockQuery as TextSearch).negate).to.be.false;
     });
 
     it('should create a context with both allowQuery and blockQuery, combine them with AND', async () => {
@@ -181,8 +181,8 @@ describe('SessionManager', (sqlHelper: DBTestHelper) => {
       expect(context.user).to.be.eql(user);
       expect(context.projectionQuery).to.be.eql(mockProjectionQuery);
       expect(context.user.projectionKey).to.be.a('string').and.not.empty;
-      // Verify the blockQuery was negated
-      expect((user.blockQuery as TextSearch).negate).to.be.true;
+      // Verify the blockQuery was not changed
+      expect((user.blockQuery as TextSearch).negate).to.be.false;
     });
 
     it('should generate consistent projectionKey for the same query', async () => {
