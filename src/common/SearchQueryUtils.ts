@@ -104,40 +104,42 @@ export const SearchQueryUtils = {
     return JSON.stringify(SearchQueryUtils.sortQuery(queryIN));
   },
   isQueryEmpty(query: SearchQueryDTO): boolean {
-    return !!(query && query.type !== undefined && !(query.type === SearchQueryTypes.any_text && !(query as TextSearch).text));
+    return !query ||
+      query.type === undefined ||
+      (query.type === SearchQueryTypes.any_text && !(query as TextSearch).text);
+  },
+  // Recursively strip negate:false so that optional false flags do not break validation
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  stripFalseNegate: (val: any): any => {
+    if (Array.isArray(val)) {
+      return val.map((v) => SearchQueryUtils.stripFalseNegate(v));
+    }
+    if (val && typeof val === 'object') {
+      const out: Record<string, unknown> = {};
+      for (const k of Object.keys(val)) {
+        const v = SearchQueryUtils.stripFalseNegate(val[k]);
+        if (k === 'negate' && v === false) {
+          // drop negate:false
+          continue;
+        }
+        // keep everything else, including negate:true and undefined-handled by equalsFilter
+        out[k] = v;
+      }
+      return out;
+    }
+    return val;
   },
   validateSearchQuery(query: SearchQueryDTO, what = 'SearchQuery'): void {
     if (!query) {
       return;
     }
 
-    // Recursively strip negate:false so that optional false flags do not break validation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const stripFalseNegate = (val: any): any => {
-      if (Array.isArray(val)) {
-        return val.map((v) => stripFalseNegate(v));
-      }
-      if (val && typeof val === 'object') {
-        const out: Record<string, unknown> = {};
-        for (const k of Object.keys(val)) {
-          const v = stripFalseNegate(val[k]);
-          if (k === 'negate' && v === false) {
-            // drop negate:false
-            continue;
-          }
-          // keep everything else, including negate:true and undefined-handled by equalsFilter
-          out[k] = v;
-        }
-        return out;
-      }
-      return val;
-    };
 
     const sp = new SearchQueryParser();
     try {
       const parsed = sp.parse(sp.stringify(query));
-      const normParsed = stripFalseNegate(parsed) as SearchQueryDTO;
-      const normQuery = stripFalseNegate(query) as SearchQueryDTO;
+      const normParsed = SearchQueryUtils.stripFalseNegate(parsed) as SearchQueryDTO;
+      const normQuery = SearchQueryUtils.stripFalseNegate(query) as SearchQueryDTO;
       if (!Utils.equalsFilter(normParsed, normQuery)) {
         throw new Error(
           `${what} is not valid. Expected: ${JSON.stringify(parsed)} to equal: ${JSON.stringify(query)}`

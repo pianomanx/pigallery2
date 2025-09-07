@@ -17,15 +17,15 @@ export class SessionManager {
     let blockQuery = user.overrideAllowBlockList ? user.blockQuery : Config.Users.blockQuery;
     const allowQuery = user.overrideAllowBlockList ? user.allowQuery : Config.Users.allowQuery;
 
-    if (!SearchQueryUtils.isQueryEmpty(allowQuery) && !SearchQueryUtils.isQueryEmpty(blockQuery)) {
+    if (SearchQueryUtils.isQueryEmpty(allowQuery) && SearchQueryUtils.isQueryEmpty(blockQuery)) {
       return null;
     }
 
-    if (SearchQueryUtils.isQueryEmpty(blockQuery)) {
+    if (!SearchQueryUtils.isQueryEmpty(blockQuery)) {
       blockQuery = SearchQueryUtils.negate(blockQuery);
     }
-    let query = SearchQueryUtils.isQueryEmpty(allowQuery) ? allowQuery : blockQuery;
-    if (SearchQueryUtils.isQueryEmpty(allowQuery) && SearchQueryUtils.isQueryEmpty(blockQuery)) {
+    let query = !SearchQueryUtils.isQueryEmpty(allowQuery) ? allowQuery : blockQuery;
+    if (!SearchQueryUtils.isQueryEmpty(allowQuery) && !SearchQueryUtils.isQueryEmpty(blockQuery)) {
       query = {
         type: SearchQueryTypes.AND,
         list: [

@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {QueryKeywords, SearchQueryParser,} from '../../../../../common/SearchQueryParser';
 import {SearchQueryDTO} from '../../../../../common/entities/SearchQueryDTO';
+import {SearchQueryUtils} from '../../../../../common/SearchQueryUtils';
 
 @Injectable()
 export class SearchQueryParserService {
@@ -52,6 +53,6 @@ export class SearchQueryParserService {
   }
 
   stringify(query: SearchQueryDTO): string {
-    return this.parser.stringify(query);
+    return this.parser.stringify(SearchQueryUtils.stripFalseNegate(query));
   }
 }
