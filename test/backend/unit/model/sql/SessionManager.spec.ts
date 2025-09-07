@@ -66,8 +66,11 @@ describe('SessionManager', (sqlHelper: DBTestHelper) => {
           // Verify the query is passed correctly
           expect(query).to.be.eql(user.allowQuery);
           return Promise.resolve(mockProjectionQuery);
-        }
+        },
+        hasDirectoryQuery:()=>true
       } as any;
+
+
 
       // Create the context
       const context = await sm.buildContext(user);
@@ -106,7 +109,8 @@ describe('SessionManager', (sqlHelper: DBTestHelper) => {
           expect(query).to.not.be.eql(originalBlockQuery);
           expect(query.negate).to.be.true;
           return Promise.resolve(mockProjectionQuery);
-        }
+        },
+        hasDirectoryQuery:()=>true
       } as any;
 
       // Create the context
@@ -165,7 +169,8 @@ describe('SessionManager', (sqlHelper: DBTestHelper) => {
           expect(query.list[0]).to.be.eql(originalAllowQuery);
           expect(query.list[1].negate).to.be.true;
           return Promise.resolve(mockProjectionQuery);
-        }
+        },
+        hasDirectoryQuery:()=>true
       } as any;
 
       // Create the context
