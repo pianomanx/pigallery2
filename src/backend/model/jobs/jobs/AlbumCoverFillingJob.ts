@@ -53,7 +53,9 @@ export class AlbumCoverFillingJob extends Job {
   }
 
   private async stepPersonsPreview(): Promise<boolean> {
-    await ObjectManagers.getInstance().PersonManager.getAll();
+    for (const session of this.availableSessions) {
+      await ObjectManagers.getInstance().PersonManager.getAll(session);
+    }
     this.Progress.log('Updating Persons preview');
     this.Progress.Processed++;
     return false;

@@ -24,6 +24,7 @@ import {NotificationManager} from '../NotifocationManager';
 import {PersonJunctionTable} from './enitites/PersonJunctionTable';
 import {MDFileEntity} from './enitites/MDFileEntity';
 import { ProjectedDirectoryCacheEntity } from './enitites/ProjectedDirectoryCacheEntity';
+import { ProjectedPersonCacheEntity } from './enitites/ProjectedPersonCacheEntity';
 
 const LOG_TAG = '[SQLConnection]';
 
@@ -61,7 +62,8 @@ export class SQLConnection {
     SavedSearchEntity,
     VersionEntity,
     // projection-aware cache entries
-    ProjectedDirectoryCacheEntity
+    ProjectedDirectoryCacheEntity,
+    ProjectedPersonCacheEntity
   ];
 
   private static connection: Connection = null;

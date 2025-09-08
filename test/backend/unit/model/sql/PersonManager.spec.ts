@@ -46,11 +46,22 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
     p2 = (dir.media.filter(m => m.name === p2.name)[0] as any);
     pFaceLess = (dir.media[2] as any);
     v = (dir.media.filter(m => m.name === v.name)[0] as any);
-    savedPerson = await (await SQLConnection.getConnection()).getRepository(PersonEntry).find({
-      relations: ['sampleRegion',
-        'sampleRegion.media',
-        'sampleRegion.media.directory']
-    });
+    savedPerson = await (await SQLConnection.getConnection()).getRepository(PersonEntry).createQueryBuilder('person')
+      .leftJoin('person.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: DBTestHelper.defaultSession.user.projectionKey})
+      .leftJoin('cache.sampleRegion', 'sampleRegion')
+      .leftJoin('sampleRegion.media', 'media')
+      .leftJoin('media.directory', 'directory')
+      .select([
+        'person.id',
+        'person.name',
+        'person.isFavourite',
+        'cache.count',
+        'sampleRegion',
+        'media.name',
+        'directory.path',
+        'directory.name'
+      ])
+      .getMany();
   };
 
 
@@ -67,13 +78,12 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
     const pm = new PersonManager();
     const person = Utils.clone(savedPerson[0]);
 
-    const selected = Utils.clone(await pm.get('Boba Fett'));
-    delete selected.sampleRegion;
-    delete person.sampleRegion;
-    person.count = 1;
+    const selected = Utils.clone(await pm.get(DBTestHelper.defaultSession, 'Boba Fett'));
+    expect(selected.cache).to.be.not.undefined;
+    delete selected.cache;
+    delete person.cache;
     expect(selected).to.deep.equal(person);
 
-    expect((await pm.get('Boba Fett') as PersonEntry).sampleRegion.media.name).to.deep.equal(p.name);
   });
 
 

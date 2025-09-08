@@ -4,7 +4,7 @@ Author: Junie (JetBrains autonomous programmer)
 Date: 2025-08-13
 Status: Updated after maintainer clarifications
 
-Terminology: The project uses the term projection. Earlier drafts and filenames may still say “scoped”; whenever you see “scoped,” read it as “projection.” Benchmark file names keep “scoped” for historical reasons.
+Terminology: The project uses the term projection. Earlier drafts and filenames may still say “projected”; whenever you see “projected,” read it as “projection.” Benchmark file names keep “projected” for historical reasons.
 
 ## Overview
 This document proposes a design to support:
@@ -302,11 +302,11 @@ Purpose
   - Variant B (alternative): separate ProjectionKey table (unique key hash), projection tables reference it via projectionId (FK ON DELETE CASCADE).
 
 Benchmark harness
-- Location: benchmark\\scoped-cache-bench.ts (historical filename)
-- Run: npm run bench:scoped-cache
+- Location: benchmark\\projected-cache-bench.ts (historical filename)
+- Run: npm run bench:projected-cache
 - Params (env vars): BENCH_SCOPES, BENCH_DIRS, BENCH_PERSONS, BENCH_LOOKUPS. Example (Windows cmd):
-  - set BENCH_SCOPES=20&&set BENCH_DIRS=120&&set BENCH_PERSONS=90&&set BENCH_LOOKUPS=1000&&npm run bench:scoped-cache
-- DB: temporary SQLite file at db\\scoped_bench.sqlite (does not touch app DB)
+  - set BENCH_SCOPES=20&&set BENCH_DIRS=120&&set BENCH_PERSONS=90&&set BENCH_LOOKUPS=1000&&npm run bench:projected-cache
+- DB: temporary SQLite file at db\\projected_bench.sqlite (does not touch app DB)
 - Measures: upsert throughput for dir/person tables, lookup latency by (projection, directory), cascade delete performance, file size delta.
 
 Sample results (SQLite, N=20, D=120, P=90, lookups=1000)

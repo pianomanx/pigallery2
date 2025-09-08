@@ -28,8 +28,9 @@ import {
   TextSearchQueryMatchTypes,
   TextSearchQueryTypes
 } from '../src/common/entities/SearchQueryDTO';
-import {defaultQueryKeywords, QueryKeywords, SearchQueryParser} from '../src/common/SearchQueryParser';
+import {defaultQueryKeywords, SearchQueryParser} from '../src/common/SearchQueryParser';
 import {ParentDirectoryDTO} from '../src/common/entities/DirectoryDTO';
+import {SessionManager} from '../src/backend/model/database/SessionManager';
 import {SessionContext} from '../src/backend/model/SessionContext';
 
 
@@ -79,9 +80,11 @@ export class BenchmarkRunner {
     query: {},
     session: {}
   };
+  private session: SessionContext;
 
   constructor(public RUNS: number) {
     Config.Users.authenticationRequired = false;
+    this.session = {user: {projectionKey: SessionManager.NO_PROJECTION_KEY}} as SessionContext;
   }
 
   async bmSaveDirectory(): Promise<BenchmarkResult[]> {
@@ -150,7 +153,7 @@ export class BenchmarkRunner {
     await this.setupDB();
 
     const queryParser = new SearchQueryParser(defaultQueryKeywords);
-    const names = (await ObjectManagers.getInstance().PersonManager.getAll()).sort((a, b) => b.count - a.count);
+    const names = (await ObjectManagers.getInstance().PersonManager.getAll(this.session)).sort((a, b) => b.count - a.count);
     const queries: { query: SearchQueryDTO, description: string }[] = TextSearchQueryTypes.map(t => {
       const q = {
         type: t, text: 'a'
@@ -255,7 +258,7 @@ export class BenchmarkRunner {
       ', videos: ' + await gm.countVideos() +
       ', diskUsage : ' + Utils.renderDataSize(await gm.countMediaSize()) +
       ', persons : ' + await pm.countFaces() +
-      ', unique persons (faces): ' + (await pm.getAll()).length;
+      ', unique persons (faces): ' + (await pm.getAll(this.session)).length;
 
   }
 
@@ -269,8 +272,7 @@ export class BenchmarkRunner {
       const queue = ['/'];
       while (queue.length > 0) {
         const dirPath = queue.shift();
-        const session = new SessionContext();
-        const dir = await gm.listDirectory(session,dirPath);
+        const dir = await gm.listDirectory(this.session, dirPath);
         dir.directories.forEach((d): number => queue.push(path.join(d.path + d.name)));
         if (biggest < dir.media.length) {
           biggestPath = path.join(dir.path + dir.name);
