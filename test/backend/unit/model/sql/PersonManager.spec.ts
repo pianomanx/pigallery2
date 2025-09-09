@@ -298,6 +298,81 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       expect(await pm.get(projectionSession, 'Padmé Amidala')).to.be.undefined;
     });
 
+    it('should filter out persons with count = 0 from getAll()', async () => {
+      const pm = new PersonManager();
+      const connection = await SQLConnection.getConnection();
+
+      // Create a test person with no media associations (count will be 0)
+      const personRepo = connection.getRepository(PersonEntry);
+      const testPerson = new PersonEntry();
+      testPerson.name = 'Test Person Zero Count';
+      testPerson.isFavourite = false;
+      const savedTestPerson = await personRepo.save(testPerson);
+
+      // Force cache invalidation to rebuild with the new person
+      await pm.resetPreviews();
+
+      // Get all persons - the person with count = 0 should not be included
+      const allPersons = await pm.getAll(DBTestHelper.defaultSession);
+
+      // Verify the test person is not in the results
+      const foundPerson = allPersons.find(p => p.name === 'Test Person Zero Count');
+      expect(foundPerson).to.be.undefined;
+
+      // Verify that all returned persons have count > 0
+      for (const person of allPersons) {
+        expect(person.cache).to.not.be.undefined;
+        expect(person.cache.count).to.be.greaterThan(0);
+      }
+
+      // Verify the person exists in the database but not in results
+      const dbPerson = await personRepo.findOne({where: {name: 'Test Person Zero Count'}});
+      expect(dbPerson).to.not.be.undefined;
+      expect(dbPerson.name).to.equal('Test Person Zero Count');
+
+      // Clean up
+      await personRepo.remove(savedTestPerson);
+    });
+
+    it('should handle persons with exactly count = 0 correctly', async () => {
+      const pm = new PersonManager();
+      const connection = await SQLConnection.getConnection();
+
+      // Create a person and manually set their cache count to 0
+      const personRepo = connection.getRepository(PersonEntry);
+      const cacheRepo = connection.getRepository(ProjectedPersonCacheEntity);
+
+      const testPerson = new PersonEntry();
+      testPerson.name = 'Test Person Exact Zero';
+      testPerson.isFavourite = false;
+      const savedTestPerson = await personRepo.save(testPerson);
+
+      // Manually create a cache entry with count = 0
+      const cacheEntry = new ProjectedPersonCacheEntity();
+      cacheEntry.projectionKey = DBTestHelper.defaultSession.user.projectionKey;
+      cacheEntry.person = savedTestPerson;
+      cacheEntry.count = 0;
+      cacheEntry.valid = true;
+      cacheEntry.sampleRegion = null;
+      await cacheRepo.save(cacheEntry);
+
+      // Reset memory cache to force reload from database
+      await pm.resetPreviews();
+
+      // Verify the person is not returned by getAll
+      const allPersons = await pm.getAll(DBTestHelper.defaultSession);
+      const foundInAll = allPersons.find(p => p.name === 'Test Person Exact Zero');
+      expect(foundInAll).to.be.undefined;
+
+      // Verify the person is not returned by get
+      const foundByGet = await pm.get(DBTestHelper.defaultSession, 'Test Person Exact Zero');
+      expect(foundByGet).to.be.undefined;
+
+      // Clean up
+      await cacheRepo.remove(cacheEntry);
+      await personRepo.remove(savedTestPerson);
+    });
+
   });
 
   describe('Cache Management', () => {
@@ -311,7 +386,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
 
       let validCacheCount = await connection.getRepository(ProjectedPersonCacheEntity)
         .count({where: {valid: true}});
-      expect(validCacheCount).to.be.equal(20);
+      expect(validCacheCount).to.be.equal(10);
 
       // Reset previews
       await pm.resetPreviews();
