@@ -38,7 +38,7 @@ export class PhotoProcessing {
     person: PersonEntry
   ): Promise<string> {
     // load parameters
-    const photo: PhotoDTO = person.sampleRegion.media;
+    const photo: PhotoDTO = person.cache.sampleRegion.media;
     const mediaPath = path.join(
       ProjectPath.ImageFolder,
       photo.directory.path,
@@ -46,7 +46,7 @@ export class PhotoProcessing {
       photo.name
     );
     const size: number = Config.Media.Photo.personThumbnailSize;
-    const faceRegion = person.sampleRegion.media.metadata.faces.find(f => f.name === person.name);
+    const faceRegion = person.cache.sampleRegion.media.metadata.faces.find(f => f.name === person.name);
     // generate thumbnail path
     const thPath = PhotoProcessing.generatePersonThumbnailPath(
       mediaPath,

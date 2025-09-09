@@ -73,22 +73,22 @@ export class ThumbnailGeneratorMWs {
 
       for (const item of persons) {
         erroredItem = item;
-        if (!item.sampleRegion) {
+        if (!item.cache.sampleRegion) {
           item.missingThumbnail = true;
           continue;
         }
         // load parameters
         const mediaPath = path.join(
             ProjectPath.ImageFolder,
-            item.sampleRegion.media.directory.path,
-            item.sampleRegion.media.directory.name,
-            item.sampleRegion.media.name
+            item.cache.sampleRegion.media.directory.path,
+            item.cache.sampleRegion.media.directory.name,
+            item.cache.sampleRegion.media.name
         );
 
         // generate thumbnail path
         const thPath = PhotoProcessing.generatePersonThumbnailPath(
             mediaPath,
-            item.sampleRegion.media.metadata.faces.find(f => f.name === item.name),
+            item.cache.sampleRegion.media.metadata.faces.find(f => f.name === item.name),
             size
         );
 
@@ -98,7 +98,7 @@ export class ThumbnailGeneratorMWs {
       return next(
           new ErrorDTO(
               ErrorCodes.SERVER_ERROR,
-              `Error during postprocessing result: adding thumbnail info for persons. Failed on: person ${erroredItem?.name}, at ${erroredItem?.sampleRegion?.media?.name} `,
+              `Error during postprocessing result: adding thumbnail info for persons. Failed on: person ${erroredItem?.name}, at ${erroredItem?.cache?.sampleRegion?.media?.name} `,
               error.toString()
           )
       );

@@ -35,7 +35,6 @@ import {Config} from '../../../../../src/common/config/private/Config';
 import {SearchQueryParser} from '../../../../../src/common/SearchQueryParser';
 import {FileDTO} from '../../../../../src/common/entities/FileDTO';
 import {SortByTypes} from '../../../../../src/common/entities/SortingMethods';
-import {LogLevel} from '../../../../../src/common/config/private/PrivateConfig';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
@@ -143,13 +142,16 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
   before(async () => {
     await setUpSqlDB();
-    Config.Search.listDirectories = true;
-    Config.Search.listMetafiles = false;
   });
 
 
   after(async () => {
     await sqlHelper.clearDB();
+  });
+  beforeEach(() => {
+    Config.loadSync();
+    Config.Search.listDirectories = true;
+    Config.Search.listMetafiles = false;
   });
 
   it('should get autocomplete', async () => {
@@ -186,10 +188,10 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
     Config.Search.AutoComplete.ItemsPerCategory.maxItems = 1;
     expect((await sm.autocomplete(DBTestHelper.defaultSession, 'a', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
-      new AutoCompleteItem('Han Solo', SearchQueryTypes.person),
-      new AutoCompleteItem('Han Solo\'s dice', SearchQueryTypes.caption),
-      new AutoCompleteItem('Research City', SearchQueryTypes.position),
-      new AutoCompleteItem('death star', SearchQueryTypes.keyword),
+      new AutoCompleteItem('Anakin Skywalker', SearchQueryTypes.person),
+      new AutoCompleteItem('Amber stone', SearchQueryTypes.caption),
+      new AutoCompleteItem('Castilon', SearchQueryTypes.position),
+      new AutoCompleteItem('star wars', SearchQueryTypes.keyword),
       new AutoCompleteItem('The Phantom Menace', SearchQueryTypes.directory)]);
     Config.Search.AutoComplete.ItemsPerCategory.maxItems = 5;
     Config.Search.AutoComplete.ItemsPerCategory.fileName = 5;
@@ -426,7 +428,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     });
   });
 
-  describe('advanced search',  () => {
+  describe('advanced search', () => {
     beforeEach(async () => {
       Config.loadSync();
       Config.Search.listDirectories = false;
@@ -1188,7 +1190,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
     });
 
-    describe('should search text',  () => {
+    describe('should search text', () => {
       it('as any', async () => {
         const sm = new SearchManager();
 
@@ -1549,7 +1551,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
     });
 
-    describe('search date pattern',  () => {
+    describe('search date pattern', () => {
       let p5: PhotoDTO;
       let p6: PhotoDTO;
       let p7: PhotoDTO;

@@ -90,7 +90,7 @@ export class PersonMWs {
     try {
       const persons = Utils.clone(req.resultPipe as PersonEntry[]);
       for (const item of persons) {
-        delete item.sampleRegion;
+        delete item.cache.sampleRegion;
       }
       req.resultPipe = persons;
       return next();

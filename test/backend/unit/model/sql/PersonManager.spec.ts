@@ -8,19 +8,28 @@ import {ParentDirectoryDTO} from '../../../../../src/common/entities/DirectoryDT
 import {VideoDTO} from '../../../../../src/common/entities/VideoDTO';
 import {SQLConnection} from '../../../../../src/backend/model/database/SQLConnection';
 import {PersonEntry} from '../../../../../src/backend/model/database/enitites/PersonEntry';
+import {PersonJunctionTable} from '../../../../../src/backend/model/database/enitites/PersonJunctionTable';
+import {ProjectedPersonCacheEntity} from '../../../../../src/backend/model/database/enitites/ProjectedPersonCacheEntity';
+import {ObjectManagers} from '../../../../../src/backend/model/ObjectManagers';
+import {SearchQueryTypes, TextSearchQueryMatchTypes} from '../../../../../src/common/entities/SearchQueryDTO';
+import {SessionContext} from '../../../../../src/backend/model/SessionContext';
 
 
 // to help WebStorm to handle the test cases
 declare let describe: any;
 declare const after: any;
 declare const before: any;
+declare const beforeEach: any;
+declare const afterEach: any;
 declare const it: any;
 
 
+const tmpDescribe = describe;
 // eslint-disable-next-line prefer-const
 describe = DBTestHelper.describe();
 
 describe('PersonManager', (sqlHelper: DBTestHelper) => {
+  describe = tmpDescribe;
 
 
   let dir: ParentDirectoryDTO;
@@ -64,6 +73,13 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       .getMany();
   };
 
+  const createProjectionSession = async (query: any): Promise<SessionContext> => {
+    await ObjectManagers.getInstance().init();
+    return await ObjectManagers.getInstance().SessionManager.buildContext({
+      allowQuery: query,
+      overrideAllowBlockList: true
+    } as any);
+  };
 
   before(async () => {
     await setUpSqlDB();
@@ -73,18 +89,336 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
     await sqlHelper.clearDB();
   });
 
+  describe('Basic Operations', () => {
 
-  it('should get person', async () => {
-    const pm = new PersonManager();
-    const person = Utils.clone(savedPerson[0]);
+    it('should get person with default session', async () => {
+      const pm = new PersonManager();
+      const person = Utils.clone(savedPerson[0]);
 
-    const selected = Utils.clone(await pm.get(DBTestHelper.defaultSession, 'Boba Fett'));
-    expect(selected.cache).to.be.not.undefined;
-    delete selected.cache;
-    delete person.cache;
-    expect(selected).to.deep.equal(person);
+      const selected = Utils.clone(await pm.get(DBTestHelper.defaultSession, 'Boba Fett'));
+      expect(selected).to.not.be.undefined;
+      expect(selected.cache).to.be.not.undefined;
+      delete selected.cache;
+      delete person.cache;
+      expect(selected).to.deep.equal(person);
+    });
+
+    it('should get all persons with default session', async () => {
+      const pm = new PersonManager();
+
+      const allPersons = await pm.getAll(DBTestHelper.defaultSession);
+      expect(allPersons).to.not.be.undefined;
+      expect(allPersons.length).to.be.greaterThan(0);
+
+      // Check that persons have expected properties
+      allPersons.forEach(person => {
+        expect(person).to.have.property('id');
+        expect(person).to.have.property('name');
+        expect(person).to.have.property('isFavourite');
+      });
+    });
+
+    it('should get person that does not exist', async () => {
+      const pm = new PersonManager();
+
+      const selected = await pm.get(DBTestHelper.defaultSession, 'Non Existent Person');
+      expect(selected).to.be.undefined;
+    });
+
+    it('should count faces', async () => {
+      const pm = new PersonManager();
+
+      const count = await pm.countFaces();
+      expect(count).to.be.a('number');
+      expect(count).to.be.greaterThan(0);
+    });
+
+    it('should update person', async () => {
+      const pm = new PersonManager();
+      const originalPerson = await pm.get(DBTestHelper.defaultSession, 'Boba Fett');
+      expect(originalPerson).to.not.be.undefined;
+
+      const updatedPerson = await pm.updatePerson('Boba Fett', {
+        id: originalPerson.id,
+        name: 'Updated Boba Fett',
+        isFavourite: !originalPerson.isFavourite
+      });
+
+      expect(updatedPerson.name).to.equal('Updated Boba Fett');
+      expect(updatedPerson.isFavourite).to.equal(!originalPerson.isFavourite);
+
+      // Verify the person was actually updated in the database
+      const fetchedPerson = await pm.get(DBTestHelper.defaultSession, 'Updated Boba Fett');
+      expect(fetchedPerson).to.not.be.undefined;
+      expect(fetchedPerson.name).to.equal('Updated Boba Fett');
+      expect(fetchedPerson.isFavourite).to.equal(!originalPerson.isFavourite);
+    });
+
+    it('should save new persons', async () => {
+      const pm = new PersonManager();
+      const connection = await SQLConnection.getConnection();
+
+      // Get initial count
+      const initialPersonCount = await connection.getRepository(PersonEntry).count();
+      const initialJunctionCount = await connection.getRepository(PersonJunctionTable).count();
+
+      // Add new persons
+      const newPersons = [
+        {name: 'New Person 1', mediaId: p.id},
+        {name: 'New Person 2', mediaId: p2.id}
+      ];
+
+      await pm.saveAll(newPersons);
+
+      // Verify persons were added
+      const finalPersonCount = await connection.getRepository(PersonEntry).count();
+      const finalJunctionCount = await connection.getRepository(PersonJunctionTable).count();
+
+      expect(finalPersonCount).to.equal(initialPersonCount + 2);
+      expect(finalJunctionCount).to.equal(initialJunctionCount + 2);
+
+      // Verify we can retrieve the new persons
+      const newPerson1 = await connection.getRepository(PersonEntry).findOne({
+        where: {name: 'New Person 1'}
+      });
+      const newPerson2 = await connection.getRepository(PersonEntry).findOne({
+        where: {name: 'New Person 2'}
+      });
+
+      expect(newPerson1).to.not.be.null;
+      expect(newPerson2).to.not.be.null;
+    });
+
+    it('should not save duplicate persons', async () => {
+      const pm = new PersonManager();
+      const connection = await SQLConnection.getConnection();
+
+      // Get initial count
+      const initialPersonCount = await connection.getRepository(PersonEntry).count();
+
+      // Try to add existing person
+      const duplicatePersons = [
+        {name: 'Unkle Ben', mediaId: p.id}
+      ];
+
+      await pm.saveAll(duplicatePersons);
+
+      // Verify no new persons were added
+      const persons = await connection.getRepository(PersonEntry).find();
+      expect(persons.length).to.equal(initialPersonCount, JSON.stringify(persons.map(p => p.name)));
+    });
 
   });
 
+  describe('Projection Tests', () => {
+
+    beforeEach(async () => {
+      // Reset cache before each projection test
+      const pm = new PersonManager();
+      await pm.resetPreviews();
+    });
+
+    it('should get persons with projection session filtering by filename', async () => {
+      const pm = new PersonManager();
+
+      // Create projection session that filters by filename
+      const projectionSession = await createProjectionSession({
+        type: SearchQueryTypes.file_name,
+        text: 'photo1',
+        matchType: TextSearchQueryMatchTypes.like
+      });
+
+      const personsWithProjection = await pm.getAll(projectionSession);
+      const personsWithDefault = await pm.getAll(DBTestHelper.defaultSession);
+
+      expect(personsWithProjection).to.not.be.undefined;
+      expect(personsWithDefault).to.not.be.undefined;
+
+      // With projection, some persons might have different counts or be filtered out
+      // The exact behavior depends on which photos match the projection
+      expect(projectionSession.user.projectionKey).to.not.equal(DBTestHelper.defaultSession.user.projectionKey);
+    });
+
+    it('should handle cache correctly with different projections', async () => {
+      const pm = new PersonManager();
+      const connection = await SQLConnection.getConnection();
+
+      // Get persons with default session first
+      const personsDefault = await pm.getAll(DBTestHelper.defaultSession);
+      expect(personsDefault.length).to.be.greaterThan(0);
+
+      // Create projection session
+      const projectionSession = await createProjectionSession({
+        type: SearchQueryTypes.file_name,
+        text: 'photo1',
+        matchType: TextSearchQueryMatchTypes.like
+      });
+
+      // Get persons with projection session
+      const personsProjection = await pm.getAll(projectionSession);
+
+      // Verify that cache entries exist for both projection keys
+      const defaultCacheEntries = await connection.getRepository(ProjectedPersonCacheEntity)
+        .count({where: {projectionKey: DBTestHelper.defaultSession.user.projectionKey}});
+      const projectionCacheEntries = await connection.getRepository(ProjectedPersonCacheEntity)
+        .count({where: {projectionKey: projectionSession.user.projectionKey}});
+
+      expect(defaultCacheEntries).to.be.greaterThan(0);
+      expect(projectionCacheEntries).to.be.greaterThan(0);
+    });
+
+    it('should get single person with projection session', async () => {
+      const pm = new PersonManager();
+
+      // Create projection session
+      const projectionSession = await createProjectionSession({
+        type: SearchQueryTypes.file_name,
+        text: 'photo1',
+        matchType: TextSearchQueryMatchTypes.like
+      });
+
+      const personWithProjection = await pm.get(projectionSession, 'Unkle Ben');
+      const personWithDefault = await pm.get(DBTestHelper.defaultSession, 'Unkle Ben');
+
+      expect(personWithProjection).to.not.be.undefined;
+      expect(personWithDefault).to.not.be.undefined;
+      expect(personWithProjection.name).to.equal(personWithDefault.name);
+    });
+
+  });
+
+  describe('Cache Management', () => {
+
+    it('should reset previews and invalidate cache', async () => {
+      const pm = new PersonManager();
+      const connection = await SQLConnection.getConnection();
+
+      // Ensure there are valid cache entries
+      await pm.getAll(DBTestHelper.defaultSession);
+
+      let validCacheCount = await connection.getRepository(ProjectedPersonCacheEntity)
+        .count({where: {valid: true}});
+      expect(validCacheCount).to.be.greaterThan(0);
+
+      // Reset previews
+      await pm.resetPreviews();
+
+      // Check that all cache entries are now invalid
+      validCacheCount = await connection.getRepository(ProjectedPersonCacheEntity)
+        .count({where: {valid: true}});
+      expect(validCacheCount).to.equal(0);
+    });
+
+    it('should invalidate cache for specific directory', async () => {
+      const pm = new PersonManager();
+      const connection = await SQLConnection.getConnection();
+
+      // Ensure there are valid cache entries
+      await pm.getAll(DBTestHelper.defaultSession);
+
+      let validCacheCount = await connection.getRepository(ProjectedPersonCacheEntity)
+        .count({where: {valid: true}});
+      expect(validCacheCount).to.be.greaterThan(0);
+
+      // Trigger cache invalidation for the directory
+      await pm.onNewDataVersion(dir);
+
+      // Some cache entries should be invalidated
+      const validCacheCountAfter = await connection.getRepository(ProjectedPersonCacheEntity)
+        .count({where: {valid: true}});
+      expect(validCacheCountAfter).to.be.lessThan(validCacheCount);
+    });
+
+    it('should handle cache invalidation for non-existent directory', async () => {
+      const pm = new PersonManager();
+
+      // Should not throw error
+      await pm.onNewDataVersion(null);
+      await pm.onNewDataVersion({} as ParentDirectoryDTO);
+      await pm.onNewDataVersion({id: 999999} as ParentDirectoryDTO);
+    });
+
+    it('should rebuild cache when accessing persons after invalidation', async () => {
+      const pm = new PersonManager();
+      const connection = await SQLConnection.getConnection();
+
+      // Reset cache
+      await pm.resetPreviews();
+
+      // Verify cache is invalid
+      let validCacheCount = await connection.getRepository(ProjectedPersonCacheEntity)
+        .count({where: {valid: true}});
+      expect(validCacheCount).to.equal(0);
+
+      // Access persons - this should rebuild cache
+      const persons = await pm.getAll(DBTestHelper.defaultSession);
+      expect(persons).to.not.be.undefined;
+      expect(persons.length).to.be.greaterThan(0);
+
+      // Verify cache is now valid
+      validCacheCount = await connection.getRepository(ProjectedPersonCacheEntity)
+        .count({where: {valid: true}});
+      expect(validCacheCount).to.be.greaterThan(0);
+    });
+
+  });
+
+  describe('Edge Cases', () => {
+
+    it('should handle empty person list in saveAll', async () => {
+      const pm = new PersonManager();
+
+      // Should not throw error
+      await pm.saveAll([]);
+    });
+
+    it('should handle large batch of persons in saveAll', async () => {
+      const pm = new PersonManager();
+      const connection = await SQLConnection.getConnection();
+
+      // Create a large batch of persons (more than 200 to test batching)
+      const largeBatch = [];
+      for (let i = 0; i < 250; i++) {
+        largeBatch.push({name: `Batch Person ${i}`, mediaId: p.id});
+      }
+
+      const initialCount = await connection.getRepository(PersonEntry).count();
+      await pm.saveAll(largeBatch);
+      const finalCount = await connection.getRepository(PersonEntry).count();
+
+      expect(finalCount).to.equal(initialCount + 250);
+    });
+
+    it('should handle cache when no persons exist', async () => {
+      const pm = new PersonManager();
+      const connection = await SQLConnection.getConnection();
+
+      // Remove all persons temporarily - need to check if any exist first
+      const junctionCount = await connection.getRepository(PersonJunctionTable).count();
+      const personCount = await connection.getRepository(PersonEntry).count();
+      const cacheCount = await connection.getRepository(ProjectedPersonCacheEntity).count();
+
+      if (junctionCount > 0) {
+        await connection.getRepository(PersonJunctionTable).createQueryBuilder().delete().execute();
+      }
+      if (personCount > 0) {
+        await connection.getRepository(PersonEntry).createQueryBuilder().delete().execute();
+      }
+      if (cacheCount > 0) {
+        await connection.getRepository(ProjectedPersonCacheEntity).createQueryBuilder().delete().execute();
+      }
+
+      const persons = await pm.getAll(DBTestHelper.defaultSession);
+      expect(persons).to.be.an('array');
+      expect(persons.length).to.equal(0);
+
+      const nonExistentPerson = await pm.get(DBTestHelper.defaultSession, 'Nobody');
+      expect(nonExistentPerson).to.be.undefined;
+
+      const faceCount = await pm.countFaces();
+      expect(faceCount).to.equal(0);
+    });
+
+  });
 
 });

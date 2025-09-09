@@ -51,13 +51,9 @@ export class PersonManager implements IObjectManager {
     const personsNeedingUpdate = await connection
       .getRepository(PersonEntry)
       .createQueryBuilder('person')
-      .leftJoin(
-        ProjectedPersonCacheEntity,
-        'cache',
-        'cache.person = person.id AND cache.projectionKey = :projectionKey',
-        {projectionKey}
-      )
+      .leftJoin('person.cache', 'cache', 'cache.projectionKey = :projectionKey', {projectionKey})
       .where('cache.id IS NULL OR cache.valid = false')
+      .select(['person.id'])
       .getMany();
 
     if (personsNeedingUpdate.length === 0) {
@@ -88,7 +84,6 @@ export class PersonManager implements IObjectManager {
         .select(['pjt.person as personId', 'COUNT(*) as count'])
         .groupBy('pjt.person')
         .getRawMany();
-
       // Compute sample regions per person (best rated/newest photo)
       // Use individual queries per person to ensure compatibility with older SQLite versions
       const topSamples: Record<number, number> = {};
@@ -129,6 +124,7 @@ export class PersonManager implements IObjectManager {
       // Get existing cache entries for this batch
       const existingEntries = await cacheRepo
         .createQueryBuilder('cache')
+        .leftJoinAndSelect('cache.person', 'person')
         .where('cache.projectionKey = :projectionKey', {projectionKey})
         .andWhere('cache.person IN (:...personIds)', {personIds})
         .getMany();
@@ -292,7 +288,7 @@ export class PersonManager implements IObjectManager {
     }
   }
 
-  private  resetMemoryCache(): void {
+  private resetMemoryCache(): void {
     this.personsCache = null;
   }
 

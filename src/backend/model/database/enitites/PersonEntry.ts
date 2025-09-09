@@ -27,7 +27,6 @@ export class PersonEntry implements PersonDTO {
   @OneToMany(() => ProjectedPersonCacheEntity, (ppc) => ppc.person)
   public cache: ProjectedPersonCacheEntity;
 
-
-  // does not store in the DB, temporal field
+  // does not store in the DB, temporal fields populated from cache/joins
   missingThumbnail?: boolean;
 }

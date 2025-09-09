@@ -120,19 +120,22 @@ export class SearchManager {
       type === SearchQueryTypes.any_text ||
       type === SearchQueryTypes.person
     ) {
+      // make sure all persons have up-to-date cache
+      await ObjectManagers.getInstance().PersonManager.getAll(session);
       partialResult.push(
         this.encapsulateAutoComplete(
           (
             await personRepository
               .createQueryBuilder('person')
-              .select('DISTINCT(person.name), person.count')
+              .select('DISTINCT(person.name), cache.count')
+              .leftJoin('person.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: session.user.projectionKey})
               .where('person.name LIKE :text COLLATE ' + SQL_COLLATE, {
                 text: '%' + text + '%',
               })
               .limit(
                 Config.Search.AutoComplete.ItemsPerCategory.person
               )
-              .orderBy('person.count', 'DESC')
+              .orderBy('cache.count', 'DESC')
               .getRawMany()
           ).map((r) => r.name),
           SearchQueryTypes.person
@@ -304,7 +307,7 @@ export class SearchManager {
         if (partialResult[i].length <= 0) {
           continue;
         }
-        result.push(partialResult[i].pop());
+        result.push(partialResult[i].shift()); // first elements are more important
         adding = true;
       }
       if (!adding) {
