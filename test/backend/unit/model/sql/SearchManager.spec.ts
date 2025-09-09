@@ -307,6 +307,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
 
     describe('autocomplete', () => {
+      beforeEach(()=>Config.loadSync());
+
       it('autocomplete should respect projectionQuery', async () => {
         const sm = new SearchManager();
 
@@ -399,6 +401,65 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         expect(withProj).to.deep.equalInAnyOrder([
           new AutoCompleteItem(pFaceLess.name, SearchQueryTypes.file_name)
         ]);
+      });
+
+      it('autocomplete should apply projection to person suggestions', async () => {
+        const sm = new SearchManager();
+
+        // Project to photos with "Boba Fett" person, which should include only p (sw1.jpg)
+        // p contains: Boba Fett, Luke Skywalker, Han Solo, Unkle Ben, R2-D2
+        const projQ = ({
+          text: 'Boba Fett',
+          matchType: TextSearchQueryMatchTypes.exact_match,
+          type: SearchQueryTypes.person
+        } as TextSearch);
+        const session = await ObjectManagers.getInstance().SessionManager.buildContext({
+          overrideAllowBlockList: true,
+          allowQuery: projQ
+        } as any);
+
+        // Without projection, searching 'a' should return multiple people
+        const noProj = await sm.autocomplete(DBTestHelper.defaultSession, 'a', SearchQueryTypes.person);
+        expect(noProj.length).to.be.greaterThan(2); // Should include Anakin Skywalker from p2 and p4
+
+        // With projection to Boba Fett photos, expect only people from that photo set
+        // 'a' should match Han Solo (from p/sw1.jpg) but not Anakin Skywalker (from p2/p4)
+        Config.Search.AutoComplete.ItemsPerCategory.person = 999;
+        Config.Search.AutoComplete.ItemsPerCategory.maxItems = 999;
+        const withProj = await sm.autocomplete(session, 'a', SearchQueryTypes.person);
+        expect(withProj).to.deep.equalInAnyOrder([
+          new AutoCompleteItem('Boba Fett', SearchQueryTypes.person),
+          new AutoCompleteItem('Luke Skywalker', SearchQueryTypes.person),
+          new AutoCompleteItem('Han Solo', SearchQueryTypes.person)
+        ]);
+      });
+
+      it('autocomplete should filter out persons with count=0 when projection is applied', async () => {
+        const sm = new SearchManager();
+
+        // Project to photos with keyword "wookiees" which only matches pFaceLess (sw3.jpg)
+        // but pFaceLess has no faces, so all persons should have count=0
+        const projQ = ({
+          text: 'wookiees',
+          matchType: TextSearchQueryMatchTypes.exact_match,
+          type: SearchQueryTypes.keyword
+        } as TextSearch);
+        const session = await ObjectManagers.getInstance().SessionManager.buildContext({
+          overrideAllowBlockList: true,
+          allowQuery: projQ
+        } as any);
+
+        // Without projection, should return people matching the search term
+        const noProj = await sm.autocomplete(DBTestHelper.defaultSession, 'skywalker', SearchQueryTypes.person);
+        expect(noProj.length).to.be.equal(2); // Should find Luke and Anakin Skywalker
+
+        // With projection to photos with no faces, expect no person suggestions (all have count=0)
+        const withProj = await sm.autocomplete(session, 'skywalker', SearchQueryTypes.person);
+        expect(withProj).to.deep.equalInAnyOrder([]);
+
+        // Test with a broader search term
+        const withProjBroad = await sm.autocomplete(session, 'a', SearchQueryTypes.person);
+        expect(withProjBroad).to.deep.equalInAnyOrder([]);
       });
     });
     it('search should respect projectionQuery', async () => {
