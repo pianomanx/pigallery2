@@ -98,6 +98,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       const selected = Utils.clone(await pm.get(DBTestHelper.defaultSession, 'Boba Fett'));
       expect(selected).to.not.be.undefined;
       expect(selected.cache).to.be.not.undefined;
+      expect(selected.cache.count).to.be.greaterThan(0);
       delete selected.cache;
       delete person.cache;
       expect(selected).to.deep.equal(person);
@@ -115,6 +116,13 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
         expect(person).to.have.property('id');
         expect(person).to.have.property('name');
         expect(person).to.have.property('isFavourite');
+
+        // Check that cache is a single object, not an array
+        if (person.cache) {
+          expect(Array.isArray(person.cache)).to.be.false;
+          expect(person.cache).to.have.property('count');
+          expect(person.cache.count).to.be.a('number');
+        }
       });
     });
 
@@ -130,7 +138,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
 
       const count = await pm.countFaces();
       expect(count).to.be.a('number');
-      expect(count).to.be.greaterThan(0);
+      expect(count).to.be.equal(9);
     });
 
     it('should update person', async () => {
@@ -232,7 +240,9 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       const personsWithDefault = await pm.getAll(DBTestHelper.defaultSession);
 
       expect(personsWithProjection).to.not.be.undefined;
+      expect(personsWithProjection.length).to.equal(10);
       expect(personsWithDefault).to.not.be.undefined;
+      expect(personsWithDefault.length).to.equal(10);
 
       // With projection, some persons might have different counts or be filtered out
       // The exact behavior depends on which photos match the projection
@@ -245,7 +255,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
 
       // Get persons with default session first
       const personsDefault = await pm.getAll(DBTestHelper.defaultSession);
-      expect(personsDefault.length).to.be.greaterThan(0);
+      expect(personsDefault.length).to.be.equal(10);
 
       // Create projection session
       const projectionSession = await createProjectionSession({
@@ -254,8 +264,8 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
         matchType: TextSearchQueryMatchTypes.like
       });
 
-      // Get persons with projection session
-      const personsProjection = await pm.getAll(projectionSession);
+      // Trigger cache filling
+      await pm.getAll(projectionSession);
 
       // Verify that cache entries exist for both projection keys
       const defaultCacheEntries = await connection.getRepository(ProjectedPersonCacheEntity)
@@ -263,8 +273,8 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       const projectionCacheEntries = await connection.getRepository(ProjectedPersonCacheEntity)
         .count({where: {projectionKey: projectionSession.user.projectionKey}});
 
-      expect(defaultCacheEntries).to.be.greaterThan(0);
-      expect(projectionCacheEntries).to.be.greaterThan(0);
+      expect(defaultCacheEntries).to.be.equal(10);
+      expect(projectionCacheEntries).to.be.equal(10);
     });
 
     it('should get single person with projection session', async () => {
@@ -298,7 +308,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
 
       let validCacheCount = await connection.getRepository(ProjectedPersonCacheEntity)
         .count({where: {valid: true}});
-      expect(validCacheCount).to.be.greaterThan(0);
+      expect(validCacheCount).to.be.equal(20);
 
       // Reset previews
       await pm.resetPreviews();
@@ -318,7 +328,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
 
       let validCacheCount = await connection.getRepository(ProjectedPersonCacheEntity)
         .count({where: {valid: true}});
-      expect(validCacheCount).to.be.greaterThan(0);
+      expect(validCacheCount).to.be.equal(10);
 
       // Trigger cache invalidation for the directory
       await pm.onNewDataVersion(dir);
@@ -353,12 +363,12 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       // Access persons - this should rebuild cache
       const persons = await pm.getAll(DBTestHelper.defaultSession);
       expect(persons).to.not.be.undefined;
-      expect(persons.length).to.be.greaterThan(0);
+      expect(persons.length).to.be.equal(10);
 
       // Verify cache is now valid
       validCacheCount = await connection.getRepository(ProjectedPersonCacheEntity)
         .count({where: {valid: true}});
-      expect(validCacheCount).to.be.greaterThan(0);
+      expect(validCacheCount).to.be.equal(10);
     });
 
   });

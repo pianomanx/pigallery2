@@ -153,7 +153,7 @@ export class BenchmarkRunner {
     await this.setupDB();
 
     const queryParser = new SearchQueryParser(defaultQueryKeywords);
-    const names = (await ObjectManagers.getInstance().PersonManager.getAll(this.session)).sort((a, b) => b.count - a.count);
+    const names = (await ObjectManagers.getInstance().PersonManager.getAll(this.session)).sort((a, b) => b.cache.count - a.cache.count);
     const queries: { query: SearchQueryDTO, description: string }[] = TextSearchQueryTypes.map(t => {
       const q = {
         type: t, text: 'a'
