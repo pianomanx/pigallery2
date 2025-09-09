@@ -240,7 +240,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       const personsWithDefault = await pm.getAll(DBTestHelper.defaultSession);
 
       expect(personsWithProjection).to.not.be.undefined;
-      expect(personsWithProjection.length).to.equal(10);
+      expect(personsWithProjection.length).to.equal(0);
       expect(personsWithDefault).to.not.be.undefined;
       expect(personsWithDefault.length).to.equal(10);
 
@@ -283,7 +283,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       // Create projection session
       const projectionSession = await createProjectionSession({
         type: SearchQueryTypes.file_name,
-        text: 'photo1',
+        text: 'sw1',
         matchType: TextSearchQueryMatchTypes.like
       });
 
@@ -293,6 +293,9 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       expect(personWithProjection).to.not.be.undefined;
       expect(personWithDefault).to.not.be.undefined;
       expect(personWithProjection.name).to.equal(personWithDefault.name);
+
+
+      expect(await pm.get(projectionSession, 'Padmé Amidala')).to.be.undefined;
     });
 
   });
