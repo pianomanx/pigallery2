@@ -75,6 +75,9 @@ export class PersonManager implements IObjectManager {
 
       // Apply projection query if it exists
       if (session.projectionQuery) {
+        if (session.hasDirectoryProjection) {
+          baseQb.leftJoin('media.directory', 'directory');
+        }
         baseQb.andWhere(session.projectionQuery);
       }
 
@@ -96,6 +99,9 @@ export class PersonManager implements IObjectManager {
 
         // Apply projection query if it exists
         if (session.projectionQuery) {
+          if (session.hasDirectoryProjection) {
+            sampleQb.leftJoin('media.directory', 'directory');
+          }
           sampleQb.andWhere(session.projectionQuery);
         }
 
@@ -309,7 +315,7 @@ export class PersonManager implements IObjectManager {
     this.personsCache = this.personsCache || {};
     const persons = await personRepository
       .createQueryBuilder('person')
-      .leftJoin('person.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: session.user.projectionKey})
+      .leftJoin('person.cache', 'cache', 'cache.projectionKey = :pk', {pk: session.user.projectionKey})
       .leftJoin('cache.sampleRegion', 'sampleRegion')
       .leftJoin('sampleRegion.media', 'media')
       .leftJoin('media.directory', 'directory')
@@ -319,10 +325,11 @@ export class PersonManager implements IObjectManager {
         'person.isFavourite',
         'cache.count',
         'sampleRegion',
-        'media.name',
+        'media',
         'directory.path',
         'directory.name'
       ])
+      .where('cache.valid = 1 AND cache.count > 0')
       .getMany();
 
     // Fix cache property: convert from array to single object

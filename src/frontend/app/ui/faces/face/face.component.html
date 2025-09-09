@@ -23,7 +23,7 @@
              [class.clickable]="CanUpdate"
              (click)="CanUpdate && toggleFavourite($event)"
     ></ng-icon>
-    {{person.name}} ({{person.count}})
+    {{person.name}} ({{person.cache.count}})
 
   </div>
 </a>

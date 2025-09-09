@@ -1,4 +1,4 @@
-import {PersonDTO} from '../../../../common/entities/PersonDTO';
+import {PersonCacheDTO, PersonDTO} from '../../../../common/entities/PersonDTO';
 import {Config} from '../../../../common/config/public/Config';
 import {Utils} from '../../../../common/Utils';
 
@@ -7,6 +7,7 @@ export class Person implements PersonDTO {
   count: number;
   id: number;
   name: string;
+  cache:PersonCacheDTO;
 
 
   public static getThumbnailUrl(that: PersonDTO): string {

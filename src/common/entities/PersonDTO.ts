@@ -1,4 +1,5 @@
 export interface PersonDTO {
+  cache: PersonCacheDTO;
   id: number;
   name: string;
   missingThumbnail?: boolean;

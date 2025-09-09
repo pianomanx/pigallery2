@@ -128,10 +128,11 @@ export class SearchManager {
             await personRepository
               .createQueryBuilder('person')
               .select('DISTINCT(person.name), cache.count')
-              .leftJoin('person.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: session.user.projectionKey})
+              .leftJoin('person.cache', 'cache', 'cache.projectionKey = :pk', {pk: session.user.projectionKey})
               .where('person.name LIKE :text COLLATE ' + SQL_COLLATE, {
                 text: '%' + text + '%',
               })
+              .andWhere('cache.count > 0 AND cache.valid = 1')
               .limit(
                 Config.Search.AutoComplete.ItemsPerCategory.person
               )
