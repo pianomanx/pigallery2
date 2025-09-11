@@ -89,7 +89,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
   };
 
   const makePreview = (m: MediaDTO) => {
-    delete (m.directory as ParentDirectoryDTO).id;
+    delete (m.directory as ParentDirectoryDTO)?.id;
     delete m.metadata;
     return m;
   };
@@ -848,18 +848,27 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
       const am = new AlbumManager();
 
       const dir = await DiskManager.scanDirectory('/');
-
+      const p = Utils.clone(dir.media.find(m => m.name === 'exiftool.jpg')); // .saved_searches.pg2conf should match this file
+      p.directory = {
+        path: dir.path,
+        name: dir.name
+      };
       await im.saveToDB(dir);
 
       const albums = await am.getAlbums(DBTestHelper.defaultSession);
-      expect(albums[0].cache.cover).to.be.an('object');
-      delete albums[0].cache.cover;
       expect(albums).to.be.deep.equal([
         {
           id: 1,
           name: 'Alvin',
           locked: true,
-          count: 1,
+          cache: {
+            cover: makePreview(Utils.clone(p)),
+            id: 1,
+            itemCount: 1,
+            oldestMedia: p.metadata.creationDate,
+            valid: true,
+            youngestMedia: p.metadata.creationDate,
+          },
           searchQuery: {
             type: SearchQueryTypes.person,
             text: 'Alvin',

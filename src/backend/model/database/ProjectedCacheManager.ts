@@ -238,6 +238,23 @@ export class ProjectedCacheManager implements IObjectManager {
     id: number,
     searchQuery: any
   }): Promise<ProjectedAlbumCacheEntity> {
+
+
+    const cacheRepo = connection.getRepository(ProjectedAlbumCacheEntity);
+
+    // Find existing cache row by (projectionKey, album)
+    const projectionKey = session?.user?.projectionKey;
+
+    let row = await cacheRepo
+      .createQueryBuilder('pac')
+      .leftJoin('pac.album', 'a')
+      .where('pac.projectionKey = :pk AND a.id = :albumId', {pk: projectionKey, albumId: album.id})
+      .getOne();
+
+    if(row.valid === true){
+      return row;
+    }
+
     // Compute aggregates under the current projection (if any)
     const mediaRepo = connection.getRepository(MediaEntity);
 
@@ -270,18 +287,8 @@ export class ProjectedCacheManager implements IObjectManager {
     const youngestMedia: number = agg?.youngest != null ? parseInt(agg.youngest as any, 10) : null;
 
     // Compute cover respecting projection
-    const coverMedia = await ObjectManagers.getInstance().CoverManager.getCoverForAlbum(album as any);
+    const coverMedia = await ObjectManagers.getInstance().CoverManager.getCoverForAlbum(session, album as any);
 
-    const cacheRepo = connection.getRepository(ProjectedAlbumCacheEntity);
-
-    // Find existing cache row by (projectionKey, album)
-    const projectionKey = session?.user?.projectionKey;
-
-    let row = await cacheRepo
-      .createQueryBuilder('pac')
-      .leftJoin('pac.album', 'a')
-      .where('pac.projectionKey = :pk AND a.id = :albumId', {pk: projectionKey, albumId: album.id})
-      .getOne();
 
     if (!row) {
       row = new ProjectedAlbumCacheEntity();

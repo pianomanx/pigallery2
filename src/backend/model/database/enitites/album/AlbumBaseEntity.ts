@@ -1,4 +1,4 @@
-import {Column, Entity, Index, OneToMany, PrimaryGeneratedColumn, TableInheritance,} from 'typeorm';
+import {Column, Entity, Index, OneToOne, PrimaryGeneratedColumn, TableInheritance,} from 'typeorm';
 import {columnCharsetCS} from '../EntityUtils';
 import {AlbumBaseDTO} from '../../../../../common/entities/album/AlbumBaseDTO';
 import {ProjectedAlbumCacheEntity} from './ProjectedAlbumCacheEntity';
@@ -20,6 +20,6 @@ export class AlbumBaseEntity implements AlbumBaseDTO {
   @Column({default: false})
   locked: boolean;
 
-  @OneToMany(() => ProjectedAlbumCacheEntity, (c) => c.album)
+  @OneToOne(() => ProjectedAlbumCacheEntity, (c) => c.album)
   public cache: ProjectedAlbumCacheEntity;
 }

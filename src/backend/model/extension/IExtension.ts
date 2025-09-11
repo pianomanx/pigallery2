@@ -17,7 +17,6 @@ import {CoverPhotoDTOWithID} from '../database/CoverManager';
 import {ParentDirectoryDTO} from '../../../common/entities/DirectoryDTO';
 import {DirectoryScanSettings} from '../fileaccess/DiskManager';
 import {SessionContext} from '../SessionContext';
-import {ProjectedCacheManager} from '../database/ProjectedCacheManager';
 
 
 export type IExtensionBeforeEventHandler<I extends unknown[], O> = (input: I, event: { stopPropagation: boolean }) => Promise<I | O>;
@@ -42,7 +41,7 @@ export interface IExtensionEvents {
      * Events for Directory and Album covers
      */
     CoverManager: {
-      getCoverForAlbum: IExtensionEvent<[{
+      getCoverForAlbum: IExtensionEvent<[session: SessionContext, {
         searchQuery: SearchQueryDTO;
       }], CoverPhotoDTOWithID>;
       getCoverForDirectory: IExtensionEvent<[
@@ -52,7 +51,7 @@ export interface IExtensionEvents {
           path: string;
         }], CoverPhotoDTOWithID>
     },
-    ProjectedCacheManager:{
+    ProjectedCacheManager: {
       /**
        * Invalidates directory covers and caches for a given directory and every parent
        */

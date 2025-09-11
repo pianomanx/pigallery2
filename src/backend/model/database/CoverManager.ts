@@ -9,11 +9,9 @@ import {SearchQueryDTO, SearchQueryTypes, TextSearch,} from '../../../common/ent
 import {DirectoryEntity} from './enitites/DirectoryEntity';
 import {Utils} from '../../../common/Utils';
 import {CoverPhotoDTO} from '../../../common/entities/PhotoDTO';
-import {IObjectManager} from './IObjectManager';
 import {Logger} from '../../Logger';
 import {SearchManager} from './SearchManager';
 import {ExtensionDecorator} from '../extension/ExtensionDecorator';
-import {ProjectedDirectoryCacheEntity} from './enitites/ProjectedDirectoryCacheEntity';
 import {SessionContext} from '../SessionContext';
 
 const LOG_TAG = '[CoverManager]';
@@ -38,9 +36,11 @@ export class CoverManager {
 
 
   @ExtensionDecorator(e => e.gallery.CoverManager.getCoverForAlbum)
-  public async getCoverForAlbum(album: {
-    searchQuery: SearchQueryDTO;
-  }): Promise<CoverPhotoDTOWithID> {
+  public async getCoverForAlbum(
+    session: SessionContext,
+    album: {
+      searchQuery: SearchQueryDTO;
+    }): Promise<CoverPhotoDTOWithID> {
     const albumQuery: Brackets = await
       ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(album.searchQuery);
     const connection = await SQLConnection.getConnection();
@@ -52,6 +52,11 @@ export class CoverManager {
         .innerJoin('media.directory', 'directory')
         .select(['media.name', 'media.id', ...CoverManager.DIRECTORY_SELECT])
         .where(albumQuery);
+
+      if (session.projectionQuery) {
+        query.andWhere(session.projectionQuery);
+      }
+
       SearchManager.setSorting(query, Config.AlbumCover.Sorting);
       return query;
     };

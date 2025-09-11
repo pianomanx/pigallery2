@@ -99,10 +99,17 @@ export class AlbumManager implements IObjectManager {
     }
     Logger.debug(LOG_TAG, 'Updating derived album data');
     const connection = await SQLConnection.getConnection();
-    const albums = await connection.getRepository(AlbumBaseEntity).find();
+    const albums = await connection
+      .getRepository(SavedSearchEntity)
+      .createQueryBuilder('album')
+      .leftJoinAndSelect('album.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: session.user.projectionKey})
+      .getMany();
 
     for (const a of albums) {
-      await AlbumManager.updateAlbum(session, a as SavedSearchEntity);
+      if (a.cache?.valid === true) {
+        continue;
+      }
+      await AlbumManager.updateAlbum(session, a);
       // giving back the control to the main event loop (Macrotask queue)
       // https://blog.insiderattack.net/promises-next-ticks-and-immediates-nodejs-event-loop-part-3-9226cbe7a6aa
       await new Promise(setImmediate);

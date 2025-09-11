@@ -83,7 +83,6 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
         id: 1,
         name: 'Test Album',
         locked: false,
-        count: 0,
         searchQuery: query
       } as SavedSearchDTO]);
     });
@@ -103,14 +102,12 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
           id: 1,
           name: 'Test Album',
           locked: false,
-          count: 0,
           searchQuery: query
         } as SavedSearchDTO,
         {
           id: 2,
           name: 'Test Album2',
           locked: true,
-          count: 0,
           searchQuery: query
         } as SavedSearchDTO]);
 
@@ -119,7 +116,6 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
         id: 2,
         name: 'Test Album2',
         locked: true,
-        count: 0,
         searchQuery: query
       } as SavedSearchDTO]);
 
@@ -133,7 +129,6 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
         id: 2,
         name: 'Test Album2',
         locked: true,
-        count: 0,
         searchQuery: query
       } as SavedSearchDTO]);
     });
@@ -146,14 +141,20 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
 
     await am.addSavedSearch('Test Album', Utils.clone(query));
 
-    expect(await am.getAlbums(DBTestHelper.defaultSession)).to.deep.equalInAnyOrder(([{
+    expect(await am.getAlbums(DBTestHelper.defaultSession)).to.deep.equalInAnyOrder([{
       id: 1,
       name: 'Test Album',
       searchQuery: query,
       locked: false,
-      count: 1,
-      cover: toAlbumCover(sqlHelper.testGalleyEntities.p)
-    } as SavedSearchDTO]));
+      cache: {
+        cover: toAlbumCover(sqlHelper.testGalleyEntities.p),
+        id: 1,
+        itemCount: 1,
+        oldestMedia: sqlHelper.testGalleyEntities.p.metadata.creationDate,
+        valid: true,
+        youngestMedia: sqlHelper.testGalleyEntities.p.metadata.creationDate,
+      },
+    } as SavedSearchDTO]);
 
 
   });
