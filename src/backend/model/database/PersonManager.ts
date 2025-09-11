@@ -313,7 +313,7 @@ export class PersonManager implements IObjectManager {
     const connection = await SQLConnection.getConnection();
     const personRepository = connection.getRepository(PersonEntry);
     this.personsCache = this.personsCache || {};
-    const persons = await personRepository
+    this.personsCache[session.user.projectionKey] = await personRepository
       .createQueryBuilder('person')
       .leftJoin('person.cache', 'cache', 'cache.projectionKey = :pk', {pk: session.user.projectionKey})
       .leftJoin('cache.sampleRegion', 'sampleRegion')
@@ -332,13 +332,6 @@ export class PersonManager implements IObjectManager {
       .where('cache.valid = 1 AND cache.count > 0')
       .getMany();
 
-    // Fix cache property: convert from array to single object
-    this.personsCache[session.user.projectionKey] = persons.map(person => {
-      if (person.cache && Array.isArray(person.cache) && person.cache.length > 0) {
-        person.cache = person.cache[0];
-      }
-      return person;
-    });
   }
 
 }

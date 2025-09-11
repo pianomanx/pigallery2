@@ -1,4 +1,4 @@
-import {Column, Entity, Index, OneToMany, PrimaryGeneratedColumn, Unique,} from 'typeorm';
+import {Column, Entity, Index, OneToMany, OneToOne, PrimaryGeneratedColumn, Unique,} from 'typeorm';
 import {PersonJunctionTable} from './PersonJunctionTable';
 import {columnCharsetCS} from './EntityUtils';
 import {PersonDTO} from '../../../../common/entities/PersonDTO';
@@ -24,7 +24,7 @@ export class PersonEntry implements PersonDTO {
   public faces: PersonJunctionTable[];
 
 
-  @OneToMany(() => ProjectedPersonCacheEntity, (ppc) => ppc.person)
+  @OneToOne(() => ProjectedPersonCacheEntity, (ppc) => ppc.person)
   public cache: ProjectedPersonCacheEntity;
 
   // does not store in the DB, temporal fields populated from cache/joins
