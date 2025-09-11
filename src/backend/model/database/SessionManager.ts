@@ -6,7 +6,6 @@ import {ANDSearchQuery, SearchQueryDTO, SearchQueryTypes} from '../../../common/
 import {SharingEntity} from './enitites/SharingEntity';
 import {ObjectManagers} from '../ObjectManagers';
 import {Logger} from '../../Logger';
-import {Utils} from '../../../common/Utils';
 
 const LOG_TAG = '[SessionManager]';
 

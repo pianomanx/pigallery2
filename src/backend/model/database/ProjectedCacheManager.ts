@@ -17,7 +17,7 @@ import {SessionContext} from '../SessionContext';
 import {MediaEntity} from './enitites/MediaEntity';
 import {Config} from '../../../common/config/private/Config';
 import {DatabaseType} from '../../../common/config/private/PrivateConfig';
-import {ProjectedPersonCacheEntity} from './enitites/ProjectedPersonCacheEntity';
+import {ProjectedPersonCacheEntity} from './enitites/person/ProjectedPersonCacheEntity';
 
 const LOG_TAG = '[ProjectedCacheManager]';
 
@@ -33,55 +33,6 @@ export class ProjectedCacheManager implements IObjectManager {
       return;
     }
     await this.invalidateDirectoryCache(changedDir);
-  }
-
-  @ExtensionDecorator(e => e.gallery.ProjectedCacheManager.invalidateDirectoryCache)
-  protected async invalidateDirectoryCache(dir: ParentDirectoryDTO) {
-    const connection = await SQLConnection.getConnection();
-    const dirRepo = connection.getRepository(DirectoryEntity);
-
-    // Collect directory paths from target to root
-    const paths: { path: string; name: string }[] = [];
-    let fullPath = DiskManager.normalizeDirPath(path.join(dir.path, dir.name));
-    const root = DiskManager.pathFromRelativeDirName('.');
-
-    // Build path-name pairs for current directory and all parents
-    while (fullPath !== root) {
-      const name = DiskManager.dirName(fullPath);
-      const parentPath = DiskManager.pathFromRelativeDirName(fullPath);
-      paths.push({path: parentPath, name});
-      fullPath = parentPath;
-    }
-
-    // Add root directory
-    paths.push({path: DiskManager.pathFromRelativeDirName(root), name: DiskManager.dirName(root)});
-
-    if (paths.length === 0) {
-      return;
-    }
-
-    // Build query for all directories in one shot
-    const qb = dirRepo.createQueryBuilder('d');
-    paths.forEach((p, i) => {
-      qb.orWhere(new Brackets(q => {
-        q.where(`d.path = :path${i}`, {[`path${i}`]: p.path})
-          .andWhere(`d.name = :name${i}`, {[`name${i}`]: p.name});
-      }));
-    });
-
-    // Find matching directories and invalidate their cache entries
-    const entities = await qb.getMany();
-    if (entities.length === 0) {
-      return;
-    }
-
-    // Invalidate all related cache entries in one operation
-    await connection.getRepository(ProjectedDirectoryCacheEntity)
-      .createQueryBuilder()
-      .update()
-      .set({valid: false})
-      .where('directoryId IN (:...dirIds)', {dirIds: entities.map(e => e.id)})
-      .execute();
   }
 
   public async getAllProjections(): Promise<string[]> {
@@ -141,7 +92,6 @@ export class ProjectedCacheManager implements IObjectManager {
       .where('projectionKey NOT IN (:...keys)', {keys})
       .execute();
   }
-
 
   public async setAndGetCacheForDirectory(connection: Connection, session: SessionContext, dir: {
     id: number,
@@ -251,7 +201,7 @@ export class ProjectedCacheManager implements IObjectManager {
       .where('pac.projectionKey = :pk AND a.id = :albumId', {pk: projectionKey, albumId: album.id})
       .getOne();
 
-    if(row.valid === true){
+    if (row.valid === true) {
       return row;
     }
 
@@ -318,6 +268,55 @@ export class ProjectedCacheManager implements IObjectManager {
     const connection = await SQLConnection.getConnection();
     await connection.getRepository(ProjectedAlbumCacheEntity)
       .update({album: {id: albumId} as any}, {valid: false});
+  }
+
+  @ExtensionDecorator(e => e.gallery.ProjectedCacheManager.invalidateDirectoryCache)
+  protected async invalidateDirectoryCache(dir: ParentDirectoryDTO) {
+    const connection = await SQLConnection.getConnection();
+    const dirRepo = connection.getRepository(DirectoryEntity);
+
+    // Collect directory paths from target to root
+    const paths: { path: string; name: string }[] = [];
+    let fullPath = DiskManager.normalizeDirPath(path.join(dir.path, dir.name));
+    const root = DiskManager.pathFromRelativeDirName('.');
+
+    // Build path-name pairs for current directory and all parents
+    while (fullPath !== root) {
+      const name = DiskManager.dirName(fullPath);
+      const parentPath = DiskManager.pathFromRelativeDirName(fullPath);
+      paths.push({path: parentPath, name});
+      fullPath = parentPath;
+    }
+
+    // Add root directory
+    paths.push({path: DiskManager.pathFromRelativeDirName(root), name: DiskManager.dirName(root)});
+
+    if (paths.length === 0) {
+      return;
+    }
+
+    // Build query for all directories in one shot
+    const qb = dirRepo.createQueryBuilder('d');
+    paths.forEach((p, i) => {
+      qb.orWhere(new Brackets(q => {
+        q.where(`d.path = :path${i}`, {[`path${i}`]: p.path})
+          .andWhere(`d.name = :name${i}`, {[`name${i}`]: p.name});
+      }));
+    });
+
+    // Find matching directories and invalidate their cache entries
+    const entities = await qb.getMany();
+    if (entities.length === 0) {
+      return;
+    }
+
+    // Invalidate all related cache entries in one operation
+    await connection.getRepository(ProjectedDirectoryCacheEntity)
+      .createQueryBuilder()
+      .update()
+      .set({valid: false})
+      .where('directoryId IN (:...dirIds)', {dirIds: entities.map(e => e.id)})
+      .execute();
   }
 
 }

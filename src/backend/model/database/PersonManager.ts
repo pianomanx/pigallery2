@@ -1,47 +1,18 @@
 import {SQLConnection} from './SQLConnection';
-import {PersonEntry} from './enitites/PersonEntry';
+import {PersonEntry} from './enitites/person/PersonEntry';
 import {PersonDTO} from '../../../common/entities/PersonDTO';
 import {Logger} from '../../Logger';
 import {SQL_COLLATE} from './enitites/EntityUtils';
-import {PersonJunctionTable} from './enitites/PersonJunctionTable';
+import {PersonJunctionTable} from './enitites/person/PersonJunctionTable';
 import {IObjectManager} from './IObjectManager';
 import {ParentDirectoryDTO} from '../../../common/entities/DirectoryDTO';
-import {ProjectedPersonCacheEntity} from './enitites/ProjectedPersonCacheEntity';
+import {ProjectedPersonCacheEntity} from './enitites/person/ProjectedPersonCacheEntity';
 import {SessionContext} from '../SessionContext';
 
 const LOG_TAG = '[PersonManager]';
 
 export class PersonManager implements IObjectManager {
   personsCache: Record<string, PersonEntry[]> = null;
-
-  private static async updateCounts(): Promise<void> {
-    const connection = await SQLConnection.getConnection();
-    await connection.query(
-      'UPDATE person_entry SET count = ' +
-      ' (SELECT COUNT(1) FROM person_junction_table WHERE person_junction_table.personId = person_entry.id)'
-    );
-
-    // remove persons without photo
-    await connection
-      .createQueryBuilder()
-      .delete()
-      .from(PersonEntry)
-      .where('count = 0')
-      .execute();
-  }
-
-  private static async updateSamplePhotos(): Promise<void> {
-    const connection = await SQLConnection.getConnection();
-    await connection.query(
-      'update person_entry set sampleRegionId = ' +
-      '(Select person_junction_table.id from  media_entity ' +
-      'left join person_junction_table on media_entity.id = person_junction_table.mediaId ' +
-      'where person_junction_table.personId=person_entry.id ' +
-      'order by media_entity.metadataRating desc, ' +
-      'media_entity.metadataCreationdate desc ' +
-      'limit 1)'
-    );
-  }
 
   private async updateCacheForAll(session: SessionContext): Promise<void> {
     const connection = await SQLConnection.getConnection();

@@ -14,39 +14,24 @@ import {MediaEntity} from './enitites/MediaEntity';
 import {VideoEntity} from './enitites/VideoEntity';
 import {DataStructureVersion} from '../../../common/DataStructureVersion';
 import {FileEntity} from './enitites/FileEntity';
-import {PersonEntry} from './enitites/PersonEntry';
+import {PersonEntry} from './enitites/person/PersonEntry';
 import {Utils} from '../../../common/Utils';
 import * as path from 'path';
 import {DatabaseType, ServerDataBaseConfig, SQLLogLevel,} from '../../../common/config/private/PrivateConfig';
 import {AlbumBaseEntity} from './enitites/album/AlbumBaseEntity';
 import {SavedSearchEntity} from './enitites/album/SavedSearchEntity';
 import {NotificationManager} from '../NotifocationManager';
-import {PersonJunctionTable} from './enitites/PersonJunctionTable';
+import {PersonJunctionTable} from './enitites/person/PersonJunctionTable';
 import {MDFileEntity} from './enitites/MDFileEntity';
-import { ProjectedDirectoryCacheEntity } from './enitites/ProjectedDirectoryCacheEntity';
-import { ProjectedPersonCacheEntity } from './enitites/ProjectedPersonCacheEntity';
-import { ProjectedAlbumCacheEntity } from './enitites/album/ProjectedAlbumCacheEntity';
+import {ProjectedDirectoryCacheEntity} from './enitites/ProjectedDirectoryCacheEntity';
+import {ProjectedPersonCacheEntity} from './enitites/person/ProjectedPersonCacheEntity';
+import {ProjectedAlbumCacheEntity} from './enitites/album/ProjectedAlbumCacheEntity';
 
 const LOG_TAG = '[SQLConnection]';
 
 type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 
 export class SQLConnection {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  public static getEntries(): Function[] {
-    return this.entries;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  public static async addEntries(tables: Function[]) {
-    if (!tables?.length) {
-      return;
-    }
-    await this.close();
-    this.entries = Utils.getUnique(this.entries.concat(tables));
-    await (await this.getConnection()).synchronize();
-  }
-
   // eslint-disable-next-line @typescript-eslint/ban-types
   private static entries: Function[] = [
     UserEntity,
@@ -67,9 +52,25 @@ export class SQLConnection {
     ProjectedPersonCacheEntity,
     ProjectedAlbumCacheEntity
   ];
-
   private static connection: Connection = null;
+  private static FIXED_SQL_TABLE = [
+    'sqlite_sequence'
+  ];
 
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  public static getEntries(): Function[] {
+    return this.entries;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  public static async addEntries(tables: Function[]) {
+    if (!tables?.length) {
+      return;
+    }
+    await this.close();
+    this.entries = Utils.getUnique(this.entries.concat(tables));
+    await (await this.getConnection()).synchronize();
+  }
 
   public static async getConnection(): Promise<Connection> {
     if (this.connection == null) {
@@ -166,10 +167,6 @@ export class SQLConnection {
       console.error(err);
     }
   }
-
-  private static FIXED_SQL_TABLE = [
-    'sqlite_sequence'
-  ];
 
   /**
    * Clears up the DB from unused tables. use it when the entities list are up-to-date (extensions won't add any new)

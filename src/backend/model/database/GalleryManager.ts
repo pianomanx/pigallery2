@@ -367,8 +367,8 @@ export class GalleryManager {
     // search does not return a directory if that is recursively having 0 media
     // gallery listing should otherwise, we won't be able to trigger lazy indexing
     // this behavior lets us explicitly hid a directory if it is explicitly blocked
-    if(session.projectionQueryForSubDir) {
-      query.andWhere(new Brackets(q=>{
+    if (session.projectionQueryForSubDir) {
+      query.andWhere(new Brackets(q => {
         q.where(session.projectionQueryForSubDir);
         // also select directories when they have no child dirs.
         q.orWhere('directories.id is NULL');

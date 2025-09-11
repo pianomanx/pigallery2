@@ -1,7 +1,7 @@
 import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { PersonEntry } from './PersonEntry';
 import { PersonJunctionTable } from './PersonJunctionTable';
-import {PersonCacheDTO} from '../../../../common/entities/PersonDTO';
+import {PersonCacheDTO} from '../../../../../common/entities/PersonDTO';
 
 // Projection-aware cache for persons, analogous to ProjectedDirectoryCacheEntity
 // Stores per-projection aggregates for a given person

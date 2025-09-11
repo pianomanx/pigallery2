@@ -3,7 +3,7 @@ import {ErrorCodes, ErrorDTO} from '../../common/entities/Error';
 import {ObjectManagers} from '../model/ObjectManagers';
 import {PersonDTO,} from '../../common/entities/PersonDTO';
 import {Utils} from '../../common/Utils';
-import {PersonEntry} from '../model/database/enitites/PersonEntry';
+import {PersonEntry} from '../model/database/enitites/person/PersonEntry';
 
 export class PersonMWs {
   public static async updatePerson(

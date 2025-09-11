@@ -1,7 +1,7 @@
 import {Column, Entity, Index, OneToMany, OneToOne, PrimaryGeneratedColumn, Unique,} from 'typeorm';
 import {PersonJunctionTable} from './PersonJunctionTable';
-import {columnCharsetCS} from './EntityUtils';
-import {PersonDTO} from '../../../../common/entities/PersonDTO';
+import {columnCharsetCS} from '../EntityUtils';
+import {PersonDTO} from '../../../../../common/entities/PersonDTO';
 import {ProjectedPersonCacheEntity} from './ProjectedPersonCacheEntity';
 
 @Entity()

@@ -15,7 +15,6 @@ import {Config} from '../../../../../src/common/config/private/Config';
 import {SortByTypes} from '../../../../../src/common/entities/SortingMethods';
 import {Utils} from '../../../../../src/common/Utils';
 import {SQLConnection} from '../../../../../src/backend/model/database/SQLConnection';
-import {DirectoryEntity} from '../../../../../src/backend/model/database/enitites/DirectoryEntity';
 import {ClientSortingConfig} from '../../../../../src/common/config/public/ClientConfig';
 import {SessionContext} from '../../../../../src/backend/model/SessionContext';
 import {ProjectedDirectoryCacheEntity} from '../../../../../src/backend/model/database/enitites/ProjectedDirectoryCacheEntity';
@@ -186,42 +185,47 @@ describe('CoverManager', (sqlHelper: DBTestHelper) => {
   it('should get cover for saved search', async () => {
     const pm = new CoverManager();
     Config.AlbumCover.SearchQuery = null;
-    expect(Utils.clone(await pm.getCoverForAlbum({
-      searchQuery: {
-        type: SearchQueryTypes.any_text,
-        text: 'sw'
-      } as TextSearch
-    }))).to.deep.equalInAnyOrder(previewifyMedia(p4));
+    expect(Utils.clone(await pm.getCoverForAlbum(
+      DBTestHelper.defaultSession, {
+        searchQuery: {
+          type: SearchQueryTypes.any_text,
+          text: 'sw'
+        } as TextSearch
+      }))).to.deep.equalInAnyOrder(previewifyMedia(p4));
     Config.AlbumCover.SearchQuery = {type: SearchQueryTypes.any_text, text: 'Boba'} as TextSearch;
-    expect(Utils.clone(await pm.getCoverForAlbum({
-      searchQuery: {
-        type: SearchQueryTypes.any_text,
-        text: 'sw'
-      } as TextSearch
-    }))).to.deep.equalInAnyOrder(previewifyMedia(p));
+    expect(Utils.clone(await pm.getCoverForAlbum(
+      DBTestHelper.defaultSession, {
+        searchQuery: {
+          type: SearchQueryTypes.any_text,
+          text: 'sw'
+        } as TextSearch
+      }))).to.deep.equalInAnyOrder(previewifyMedia(p));
     Config.AlbumCover.SearchQuery = {type: SearchQueryTypes.any_text, text: 'Derem'} as TextSearch;
-    expect(Utils.clone(await pm.getCoverForAlbum({
-      searchQuery: {
-        type: SearchQueryTypes.any_text,
-        text: 'sw'
-      } as TextSearch
-    }))).to.deep.equalInAnyOrder(previewifyMedia(p2));
+    expect(Utils.clone(await pm.getCoverForAlbum(
+      DBTestHelper.defaultSession, {
+        searchQuery: {
+          type: SearchQueryTypes.any_text,
+          text: 'sw'
+        } as TextSearch
+      }))).to.deep.equalInAnyOrder(previewifyMedia(p2));
     // Having a preview search query that does not return valid result
     Config.AlbumCover.SearchQuery = {type: SearchQueryTypes.any_text, text: 'wont find it'} as TextSearch;
-    expect(Utils.clone(await pm.getCoverForAlbum({
-      searchQuery: {
-        type: SearchQueryTypes.any_text,
-        text: 'Derem'
-      } as TextSearch
-    }))).to.deep.equalInAnyOrder(previewifyMedia(p2));
+    expect(Utils.clone(await pm.getCoverForAlbum(
+      DBTestHelper.defaultSession, {
+        searchQuery: {
+          type: SearchQueryTypes.any_text,
+          text: 'Derem'
+        } as TextSearch
+      }))).to.deep.equalInAnyOrder(previewifyMedia(p2));
     // having a saved search that does not have any image
     Config.AlbumCover.SearchQuery = {type: SearchQueryTypes.any_text, text: 'Derem'} as TextSearch;
-    expect(Utils.clone(await pm.getCoverForAlbum({
-      searchQuery: {
-        type: SearchQueryTypes.any_text,
-        text: 'wont find it'
-      } as TextSearch
-    }))).to.deep.equal(null);
+    expect(Utils.clone(await pm.getCoverForAlbum(
+      DBTestHelper.defaultSession, {
+        searchQuery: {
+          type: SearchQueryTypes.any_text,
+          text: 'wont find it'
+        } as TextSearch
+      }))).to.deep.equal(null);
   });
 
 });

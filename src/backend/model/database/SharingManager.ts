@@ -69,7 +69,7 @@ export class SharingManager {
       sharing.password = PasswordHelper.cryptPassword(sharing.password);
     }
     if (sharing.searchQuery) {
-      SearchQueryUtils.validateSearchQuery(sharing.searchQuery)
+      SearchQueryUtils.validateSearchQuery(sharing.searchQuery);
       sharing.searchQuery = SearchQueryUtils.sortQuery(sharing.searchQuery);
     }
     return connection.getRepository(SharingEntity).save(sharing);

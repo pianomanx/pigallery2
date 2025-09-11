@@ -5,7 +5,7 @@ import {SQLConnection} from './SQLConnection';
 import {PhotoEntity} from './enitites/PhotoEntity';
 import {DirectoryEntity} from './enitites/DirectoryEntity';
 import {MediaEntity} from './enitites/MediaEntity';
-import {PersonEntry} from './enitites/PersonEntry';
+import {PersonEntry} from './enitites/person/PersonEntry';
 import {Brackets, SelectQueryBuilder, WhereExpression} from 'typeorm';
 import {Config} from '../../../common/config/private/Config';
 import {
@@ -47,6 +47,50 @@ export class SearchManager {
   ];
   // makes all search query params unique, so typeorm won't mix them
   private queryIdBase = 0;
+
+  public static setSorting<T>(
+    query: SelectQueryBuilder<T>,
+    sortings: SortingMethod[]
+  ): SelectQueryBuilder<T> {
+    if (!sortings || !Array.isArray(sortings)) {
+      return query;
+    }
+    if (sortings.findIndex(s => s.method == SortByTypes.Random) !== -1 && sortings.length > 1) {
+      throw new Error('Error during applying sorting: Can\' randomize and also sort the result. Bad input:' + sortings.map(s => GroupSortByTypes[s.method]).join(', '));
+    }
+    for (const sort of sortings) {
+      switch (sort.method) {
+        case SortByTypes.Date:
+          if (Config.Gallery.ignoreTimestampOffset === true) {
+            query.addOrderBy('media.metadata.creationDate + (coalesce(media.metadata.creationDateOffset,0) * 60000)', sort.ascending ? 'ASC' : 'DESC');
+          } else {
+            query.addOrderBy('media.metadata.creationDate', sort.ascending ? 'ASC' : 'DESC');
+          }
+          break;
+        case SortByTypes.Rating:
+          query.addOrderBy('media.metadata.rating', sort.ascending ? 'ASC' : 'DESC');
+          break;
+        case SortByTypes.Name:
+          query.addOrderBy('media.name', sort.ascending ? 'ASC' : 'DESC');
+          break;
+        case SortByTypes.PersonCount:
+          query.addOrderBy('media.metadata.personsLength', sort.ascending ? 'ASC' : 'DESC');
+          break;
+        case SortByTypes.FileSize:
+          query.addOrderBy('media.metadata.fileSize', sort.ascending ? 'ASC' : 'DESC');
+          break;
+        case SortByTypes.Random:
+          if (Config.Database.type === DatabaseType.mysql) {
+            query.groupBy('RAND(), media.id');
+          } else {
+            query.groupBy('RANDOM()');
+          }
+          break;
+      }
+    }
+
+    return query;
+  }
 
   private static autoCompleteItemsUnique(
     array: Array<AutoCompleteItem>
@@ -402,51 +446,6 @@ export class SearchManager {
     }
 
     return result;
-  }
-
-
-  public static setSorting<T>(
-    query: SelectQueryBuilder<T>,
-    sortings: SortingMethod[]
-  ): SelectQueryBuilder<T> {
-    if (!sortings || !Array.isArray(sortings)) {
-      return query;
-    }
-    if (sortings.findIndex(s => s.method == SortByTypes.Random) !== -1 && sortings.length > 1) {
-      throw new Error('Error during applying sorting: Can\' randomize and also sort the result. Bad input:' + sortings.map(s => GroupSortByTypes[s.method]).join(', '));
-    }
-    for (const sort of sortings) {
-      switch (sort.method) {
-        case SortByTypes.Date:
-          if (Config.Gallery.ignoreTimestampOffset === true) {
-            query.addOrderBy('media.metadata.creationDate + (coalesce(media.metadata.creationDateOffset,0) * 60000)', sort.ascending ? 'ASC' : 'DESC');
-          } else {
-            query.addOrderBy('media.metadata.creationDate', sort.ascending ? 'ASC' : 'DESC');
-          }
-          break;
-        case SortByTypes.Rating:
-          query.addOrderBy('media.metadata.rating', sort.ascending ? 'ASC' : 'DESC');
-          break;
-        case SortByTypes.Name:
-          query.addOrderBy('media.name', sort.ascending ? 'ASC' : 'DESC');
-          break;
-        case SortByTypes.PersonCount:
-          query.addOrderBy('media.metadata.personsLength', sort.ascending ? 'ASC' : 'DESC');
-          break;
-        case SortByTypes.FileSize:
-          query.addOrderBy('media.metadata.fileSize', sort.ascending ? 'ASC' : 'DESC');
-          break;
-        case SortByTypes.Random:
-          if (Config.Database.type === DatabaseType.mysql) {
-            query.groupBy('RAND(), media.id');
-          } else {
-            query.groupBy('RANDOM()');
-          }
-          break;
-      }
-    }
-
-    return query;
   }
 
   public async getNMedia(session: SessionContext, query: SearchQueryDTO, sortings: SortingMethod[], take: number, photoOnly = false) {
@@ -1185,6 +1184,19 @@ export class SearchManager {
     });
   }
 
+  public hasDirectoryQuery(query: SearchQueryDTO): boolean {
+    switch (query.type) {
+      case SearchQueryTypes.AND:
+      case SearchQueryTypes.OR:
+      case SearchQueryTypes.SOME_OF:
+        return (query as SearchListQuery).list.some(q => this.hasDirectoryQuery(q));
+      case SearchQueryTypes.any_text:
+      case SearchQueryTypes.directory:
+        return true;
+    }
+    return false;
+  }
+
   protected flattenSameOfQueries(query: SearchQueryDTO): SearchQueryDTO {
     switch (query.type) {
       case SearchQueryTypes.AND:
@@ -1302,20 +1314,6 @@ export class SearchManager {
       this.queryIdBase + '_' + id.value;
     id.value++;
     return queryIN;
-  }
-
-
-  public hasDirectoryQuery(query: SearchQueryDTO): boolean {
-    switch (query.type) {
-      case SearchQueryTypes.AND:
-      case SearchQueryTypes.OR:
-      case SearchQueryTypes.SOME_OF:
-        return (query as SearchListQuery).list.some(q => this.hasDirectoryQuery(q));
-      case SearchQueryTypes.any_text:
-      case SearchQueryTypes.directory:
-        return true;
-    }
-    return false;
   }
 
   /**

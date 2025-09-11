@@ -18,12 +18,11 @@ import {ProjectPath} from '../../ProjectPath';
 import * as path from 'path';
 import * as fs from 'fs';
 import {SearchQueryDTO} from '../../../common/entities/SearchQueryDTO';
-import {PersonEntry} from './enitites/PersonEntry';
-import {PersonJunctionTable} from './enitites/PersonJunctionTable';
+import {PersonEntry} from './enitites/person/PersonEntry';
+import {PersonJunctionTable} from './enitites/person/PersonJunctionTable';
 import {MDFileEntity} from './enitites/MDFileEntity';
 import {MDFileDTO} from '../../../common/entities/MDFileDTO';
 import {DiskManager} from '../fileaccess/DiskManager';
-import {SessionContext} from '../SessionContext';
 import {ProjectedDirectoryCacheEntity} from './enitites/ProjectedDirectoryCacheEntity';
 
 const LOG_TAG = '[IndexingManager]';

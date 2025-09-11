@@ -8,7 +8,7 @@ import {MediaRendererInput, PhotoWorker, SvgRendererInput, ThumbnailSourceType,}
 import {ITaskExecuter, TaskExecuter} from '../TaskExecuter';
 import {FaceRegion, PhotoDTO} from '../../../../common/entities/PhotoDTO';
 import {SupportedFormats} from '../../../../common/SupportedFormats';
-import {PersonEntry} from '../../database/enitites/PersonEntry';
+import {PersonEntry} from '../../database/enitites/person/PersonEntry';
 import {SVGIconConfig} from '../../../../common/config/public/ClientConfig';
 
 export class PhotoProcessing {

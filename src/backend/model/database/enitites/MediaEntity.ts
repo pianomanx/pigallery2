@@ -1,10 +1,10 @@
 import {Column, Entity, Index, ManyToOne, OneToMany, PrimaryGeneratedColumn, TableInheritance, Unique,} from 'typeorm';
 import {DirectoryEntity} from './DirectoryEntity';
 import {MediaDimension, MediaDTO, MediaMetadata,} from '../../../../common/entities/MediaDTO';
-import {PersonJunctionTable} from './PersonJunctionTable';
+import {PersonJunctionTable} from './person/PersonJunctionTable';
 import {columnCharsetCS} from './EntityUtils';
 import {CameraMetadata, FaceRegion, GPSMetadata, PositionMetaData,} from '../../../../common/entities/PhotoDTO';
-import { Utils } from '../../../../common/Utils';
+import {Utils} from '../../../../common/Utils';
 
 export class MediaDimensionEntity implements MediaDimension {
   @Column('int')
@@ -106,7 +106,7 @@ export class MediaMetadataEntity implements MediaMetadata {
   })
   @Index()
   creationDate: number;
-  
+
   @Column('smallint', {
     transformer: {
       from: (v) => Utils.getOffsetString(v), //from database repr. as smallint (minutes) to string (+/-HH:MM)
