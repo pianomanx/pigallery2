@@ -7,6 +7,7 @@ import {SavedSearchEntity} from './enitites/album/SavedSearchEntity';
 import {Logger} from '../../Logger';
 import {IObjectManager} from './IObjectManager';
 import {SessionContext} from '../SessionContext';
+import {ProjectedAlbumCacheEntity} from './enitites/album/ProjectedAlbumCacheEntity';
 
 const LOG_TAG = '[AlbumManager]';
 
@@ -14,7 +15,7 @@ export class AlbumManager implements IObjectManager {
   /**
    * Person table contains denormalized data that needs to update when isDBValid = false
    */
-  private isDBValid = false;
+  private isDBValid:Record<string, boolean> = {};
 
   private static async updateAlbum(session: SessionContext, album: SavedSearchEntity): Promise<void> {
     const connection = await SQLConnection.getConnection();
@@ -90,11 +91,18 @@ export class AlbumManager implements IObjectManager {
   }
 
   public async resetCovers(): Promise<void> {
-    this.isDBValid = false;
+    this.isDBValid = {};
+    // Invalidate all album cache entries
+    const connection = await SQLConnection.getConnection();
+    await connection.getRepository(ProjectedAlbumCacheEntity)
+      .createQueryBuilder()
+      .update()
+      .set({valid: false})
+      .execute();
   }
 
   private async updateAlbums(session: SessionContext): Promise<void> {
-    if (this.isDBValid === true) {
+    if (this.isDBValid[session.user.projectionKey] === true) {
       return;
     }
     Logger.debug(LOG_TAG, 'Updating derived album data');
@@ -114,7 +122,7 @@ export class AlbumManager implements IObjectManager {
       // https://blog.insiderattack.net/promises-next-ticks-and-immediates-nodejs-event-loop-part-3-9226cbe7a6aa
       await new Promise(setImmediate);
     }
-    this.isDBValid = true;
+    this.isDBValid[session.user.projectionKey] = true;
   }
 
   async deleteAll() {

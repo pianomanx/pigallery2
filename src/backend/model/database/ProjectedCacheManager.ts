@@ -201,7 +201,7 @@ export class ProjectedCacheManager implements IObjectManager {
       .where('pac.projectionKey = :pk AND a.id = :albumId', {pk: projectionKey, albumId: album.id})
       .getOne();
 
-    if (row.valid === true) {
+    if (row && row.valid === true) {
       return row;
     }
 
