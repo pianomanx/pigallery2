@@ -15,7 +15,7 @@ export class AlbumMWs {
     }
     try {
       req.resultPipe =
-        await ObjectManagers.getInstance().AlbumManager.getAlbums();
+        await ObjectManagers.getInstance().AlbumManager.getAlbums(req.session.context);
       return next();
     } catch (err) {
       return next(

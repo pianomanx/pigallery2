@@ -25,6 +25,7 @@ import {PersonJunctionTable} from './enitites/PersonJunctionTable';
 import {MDFileEntity} from './enitites/MDFileEntity';
 import { ProjectedDirectoryCacheEntity } from './enitites/ProjectedDirectoryCacheEntity';
 import { ProjectedPersonCacheEntity } from './enitites/ProjectedPersonCacheEntity';
+import { ProjectedAlbumCacheEntity } from './enitites/album/ProjectedAlbumCacheEntity';
 
 const LOG_TAG = '[SQLConnection]';
 
@@ -63,7 +64,8 @@ export class SQLConnection {
     VersionEntity,
     // projection-aware cache entries
     ProjectedDirectoryCacheEntity,
-    ProjectedPersonCacheEntity
+    ProjectedPersonCacheEntity,
+    ProjectedAlbumCacheEntity
   ];
 
   private static connection: Connection = null;

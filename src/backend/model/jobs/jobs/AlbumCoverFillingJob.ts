@@ -46,7 +46,9 @@ export class AlbumCoverFillingJob extends Job {
   }
 
   private async stepAlbumCover(): Promise<boolean> {
-    await ObjectManagers.getInstance().AlbumManager.getAlbums();
+    for (const session of this.availableSessions) {
+      await ObjectManagers.getInstance().AlbumManager.getAlbums(session);
+    }
     this.Progress.log('Updating Albums cover');
     this.Progress.Processed++;
     return false;

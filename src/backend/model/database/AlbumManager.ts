@@ -1,7 +1,6 @@
 import {SQLConnection} from './SQLConnection';
 import {AlbumBaseEntity} from './enitites/album/AlbumBaseEntity';
 import {AlbumBaseDTO} from '../../../common/entities/album/AlbumBaseDTO';
-import {SavedSearchDTO} from '../../../common/entities/album/SavedSearchDTO';
 import {ObjectManagers} from '../ObjectManagers';
 import {SearchQueryDTO} from '../../../common/entities/SearchQueryDTO';
 import {SavedSearchEntity} from './enitites/album/SavedSearchEntity';
@@ -17,20 +16,15 @@ export class AlbumManager implements IObjectManager {
    */
   private isDBValid = false;
 
-  private static async updateAlbum(album: SavedSearchEntity): Promise<void> {
+  private static async updateAlbum(session: SessionContext, album: SavedSearchEntity): Promise<void> {
     const connection = await SQLConnection.getConnection();
-    const cover =
-      await ObjectManagers.getInstance().CoverManager.getCoverForAlbum(album);
-    // TODO: fix this github issue: #1015
-    const count = await
-      ObjectManagers.getInstance().SearchManager.getCount(new SessionContext(), (album as SavedSearchDTO).searchQuery);
 
-    await connection
-      .createQueryBuilder()
-      .update(AlbumBaseEntity)
-      .set({cover: cover, count})
-      .where('id = :id', {id: album.id})
-      .execute();
+    await ObjectManagers.getInstance().ProjectedCacheManager
+      .setAndGetCacheForAlbum(connection, session, {
+        id: album.id,
+        searchQuery: album.searchQuery
+      });
+
   }
 
   public async addIfNotExistSavedSearch(
@@ -57,7 +51,6 @@ export class AlbumManager implements IObjectManager {
     const a = await connection
       .getRepository(SavedSearchEntity)
       .save({name, searchQuery, locked: lockedAlbum});
-    await AlbumManager.updateAlbum(a);
   }
 
   public async deleteAlbum(id: number): Promise<void> {
@@ -76,16 +69,20 @@ export class AlbumManager implements IObjectManager {
       .delete({id, locked: false});
   }
 
-  public async getAlbums(): Promise<AlbumBaseDTO[]> {
-    await this.updateAlbums();
+  public async getAlbums(session: SessionContext): Promise<AlbumBaseDTO[]> {
+    await this.updateAlbums(session);
     const connection = await SQLConnection.getConnection();
+
+    // Return albums with projected cache data
     return await connection
       .getRepository(AlbumBaseEntity)
       .createQueryBuilder('album')
-      .leftJoin('album.cover', 'cover')
+      .leftJoin('album.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: session.user.projectionKey})
+      .leftJoin('cache.cover', 'cover')
       .leftJoin('cover.directory', 'directory')
-      .select(['album', 'cover.name', 'directory.name', 'directory.path'])
+      .select(['album', 'cache', 'cover.name', 'directory.name', 'directory.path'])
       .getMany();
+
   }
 
   public async onNewDataVersion(): Promise<void> {
@@ -96,7 +93,7 @@ export class AlbumManager implements IObjectManager {
     this.isDBValid = false;
   }
 
-  private async updateAlbums(): Promise<void> {
+  private async updateAlbums(session: SessionContext): Promise<void> {
     if (this.isDBValid === true) {
       return;
     }
@@ -105,7 +102,7 @@ export class AlbumManager implements IObjectManager {
     const albums = await connection.getRepository(AlbumBaseEntity).find();
 
     for (const a of albums) {
-      await AlbumManager.updateAlbum(a as SavedSearchEntity);
+      await AlbumManager.updateAlbum(session, a as SavedSearchEntity);
       // giving back the control to the main event loop (Macrotask queue)
       // https://blog.insiderattack.net/promises-next-ticks-and-immediates-nodejs-event-loop-part-3-9226cbe7a6aa
       await new Promise(setImmediate);

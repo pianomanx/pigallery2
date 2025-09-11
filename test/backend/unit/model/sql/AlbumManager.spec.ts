@@ -146,7 +146,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
 
     await am.addSavedSearch('Test Album', Utils.clone(query));
 
-    expect(await am.getAlbums()).to.deep.equalInAnyOrder(([{
+    expect(await am.getAlbums(DBTestHelper.defaultSession)).to.deep.equalInAnyOrder(([{
       id: 1,
       name: 'Test Album',
       searchQuery: query,
