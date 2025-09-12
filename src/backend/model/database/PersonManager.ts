@@ -162,7 +162,7 @@ export class PersonManager implements IObjectManager {
     }
     await repository.save(person);
 
-    await this.resetMemoryCache();
+     this.resetMemoryCache();
 
     return person;
   }

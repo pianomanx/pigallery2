@@ -264,12 +264,6 @@ export class ProjectedCacheManager implements IObjectManager {
     return ret;
   }
 
-  public async invalidateAlbumCache(albumId: number): Promise<void> {
-    const connection = await SQLConnection.getConnection();
-    await connection.getRepository(ProjectedAlbumCacheEntity)
-      .update({album: {id: albumId} as any}, {valid: false});
-  }
-
   @ExtensionDecorator(e => e.gallery.ProjectedCacheManager.invalidateDirectoryCache)
   protected async invalidateDirectoryCache(dir: ParentDirectoryDTO) {
     const connection = await SQLConnection.getConnection();

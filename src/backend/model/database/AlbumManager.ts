@@ -12,21 +12,7 @@ import {ProjectedAlbumCacheEntity} from './enitites/album/ProjectedAlbumCacheEnt
 const LOG_TAG = '[AlbumManager]';
 
 export class AlbumManager implements IObjectManager {
-  /**
-   * Person table contains denormalized data that needs to update when isDBValid = false
-   */
-  private isDBValid:Record<string, boolean> = {};
-
-  private static async updateAlbum(session: SessionContext, album: SavedSearchEntity): Promise<void> {
-    const connection = await SQLConnection.getConnection();
-
-    await ObjectManagers.getInstance().ProjectedCacheManager
-      .setAndGetCacheForAlbum(connection, session, {
-        id: album.id,
-        searchQuery: album.searchQuery
-      });
-
-  }
+  albumsCache: Record<string, AlbumBaseEntity[]> = {};
 
   public async addIfNotExistSavedSearch(
     name: string,
@@ -49,9 +35,10 @@ export class AlbumManager implements IObjectManager {
     lockedAlbum?: boolean
   ): Promise<void> {
     const connection = await SQLConnection.getConnection();
-    const a = await connection
+    await connection
       .getRepository(SavedSearchEntity)
       .save({name, searchQuery, locked: lockedAlbum});
+    this.resetMemoryCache();
   }
 
   public async deleteAlbum(id: number): Promise<void> {
@@ -68,14 +55,18 @@ export class AlbumManager implements IObjectManager {
     await connection
       .getRepository(AlbumBaseEntity)
       .delete({id, locked: false});
+    this.resetMemoryCache();
   }
 
   public async getAlbums(session: SessionContext): Promise<AlbumBaseDTO[]> {
+    if (this.albumsCache[session.user.projectionKey]) {
+      return this.albumsCache[session.user.projectionKey];
+    }
     await this.updateAlbums(session);
     const connection = await SQLConnection.getConnection();
 
     // Return albums with projected cache data
-    return await connection
+    this.albumsCache[session.user.projectionKey] = await connection
       .getRepository(AlbumBaseEntity)
       .createQueryBuilder('album')
       .leftJoin('album.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: session.user.projectionKey})
@@ -83,15 +74,15 @@ export class AlbumManager implements IObjectManager {
       .leftJoin('cover.directory', 'directory')
       .select(['album', 'cache', 'cover.name', 'directory.name', 'directory.path'])
       .getMany();
+    return this.albumsCache[session.user.projectionKey];
 
   }
 
   public async onNewDataVersion(): Promise<void> {
-    await this.resetCovers();
+    await this.invalidateCache();
   }
 
-  public async resetCovers(): Promise<void> {
-    this.isDBValid = {};
+  public async invalidateCache(): Promise<void> {
     // Invalidate all album cache entries
     const connection = await SQLConnection.getConnection();
     await connection.getRepository(ProjectedAlbumCacheEntity)
@@ -99,12 +90,19 @@ export class AlbumManager implements IObjectManager {
       .update()
       .set({valid: false})
       .execute();
+    this.resetMemoryCache();
+  }
+
+  async deleteAll() {
+    const connection = await SQLConnection.getConnection();
+    await connection
+      .getRepository(AlbumBaseEntity)
+      .createQueryBuilder('album')
+      .delete()
+      .execute();
   }
 
   private async updateAlbums(session: SessionContext): Promise<void> {
-    if (this.isDBValid[session.user.projectionKey] === true) {
-      return;
-    }
     Logger.debug(LOG_TAG, 'Updating derived album data');
     const connection = await SQLConnection.getConnection();
     const albums = await connection
@@ -117,20 +115,18 @@ export class AlbumManager implements IObjectManager {
       if (a.cache?.valid === true) {
         continue;
       }
-      await AlbumManager.updateAlbum(session, a);
+      await ObjectManagers.getInstance().ProjectedCacheManager
+        .setAndGetCacheForAlbum(connection, session, {
+          id: a.id,
+          searchQuery: a.searchQuery
+        });
       // giving back the control to the main event loop (Macrotask queue)
       // https://blog.insiderattack.net/promises-next-ticks-and-immediates-nodejs-event-loop-part-3-9226cbe7a6aa
       await new Promise(setImmediate);
     }
-    this.isDBValid[session.user.projectionKey] = true;
   }
 
-  async deleteAll() {
-    const connection = await SQLConnection.getConnection();
-    await connection
-      .getRepository(AlbumBaseEntity)
-      .createQueryBuilder('album')
-      .delete()
-      .execute();
+  private resetMemoryCache(): void {
+    this.albumsCache = {};
   }
 }
