@@ -20,8 +20,8 @@ export class AlbumCoverRestJob extends Job {
     this.Progress.Left = 1;
     this.Progress.Processed++;
     await ObjectManagers.getInstance().CoverManager.resetCovers();
-    await ObjectManagers.getInstance().AlbumManager.resetCovers();
-    await ObjectManagers.getInstance().PersonManager.resetPreviews();
+    await ObjectManagers.getInstance().AlbumManager.invalidateCache();
+    await ObjectManagers.getInstance().PersonManager.invalidateCache();
     return false;
   }
 }

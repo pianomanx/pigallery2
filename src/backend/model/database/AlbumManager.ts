@@ -5,14 +5,13 @@ import {ObjectManagers} from '../ObjectManagers';
 import {SearchQueryDTO} from '../../../common/entities/SearchQueryDTO';
 import {SavedSearchEntity} from './enitites/album/SavedSearchEntity';
 import {Logger} from '../../Logger';
-import {IObjectManager} from './IObjectManager';
 import {SessionContext} from '../SessionContext';
 import {ProjectedAlbumCacheEntity} from './enitites/album/ProjectedAlbumCacheEntity';
+import {ProjectionAwareManager} from './ProjectionAwareManager';
 
 const LOG_TAG = '[AlbumManager]';
 
-export class AlbumManager implements IObjectManager {
-  albumsCache: Record<string, AlbumBaseEntity[]> = {};
+export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
 
   public async addIfNotExistSavedSearch(
     name: string,
@@ -38,7 +37,6 @@ export class AlbumManager implements IObjectManager {
     await connection
       .getRepository(SavedSearchEntity)
       .save({name, searchQuery, locked: lockedAlbum});
-    this.resetMemoryCache();
   }
 
   public async deleteAlbum(id: number): Promise<void> {
@@ -55,18 +53,16 @@ export class AlbumManager implements IObjectManager {
     await connection
       .getRepository(AlbumBaseEntity)
       .delete({id, locked: false});
-    this.resetMemoryCache();
   }
 
-  public async getAlbums(session: SessionContext): Promise<AlbumBaseDTO[]> {
-    if (this.albumsCache[session.user.projectionKey]) {
-      return this.albumsCache[session.user.projectionKey];
-    }
+
+  protected async loadEntities(session: SessionContext): Promise<AlbumBaseEntity[]> {
+    Logger.debug(LOG_TAG, 'loadEntities called for projection key:', session.user.projectionKey);
     await this.updateAlbums(session);
     const connection = await SQLConnection.getConnection();
 
     // Return albums with projected cache data
-    this.albumsCache[session.user.projectionKey] = await connection
+    const result = await connection
       .getRepository(AlbumBaseEntity)
       .createQueryBuilder('album')
       .leftJoin('album.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: session.user.projectionKey})
@@ -74,15 +70,12 @@ export class AlbumManager implements IObjectManager {
       .leftJoin('cover.directory', 'directory')
       .select(['album', 'cache', 'cover.name', 'directory.name', 'directory.path'])
       .getMany();
-    return this.albumsCache[session.user.projectionKey];
 
+    Logger.debug(LOG_TAG, 'loadEntities returning', result.length, 'albums');
+    return result;
   }
 
-  public async onNewDataVersion(): Promise<void> {
-    await this.invalidateCache();
-  }
-
-  public async invalidateCache(): Promise<void> {
+  protected async invalidateDBCache(): Promise<void> {
     // Invalidate all album cache entries
     const connection = await SQLConnection.getConnection();
     await connection.getRepository(ProjectedAlbumCacheEntity)
@@ -90,7 +83,6 @@ export class AlbumManager implements IObjectManager {
       .update()
       .set({valid: false})
       .execute();
-    this.resetMemoryCache();
   }
 
   async deleteAll() {
@@ -126,7 +118,4 @@ export class AlbumManager implements IObjectManager {
     }
   }
 
-  private resetMemoryCache(): void {
-    this.albumsCache = {};
-  }
 }

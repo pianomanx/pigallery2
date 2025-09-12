@@ -154,7 +154,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
 
     await am.addSavedSearch('Test Album', Utils.clone(query));
 
-    expect(await am.getAlbums(DBTestHelper.defaultSession)).to.deep.equalInAnyOrder([{
+    expect(await am.getAll(DBTestHelper.defaultSession)).to.deep.equalInAnyOrder([{
       id: 1,
       name: 'Test Album',
       searchQuery: query,
@@ -195,8 +195,8 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
         matchType: TextSearchQueryMatchTypes.like
       });
 
-      const albumsWithProjection = await am.getAlbums(projectionSession);
-      const albumsWithDefault = await am.getAlbums(DBTestHelper.defaultSession);
+      const albumsWithProjection = await am.getAll(projectionSession);
+      const albumsWithDefault = await am.getAll(DBTestHelper.defaultSession);
 
       expect(albumsWithProjection).to.not.be.undefined;
       expect(albumsWithDefault).to.not.be.undefined;
@@ -233,7 +233,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       await am.addSavedSearch('Test Album Cache', Utils.clone(query));
 
       // Get albums with default session first
-      const albumsDefault = await am.getAlbums(DBTestHelper.defaultSession);
+      const albumsDefault = await am.getAll(DBTestHelper.defaultSession);
       expect(albumsDefault.length).to.be.equal(1);
 
       // Create projection session that will also match content
@@ -244,7 +244,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       });
 
       // Trigger cache filling for projection
-      const albumsProjected = await am.getAlbums(projectionSession);
+      const albumsProjected = await am.getAll(projectionSession);
       expect(albumsProjected.length).to.be.equal(1);
 
       // Verify that cache entries exist for both projection keys
@@ -271,7 +271,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
         matchType: TextSearchQueryMatchTypes.like
       });
 
-      const albumsWithProjection = await am.getAlbums(projectionSession);
+      const albumsWithProjection = await am.getAll(projectionSession);
 
       expect(albumsWithProjection).to.not.be.undefined;
       expect(albumsWithProjection.length).to.equal(1);
@@ -307,8 +307,8 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
         matchType: TextSearchQueryMatchTypes.like
       });
 
-      const albumsDefault = await am.getAlbums(DBTestHelper.defaultSession);
-      const albumsSW1 = await am.getAlbums(projectionSW1);
+      const albumsDefault = await am.getAll(DBTestHelper.defaultSession);
+      const albumsSW1 = await am.getAll(projectionSW1);
 
       expect(albumsDefault.length).to.equal(3);
       expect(albumsSW1.length).to.equal(3);
@@ -332,7 +332,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       await am.addSavedSearch('Cache Test Album', Utils.clone(query));
 
       // Build cache for default session
-      await am.getAlbums(DBTestHelper.defaultSession);
+      await am.getAll(DBTestHelper.defaultSession);
 
       // Verify cache exists and is valid
       let validCacheCount = await connection.getRepository(ProjectedAlbumCacheEntity)
@@ -340,7 +340,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       expect(validCacheCount).to.be.greaterThan(0);
 
       // Reset covers (invalidate cache)
-      await am.resetCovers();
+      await am.invalidateCache();
 
       // Cache should be marked as invalid but still exist
       const totalCacheCount = await connection.getRepository(ProjectedAlbumCacheEntity)
@@ -352,7 +352,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       expect(validCacheCount).to.equal(0);
 
       // Accessing albums again should rebuild cache
-      await am.getAlbums(DBTestHelper.defaultSession);
+      await am.getAll(DBTestHelper.defaultSession);
 
       validCacheCount = await connection.getRepository(ProjectedAlbumCacheEntity)
         .count({where: {valid: true, projectionKey: DBTestHelper.defaultSession.user.projectionKey}});

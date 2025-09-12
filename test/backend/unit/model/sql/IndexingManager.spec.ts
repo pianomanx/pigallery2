@@ -855,7 +855,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
       };
       await im.saveToDB(dir);
 
-      const albums = await am.getAlbums(DBTestHelper.defaultSession);
+      const albums = await am.getAll(DBTestHelper.defaultSession);
       expect(albums).to.be.deep.equal([
         {
           id: 1,

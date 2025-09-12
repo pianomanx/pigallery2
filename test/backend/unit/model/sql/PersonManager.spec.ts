@@ -223,7 +223,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
     beforeEach(async () => {
       // Reset cache before each projection test
       const pm = new PersonManager();
-      await pm.resetPreviews();
+      await pm.invalidateCache();
     });
 
     it('should get persons with projection session filtering by filename', async () => {
@@ -310,7 +310,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       const savedTestPerson = await personRepo.save(testPerson);
 
       // Force cache invalidation to rebuild with the new person
-      await pm.resetPreviews();
+      await pm.invalidateCache();
 
       // Get all persons - the person with count = 0 should not be included
       const allPersons = await pm.getAll(DBTestHelper.defaultSession);
@@ -357,7 +357,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       await cacheRepo.save(cacheEntry);
 
       // Reset memory cache to force reload from database
-      await pm.resetPreviews();
+      await pm.invalidateCache();
 
       // Verify the person is not returned by getAll
       const allPersons = await pm.getAll(DBTestHelper.defaultSession);
@@ -389,7 +389,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       expect(validCacheCount).to.be.equal(10);
 
       // Reset previews
-      await pm.resetPreviews();
+      await pm.invalidateCache();
 
       // Check that all cache entries are now invalid
       validCacheCount = await connection.getRepository(ProjectedPersonCacheEntity)
@@ -431,7 +431,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       const connection = await SQLConnection.getConnection();
 
       // Reset cache
-      await pm.resetPreviews();
+      await pm.invalidateCache();
 
       // Verify cache is invalid
       let validCacheCount = await connection.getRepository(ProjectedPersonCacheEntity)
