@@ -7,14 +7,12 @@ import {DatabaseType} from '../../../common/config/private/PrivateConfig';
 import {SQLConnection} from './SQLConnection';
 import {SearchQueryDTO, SearchQueryTypes, TextSearch,} from '../../../common/entities/SearchQueryDTO';
 import {DirectoryEntity} from './enitites/DirectoryEntity';
-import {ParentDirectoryDTO} from '../../../common/entities/DirectoryDTO';
-import * as path from 'path';
 import {Utils} from '../../../common/Utils';
 import {CoverPhotoDTO} from '../../../common/entities/PhotoDTO';
-import {IObjectManager} from './IObjectManager';
 import {Logger} from '../../Logger';
 import {SearchManager} from './SearchManager';
 import {ExtensionDecorator} from '../extension/ExtensionDecorator';
+import {SessionContext} from '../SessionContext';
 
 const LOG_TAG = '[CoverManager]';
 
@@ -23,7 +21,7 @@ export interface CoverPhotoDTOWithID extends CoverPhotoDTO {
   id: number;
 }
 
-export class CoverManager implements IObjectManager {
+export class CoverManager {
   private static DIRECTORY_SELECT = ['directory.name', 'directory.path'];
 
 
@@ -32,61 +30,17 @@ export class CoverManager implements IObjectManager {
     await connection
       .createQueryBuilder()
       .update(DirectoryEntity)
-      .set({validCover: false})
+      .set({valid: false})
       .execute();
   }
 
-  @ExtensionDecorator(e => e.gallery.CoverManager.invalidateDirectoryCovers)
-  protected async invalidateDirectoryCovers(dir: ParentDirectoryDTO) {
-    // Invalidating Album cover
-    let fullPath = DiskManager.normalizeDirPath(
-      path.join(dir.path, dir.name)
-    );
-    const query = (await SQLConnection.getConnection())
-      .createQueryBuilder()
-      .update(DirectoryEntity)
-      .set({validCover: false});
-
-    let i = 0;
-    const root = DiskManager.pathFromRelativeDirName('.');
-    while (fullPath !== root) {
-      const name = DiskManager.dirName(fullPath);
-      const parentPath = DiskManager.pathFromRelativeDirName(fullPath);
-      fullPath = parentPath;
-      ++i;
-      query.orWhere(
-        new Brackets((q: WhereExpression) => {
-          const param: { [key: string]: string } = {};
-          param['name' + i] = name;
-          param['path' + i] = parentPath;
-          q.where(`path = :path${i}`, param);
-          q.andWhere(`name = :name${i}`, param);
-        })
-      );
-    }
-
-    ++i;
-    query.orWhere(
-      new Brackets((q: WhereExpression) => {
-        const param: { [key: string]: string } = {};
-        param['name' + i] = DiskManager.dirName('.');
-        param['path' + i] = DiskManager.pathFromRelativeDirName('.');
-        q.where(`path = :path${i}`, param);
-        q.andWhere(`name = :name${i}`, param);
-      })
-    );
-
-    await query.execute();
-  }
-
-  public async onNewDataVersion(changedDir: ParentDirectoryDTO): Promise<void> {
-    await this.invalidateDirectoryCovers(changedDir);
-  }
 
   @ExtensionDecorator(e => e.gallery.CoverManager.getCoverForAlbum)
-  public async getCoverForAlbum(album: {
-    searchQuery: SearchQueryDTO;
-  }): Promise<CoverPhotoDTOWithID> {
+  public async getCoverForAlbum(
+    session: SessionContext,
+    album: {
+      searchQuery: SearchQueryDTO;
+    }): Promise<CoverPhotoDTOWithID> {
     const albumQuery: Brackets = await
       ObjectManagers.getInstance().SearchManager.prepareAndBuildWhereQuery(album.searchQuery);
     const connection = await SQLConnection.getConnection();
@@ -98,6 +52,11 @@ export class CoverManager implements IObjectManager {
         .innerJoin('media.directory', 'directory')
         .select(['media.name', 'media.id', ...CoverManager.DIRECTORY_SELECT])
         .where(albumQuery);
+
+      if (session.projectionQuery) {
+        query.andWhere(session.projectionQuery);
+      }
+
       SearchManager.setSorting(query, Config.AlbumCover.Sorting);
       return query;
     };
@@ -140,17 +99,24 @@ export class CoverManager implements IObjectManager {
     return await connection
       .getRepository(DirectoryEntity)
       .createQueryBuilder('directory')
-      .where('directory.validCover = :validCover', {validCover: 0}) // 0 === false
-      .select(['name', 'id', 'path'])
+      .leftJoin('directory.cache', 'cache')
+      .where(new Brackets(qb => {
+        qb.where('cache.valid = :valid', {valid: 0})
+          .orWhere('cache.valid IS NULL');
+      }))
+      .select(['directory.name as name', 'directory.id as id', 'directory.path as path'])
+      .distinct(true)
       .getRawMany();
   }
 
   @ExtensionDecorator(e => e.gallery.CoverManager.getCoverForDirectory)
-  protected async getCoverForDirectory(dir: {
-    id: number;
-    name: string;
-    path: string;
-  }) {
+  public async getCoverForDirectory(
+    session: SessionContext,
+    dir: {
+      id: number;
+      name: string;
+      path: string;
+    }) {
     const connection = await SQLConnection.getConnection();
     const coverQuery = (): SelectQueryBuilder<MediaEntity> => {
       const query = connection
@@ -182,6 +148,9 @@ export class CoverManager implements IObjectManager {
         `CASE WHEN directory.id = ${dir.id} THEN 0 ELSE 1 END`,
         'ASC'
       );
+      if (session.projectionQuery) {
+        query.andWhere(session.projectionQuery);
+      }
 
       SearchManager.setSorting(query, Config.AlbumCover.Sorting);
       return query;
@@ -209,24 +178,4 @@ export class CoverManager implements IObjectManager {
     return coverMedia;
   }
 
-  public async setAndGetCoverForDirectory(dir: {
-    id: number;
-    name: string;
-    path: string;
-  }): Promise<CoverPhotoDTOWithID> {
-    const connection = await SQLConnection.getConnection();
-    const coverMedia = await this.getCoverForDirectory(dir);
-
-    // set validCover bit to true even if there is no cover (to prevent future updates)
-    await connection
-      .createQueryBuilder()
-      .update(DirectoryEntity)
-      .set({cover: coverMedia, validCover: true})
-      .where('id = :dir', {
-        dir: dir.id,
-      })
-      .execute();
-
-    return coverMedia || null;
-  }
 }

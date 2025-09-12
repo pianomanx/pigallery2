@@ -57,7 +57,7 @@ export class ExpressRouteWrapper implements IExtensionRESTRoute {
     this.router[this.func](fullPaths,
       ...(this.getAuthMWs(minRole).concat([
         async (req: Request, res: Response, next: NextFunction) => {
-          req.resultPipe = await cb(req.params, req.body, req.session['user']);
+          req.resultPipe = await cb(req.params, req.body, req.session.context.user);
           next();
         },
         RenderingMWs.renderResult

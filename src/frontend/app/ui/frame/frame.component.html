@@ -24,10 +24,10 @@
                  [routerLink]="['/gallery']"
                  [queryParams]="queryService.getParams()" [class.active]="isLinkActive('/gallery')" i18n>Gallery</a>
             </li>
-            <li class="nav-item" *ngIf="link.type === NavigationLinkTypes.url">
+            <li class="nav-item" *ngIf="link.type === NavigationLinkTypes.url && isCustomLinksAvailable()">
               <a class="nav-link" [href]="link.url" [class.active]="isLinkActive(link.url)">{{link.name}}</a>
             </li>
-            <li class="nav-item" *ngIf="link.type === NavigationLinkTypes.search">
+            <li class="nav-item" *ngIf="link.type === NavigationLinkTypes.search && isCustomLinksAvailable()">
               <a class="nav-link" [routerLink]="['/search', link.SearchQuery | json]"
                  [class.active]="isSearchActive(link.SearchQuery)">{{link.name}}</a>
             </li>

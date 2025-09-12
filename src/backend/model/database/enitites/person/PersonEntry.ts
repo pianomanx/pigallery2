@@ -1,7 +1,8 @@
-import {Column, Entity, Index, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique,} from 'typeorm';
+import {Column, Entity, Index, OneToMany, OneToOne, PrimaryGeneratedColumn, Unique,} from 'typeorm';
 import {PersonJunctionTable} from './PersonJunctionTable';
-import {columnCharsetCS} from './EntityUtils';
-import {PersonDTO} from '../../../../common/entities/PersonDTO';
+import {columnCharsetCS} from '../EntityUtils';
+import {PersonDTO} from '../../../../../common/entities/PersonDTO';
+import {ProjectedPersonCacheEntity} from './ProjectedPersonCacheEntity';
 
 @Entity()
 @Unique(['name'])
@@ -16,21 +17,16 @@ export class PersonEntry implements PersonDTO {
   })
   name: string;
 
-  @Column('int', {unsigned: true, default: 0})
-  count: number;
-
   @Column({default: false})
   isFavourite: boolean;
 
   @OneToMany(() => PersonJunctionTable, (junctionTable) => junctionTable.person)
   public faces: PersonJunctionTable[];
 
-  @ManyToOne(() => PersonJunctionTable, {
-    onDelete: 'SET NULL',
-    nullable: true,
-  })
-  sampleRegion: PersonJunctionTable;
 
-  // does not store in the DB, temporal field
+  @OneToOne(() => ProjectedPersonCacheEntity, (ppc) => ppc.person)
+  public cache: ProjectedPersonCacheEntity;
+
+  // does not store in the DB, temporal fields populated from cache/joins
   missingThumbnail?: boolean;
 }

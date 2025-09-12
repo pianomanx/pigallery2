@@ -2,12 +2,15 @@ import {ObjectManagers} from '../../ObjectManagers';
 import {DefaultsJobs} from '../../../../common/entities/job/JobDTO';
 import {Job} from './Job';
 import {DynamicConfig} from '../../../../common/entities/DynamicConfig';
+import {SessionContext} from '../../SessionContext';
+import {SQLConnection} from '../../database/SQLConnection';
 
 export class AlbumCoverFillingJob extends Job {
   public readonly Name = DefaultsJobs[DefaultsJobs['Album Cover Filling']];
   public readonly ConfigTemplate: DynamicConfig[] = null;
   directoryToSetCover: { id: number; name: string; path: string }[] = null;
   status: 'Persons' | 'Albums' | 'Directory' = 'Persons';
+  private availableSessions: SessionContext[];
 
   public get Supported(): boolean {
     return true;
@@ -22,6 +25,7 @@ export class AlbumCoverFillingJob extends Job {
       this.Progress.log('Loading Directories to process');
       this.directoryToSetCover =
         await ObjectManagers.getInstance().CoverManager.getPartialDirsWithoutCovers();
+      this.availableSessions = await ObjectManagers.getInstance().SessionManager.getAvailableUserSessions();
       this.Progress.Left = this.directoryToSetCover.length + 2;
       return true;
     }
@@ -42,14 +46,18 @@ export class AlbumCoverFillingJob extends Job {
   }
 
   private async stepAlbumCover(): Promise<boolean> {
-    await ObjectManagers.getInstance().AlbumManager.getAlbums();
+    for (const session of this.availableSessions) {
+      await ObjectManagers.getInstance().AlbumManager.getAll(session);
+    }
     this.Progress.log('Updating Albums cover');
     this.Progress.Processed++;
     return false;
   }
 
   private async stepPersonsPreview(): Promise<boolean> {
-    await ObjectManagers.getInstance().PersonManager.getAll();
+    for (const session of this.availableSessions) {
+      await ObjectManagers.getInstance().PersonManager.getAll(session);
+    }
     this.Progress.log('Updating Persons preview');
     this.Progress.Processed++;
     return false;
@@ -70,9 +78,14 @@ export class AlbumCoverFillingJob extends Job {
     this.Progress.log('Setting cover: ' + directory.path + directory.name);
     this.Progress.Left = this.directoryToSetCover.length;
 
-    await ObjectManagers.getInstance().CoverManager.setAndGetCoverForDirectory(
-      directory
-    );
+    const conn = await SQLConnection.getConnection();
+    for (const session of this.availableSessions) {
+      await ObjectManagers.getInstance().ProjectedCacheManager.setAndGetCacheForDirectory(
+        conn,
+        session,
+        directory
+      );
+    }
     this.Progress.Processed++;
     return true;
   }

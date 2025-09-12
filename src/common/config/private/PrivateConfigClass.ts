@@ -13,6 +13,9 @@ const upTime = new Date().toISOString();
 // This is a bad habit to let the Config know if its in a testing env.
 const isTesting = process.env['NODE_ENV'] == true || ['afterEach', 'after', 'beforeEach', 'before', 'describe', 'it']
   .every((fn) => (global as any)[fn] instanceof Function);
+if (isTesting) {
+  console.log('Running Config in testing mode');
+}
 
 @ConfigClass<IConfigClass<TAGS> & ServerConfig>({
   configPath: path.join(__dirname, !isTesting ? './../../../../config.json' : './../../../../test/tmp/config.json'),

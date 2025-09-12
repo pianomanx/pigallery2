@@ -12,7 +12,7 @@
       <thead>
       <tr>
         <th i18n>Key</th>
-        <th i18n>Folder</th>
+        <th i18n>Sharing</th>
         <th i18n>Creator</th>
         <th i18n>Expires</th>
         <th></th>
@@ -21,7 +21,7 @@
       <tbody>
       <tr *ngFor="let share of shares">
         <td><a [href]="sharingService.getUrl(share)">{{share.sharingKey}}</a></td>
-        <td>{{share.path}}</td>
+        <td>{{share.searchQuery | searchQuery}}</td>
         <td>{{share.creator.name}}</td>
         <td>{{share.expires | date}}</td>
         <td>

@@ -1,6 +1,6 @@
 import {Entity, Index, ManyToOne, PrimaryGeneratedColumn} from 'typeorm';
 import {PersonEntry} from './PersonEntry';
-import {MediaEntity} from './MediaEntity';
+import {MediaEntity} from '../MediaEntity';
 
 
 /**

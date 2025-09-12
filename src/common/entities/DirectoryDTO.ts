@@ -8,9 +8,20 @@ export interface DirectoryPathDTO {
   path: string;
 }
 
+export interface DirectoryCacheDTO {
+  id?: number;
+  projectionKey?: string;
+  directory?: DirectoryBaseDTO;
+  mediaCount: number;
+  recursiveMediaCount?: number;
+  youngestMedia?: number;
+  oldestMedia?: number;
+  cover?: CoverPhotoDTO;
+  valid?: boolean; // does not go to the client side
+}
 
 export interface DirectoryBaseDTO<S extends FileDTO = MediaDTO>
-    extends DirectoryPathDTO {
+  extends DirectoryPathDTO {
   id: number;
   name: string;
   path: string;
@@ -18,18 +29,14 @@ export interface DirectoryBaseDTO<S extends FileDTO = MediaDTO>
   lastScanned?: number;
   isPartial?: boolean;
   parent: DirectoryBaseDTO<S>;
-  mediaCount: number;
-  youngestMedia?: number;
-  oldestMedia?: number;
   directories?: DirectoryBaseDTO<S>[];
   media?: S[];
   metaFile?: FileDTO[];
-  cover?: CoverPhotoDTO;
-  validCover?: boolean; // does not go to the client side
+  cache?: DirectoryCacheDTO;
 }
 
 export interface ParentDirectoryDTO<S extends FileDTO = MediaDTO>
-    extends DirectoryBaseDTO<S> {
+  extends DirectoryBaseDTO<S> {
   id: number;
   name: string;
   path: string;
@@ -37,16 +44,14 @@ export interface ParentDirectoryDTO<S extends FileDTO = MediaDTO>
   lastScanned?: number;
   isPartial?: boolean;
   parent: ParentDirectoryDTO<S>;
-  mediaCount: number;
-  youngestMedia?: number;
-  oldestMedia?: number;
   directories: SubDirectoryDTO<S>[];
   media: S[];
   metaFile: FileDTO[];
+  cache?: DirectoryCacheDTO;
 }
 
 export interface SubDirectoryDTO<S extends FileDTO = MediaDTO>
-    extends DirectoryBaseDTO<S> {
+  extends DirectoryBaseDTO<S> {
   id: number;
   name: string;
   path: string;
@@ -54,9 +59,7 @@ export interface SubDirectoryDTO<S extends FileDTO = MediaDTO>
   lastScanned: number;
   isPartial?: boolean;
   parent: ParentDirectoryDTO<S>;
-  mediaCount: number;
-  cover: CoverPhotoDTO;
-  validCover?: boolean; // does not go to the client side
+  cache?: DirectoryCacheDTO;
 }
 
 export const DirectoryDTOUtils = {
@@ -80,15 +83,15 @@ export const DirectoryDTOUtils = {
   },
 
   removeReferences: (dir: DirectoryBaseDTO): DirectoryBaseDTO => {
-    if (dir.cover) {
-      dir.cover.directory = {
-        path: dir.cover.directory.path,
-        name: dir.cover.directory.name,
+    if (dir.cache?.cover) {
+      dir.cache.cover.directory = {
+        path: dir.cache.cover.directory.path,
+        name: dir.cache.cover.directory.name,
       } as DirectoryPathDTO;
 
       // make sure that it is not a same object as one of the photo in the media[]
       // as the next foreach would remove the directory
-      dir.cover = Utils.clone(dir.cover);
+      dir.cache.cover = Utils.clone(dir.cache.cover);
     }
 
     if (dir.media) {
@@ -109,7 +112,7 @@ export const DirectoryDTOUtils = {
       });
     }
 
-    delete dir.validCover; // should not go to the client side;
+    delete dir.cache.valid; // should not go to the client side;
 
     return dir;
   },

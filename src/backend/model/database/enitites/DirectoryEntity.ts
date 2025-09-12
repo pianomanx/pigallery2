@@ -4,6 +4,7 @@ import {MediaEntity} from './MediaEntity';
 import {FileEntity} from './FileEntity';
 import {columnCharsetCS} from './EntityUtils';
 import {MediaDTO} from '../../../../common/entities/MediaDTO';
+import {ProjectedDirectoryCacheEntity} from './ProjectedDirectoryCacheEntity';
 
 @Entity()
 @Unique(['name', 'path'])
@@ -49,27 +50,6 @@ export class DirectoryEntity
 
   isPartial?: boolean;
 
-  @Column('mediumint', {unsigned: true})
-  mediaCount: number;
-
-  @Column('bigint', {
-    nullable: true,
-    transformer: {
-      from: (v) => parseInt(v, 10),
-      to: (v) => v,
-    },
-  })
-  oldestMedia: number;
-
-  @Column('bigint', {
-    nullable: true,
-    transformer: {
-      from: (v) => parseInt(v, 10),
-      to: (v) => v,
-    },
-  })
-  youngestMedia: number;
-
   @Index()
   @ManyToOne(() => DirectoryEntity, (directory) => directory.directories, {
     onDelete: 'CASCADE',
@@ -79,13 +59,8 @@ export class DirectoryEntity
   @OneToMany(() => DirectoryEntity, (dir) => dir.parent)
   public directories: DirectoryEntity[];
 
-  // not saving to database, it is only assigned when querying the DB
-  @ManyToOne(() => MediaEntity, {onDelete: 'SET NULL'})
-  public cover: MediaEntity;
-
-  // On galley change, cover will be invalid
-  @Column({type: 'boolean', default: false})
-  validCover: boolean;
+  @OneToMany(() => ProjectedDirectoryCacheEntity, (pdc) => pdc.directory)
+  public cache: ProjectedDirectoryCacheEntity;
 
   @OneToMany(() => MediaEntity, (media) => media.directory)
   public media: MediaEntity[];

@@ -34,7 +34,7 @@ export class GalleryDirectoryComponent implements OnInit, OnDestroy {
   }
 
   public get SamplePhoto(): CoverPhotoDTO {
-    return this.directory.cover;
+    return this.directory.cache?.cover;
   }
 
   getSanitizedThUrl(): SafeStyle {
@@ -64,7 +64,7 @@ export class GalleryDirectoryComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    if (this.directory.cover) {
+    if (this.directory.cache?.cover) {
       this.thumbnail = this.thumbnailService.getThumbnail(
           new Media(this.SamplePhoto, this.size, this.size)
       );

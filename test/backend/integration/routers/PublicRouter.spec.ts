@@ -13,6 +13,7 @@ import {TestHelper} from '../../../TestHelper';
 import {ProjectPath} from '../../../../src/backend/ProjectPath';
 import * as chai from "chai";
 import {default as chaiHttp, request} from "chai-http";
+import {DBTestHelper} from '../../DBTestHelper';
 
 process.env.NODE_ENV = 'test';
 chai.should();
@@ -20,24 +21,21 @@ const {expect} = chai;
 chai.use(chaiHttp);
 
 describe('PublicRouter', () => {
+  const sqlHelper = new DBTestHelper(DatabaseType.sqlite);
 
   const testUser: UserDTO = {
     id: 1,
     name: 'test',
     password: 'test',
-    role: UserRoles.User,
-    permissions: null
+    role: UserRoles.User
   };
   const {password: pass, ...expectedUser} = testUser;
 
   let server: Server;
   const setUp = async () => {
-    await fs.promises.rm(TestHelper.TMP_DIR, {recursive: true, force: true});
+    await sqlHelper.initDB();
     Config.Users.authenticationRequired = true;
     Config.Sharing.enabled = true;
-    Config.Database.type = DatabaseType.sqlite;
-    Config.Database.dbFolder = TestHelper.TMP_DIR;
-    ProjectPath.reset();
 
     server = new Server(false);
     await server.onStarted.wait();
@@ -47,8 +45,7 @@ describe('PublicRouter', () => {
     await SQLConnection.close();
   };
   const tearDown = async () => {
-    await ObjectManagers.reset();
-    await fs.promises.rm(TestHelper.TMP_DIR, {recursive: true, force: true});
+    await sqlHelper.clearDB();
   };
 
   const shouldHaveInjectedUser = (result: any, user: any) => {
@@ -61,6 +58,17 @@ describe('PublicRouter', () => {
 
     const u = JSON.parse(result.text.substring(result.text.indexOf(startToken) + startToken.length, result.text.indexOf(endToken)));
 
+    if (user == null) {
+      expect(u).to.equal(null);
+      return;
+    }
+    // Only public-safe subset is injected; ensure projectionKey is present but do not assert its value
+    expect(u).to.be.an('object');
+    expect(u).to.have.property('name', user.name);
+    expect(u).to.have.property('role', user.role);
+    expect(u).to.have.property('usedSharingKey', user.usedSharingKey);
+    expect(u).to.have.property('projectionKey');
+    expect(u.projectionKey).to.be.a('string').and.to.have.length.greaterThan(0);
     expect(u).to.deep.equal(user);
   };
 
@@ -94,13 +102,9 @@ describe('PublicRouter', () => {
       Config.Sharing.passwordRequired = false;
       const sharing = await RouteTestingHelper.createSharing(testUser);
       const res = await fistLoad(server, sharing.sharingKey);
-      shouldHaveInjectedUser(res, RouteTestingHelper.getExpectedSharingUser(sharing));
+      shouldHaveInjectedUser(res, RouteTestingHelper.getExpectedSharingUserForUI(sharing));
     });
 
-
-
-
   });
-
 
 });

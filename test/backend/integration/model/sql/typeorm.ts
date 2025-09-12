@@ -1,5 +1,4 @@
 import {expect} from 'chai';
-import * as path from 'path';
 import * as fs from 'fs';
 import {Config} from '../../../../../src/common/config/private/Config';
 import {SQLConnection} from '../../../../../src/backend/model/database/SQLConnection';
@@ -53,7 +52,6 @@ describe('Typeorm integration', () => {
     d.lastModified = Date.now();
     d.lastScanned = null;
     d.parent = null;
-    d.mediaCount = 0;
     d.media = [];
     d.directories = [];
     return d;

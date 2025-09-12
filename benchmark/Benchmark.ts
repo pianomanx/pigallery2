@@ -1,5 +1,5 @@
 import {BenchmarkResult} from './BenchmarkRunner';
-import {ContentWrapper} from '../src/common/entities/ConentWrapper';
+import {ContentWrapper} from '../src/common/entities/ContentWrapper';
 import {Express, NextFunction} from 'express';
 import {Utils} from '../src/common/Utils';
 import {Message} from '../src/common/entities/Message';

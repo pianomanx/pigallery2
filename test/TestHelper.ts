@@ -21,21 +21,21 @@ import {DirectoryBaseDTO, DirectoryPathDTO} from '../src/common/entities/Directo
 import {FileDTO} from '../src/common/entities/FileDTO';
 import {DiskManager} from '../src/backend/model/fileaccess/DiskManager';
 import * as path from 'path';
+import {Config} from '../src/common/config/private/Config';
+import {SortByTypes} from '../src/common/entities/SortingMethods';
 
 export class TestHelper {
 
   static creationCounter = 0;
 
-  public static readonly TMP_DIR= path.join(__dirname, './tmp');
+  public static readonly TMP_DIR = path.join(__dirname, './tmp');
 
-  public static getDirectoryEntry(parent: DirectoryBaseDTO = null, name = 'wars dir'): DirectoryEntity {
+  public static getDirectoryEntry(parent: DirectoryBaseDTO = null, name = '.'): DirectoryEntity {
 
     const dir = new DirectoryEntity();
     dir.name = name;
     dir.path = DiskManager.pathFromParent({path: '', name: '.'});
-    dir.mediaCount = 0;
-    dir.youngestMedia = 10;
-    dir.oldestMedia = 1000;
+    dir.cache = {mediaCount: 0, youngestMedia: 10, oldestMedia: 1000} as never;
     dir.directories = [];
     dir.metaFile = [];
     dir.media = [];
@@ -58,7 +58,7 @@ export class TestHelper {
     m.caption = null;
     m.size = sd;
     m.creationDate = 1656069387772;
-    m.creationDateOffset = "+02:00"
+    m.creationDateOffset = '+02:00';
     m.fileSize = 123456789;
     // m.rating = 0; no rating by default
 
@@ -72,7 +72,7 @@ export class TestHelper {
     d.directory = (dir as any);
     if ((dir as DirectoryBaseDTO).media) {
       (dir as DirectoryBaseDTO).media.push(d);
-      (dir as DirectoryBaseDTO).mediaCount++;
+      (dir as DirectoryBaseDTO).cache.mediaCount++;
     }
     d.metadata = m;
     return d;
@@ -105,7 +105,7 @@ export class TestHelper {
     m.positionData = pd;
     m.size = sd;
     m.creationDate = 1656069387772;
-    m.creationDateOffset = "-05:00";
+    m.creationDateOffset = '-05:00';
     m.fileSize = 123456789;
     // m.rating = 0; no rating by default
 
@@ -119,7 +119,7 @@ export class TestHelper {
     d.directory = (dir as any);
     if ((dir as DirectoryBaseDTO).media) {
       (dir as DirectoryBaseDTO).media.push(d);
-      (dir as DirectoryBaseDTO).mediaCount++;
+      (dir as DirectoryBaseDTO).cache.mediaCount++;
     }
     d.metadata = m;
     return d;
@@ -147,7 +147,7 @@ export class TestHelper {
     d.directory = (dir as any);
     if ((dir as DirectoryBaseDTO).media) {
       (dir as DirectoryBaseDTO).media.push(d);
-      (dir as DirectoryBaseDTO).mediaCount++;
+      (dir as DirectoryBaseDTO).cache.mediaCount++;
     }
     d.metadata = m;
     return d;
@@ -175,14 +175,14 @@ export class TestHelper {
     const p = TestHelper.getPhotoEntry(dir);
 
     p.metadata.caption = 'Han Solo\'s dice';
-    p.metadata.keywords = ['Boba Fett', 'star wars', 'Anakin', 'death star'];
+    p.metadata.keywords = ['Boba Fett', 'star wars', 'Anakin', 'death star', 'phantom menace'];
     p.metadata.positionData.city = 'Mos Eisley';
     p.metadata.positionData.country = 'Tatooine';
     p.name = 'sw1.jpg';
     p.metadata.positionData.GPSData.latitude = 10;
     p.metadata.positionData.GPSData.longitude = 10;
     p.metadata.creationDate = 1656069387772 - 1000;
-    p.metadata.creationDateOffset = "+00:00";
+    p.metadata.creationDateOffset = '+00:00';
     p.metadata.rating = 1;
     p.metadata.size.height = 1000;
     p.metadata.size.width = 1000;
@@ -218,7 +218,7 @@ export class TestHelper {
     p.metadata.positionData.GPSData.latitude = -10;
     p.metadata.positionData.GPSData.longitude = -10;
     p.metadata.creationDate = 1656069387772 - 2000;
-    p.metadata.creationDateOffset = "+11:00";
+    p.metadata.creationDateOffset = '+11:00';
     p.metadata.rating = 2;
     p.metadata.size.height = 2000;
     p.metadata.size.width = 1000;
@@ -251,7 +251,7 @@ export class TestHelper {
     p.metadata.positionData.GPSData.latitude = 10;
     p.metadata.positionData.GPSData.longitude = 15;
     p.metadata.creationDate = 1656069387772 - 3000;
-    p.metadata.creationDateOffset = "-03:45";
+    p.metadata.creationDateOffset = '-03:45';
     p.metadata.rating = 3;
     p.metadata.size.height = 1000;
     p.metadata.size.width = 2000;
@@ -280,7 +280,7 @@ export class TestHelper {
     p.metadata.positionData.GPSData.latitude = 15;
     p.metadata.positionData.GPSData.longitude = 10;
     p.metadata.creationDate = 1656069387772 - 4000;
-    p.metadata.creationDateOffset = "+04:30";
+    p.metadata.creationDateOffset = '+04:30';
     p.metadata.size.height = 3000;
     p.metadata.size.width = 2000;
 
@@ -307,13 +307,14 @@ export class TestHelper {
       id: null,
       name: DiskManager.dirName(forceStr || Math.random().toString(36).substring(7)),
       path: DiskManager.pathFromParent({path: '', name: '.'}),
-      mediaCount: 0,
-      youngestMedia: 10,
-      oldestMedia: 1000,
+      cache: {
+        mediaCount: 0,
+        recursiveMediaCount: 0,
+        cover: null,
+        valid: false,
+      },
       directories: [],
       metaFile: [],
-      cover: null,
-      validCover: false,
       media: [],
       lastModified: Date.now(),
       lastScanned: null,
@@ -359,7 +360,7 @@ export class TestHelper {
     return f;
   }
 
-  public static getRandomizedPhotoEntry(dir: DirectoryBaseDTO, forceStr: string = null, faces = 2): PhotoDTO {
+  public static getRandomizedPhotoEntry(dir: DirectoryBaseDTO, forceStr: string = null, faces = 2, rating?: number): PhotoDTO {
 
 
     const rndStr = (): string => {
@@ -399,11 +400,11 @@ export class TestHelper {
       cameraData: cd,
       positionData: pd,
       size: sd,
-      creationDate: Date.now() + ++TestHelper.creationCounter,
-      creationDateOffset: "+01:00",
+      creationDate: Date.now() + ++TestHelper.creationCounter * (1000 * 60 * 10),
+      creationDateOffset: '+01:00',
       fileSize: rndInt(10000),
       caption: rndStr(),
-      rating: rndInt(5) as any,
+      rating: rating ?? rndInt(5) as any
     };
 
 
@@ -419,23 +420,59 @@ export class TestHelper {
     }
 
     dir.media.push(p);
-    TestHelper.updateCover(dir);
+    TestHelper.updateDirCache(dir);
     return p;
   }
 
-  static updateCover(dir: DirectoryBaseDTO): void {
-    if (dir.media.length > 0) {
-      dir.cover = dir.media.sort((a, b): number => b.metadata.creationDate - a.metadata.creationDate)[0];
-    } else {
-      const filtered = dir.directories.filter((d): CoverPhotoDTO => d.cover).map((d): CoverPhotoDTO => d.cover);
-      if (filtered.length > 0) {
-        dir.cover = filtered.sort((a, b): number => b.metadata.creationDate - a.metadata.creationDate)[0];
+  static updateDirCache(dir: DirectoryBaseDTO): void {
+    // Ensure back-references are intact (removeReferences() may null them)
+    dir.media.forEach((m) => (m.directory = dir));
+
+    // Sort media by creation time (newest first) for cache boundaries
+    const sortedByDate = dir.media
+      .slice()
+      .sort((a, b): number => b.metadata.creationDate - a.metadata.creationDate);
+
+    // Build candidate list for album cover
+    // Prefer media from this directory; otherwise, use covers from subdirectories
+    const mediaForCover: CoverPhotoDTO[] =
+      dir.media.length > 0
+        ? (dir.media as CoverPhotoDTO[]).slice()
+        : dir.directories
+            .filter((d): boolean => !!d.cache?.cover)
+            .map((d): CoverPhotoDTO => {
+              // Make sure cover has correct directory reference
+              d.cache.cover.directory = d;
+              return d.cache.cover;
+            });
+
+    // Sort cover candidates by configured method
+    const sortBy = Config.AlbumCover.Sorting[0].method;
+    mediaForCover.sort((a, b): number =>
+      sortBy == SortByTypes.Rating
+        ? (b.metadata.rating || 0) - (a.metadata.rating || 0)
+        : b.metadata.creationDate - a.metadata.creationDate
+    );
+    const cover = mediaForCover?.[0] || null;
+
+    // Update directory cache
+    if (dir.cache) {
+      dir.cache.mediaCount = sortedByDate.length;
+      dir.cache.recursiveMediaCount = dir.directories.reduce((acc, d) => acc + d.cache.mediaCount, 0) + sortedByDate.length;
+      if (sortedByDate.length > 0) {
+        dir.cache.youngestMedia = sortedByDate[0].metadata.creationDate;
+        dir.cache.oldestMedia = sortedByDate[sortedByDate.length - 1].metadata.creationDate;
       }
-    }
-    if (dir.parent) {
-      TestHelper.updateCover(dir.parent);
+      if (cover) {
+        dir.cache.cover = cover;
+      }
+      dir.cache.valid = true;
     }
 
+    // Propagate cache update upward
+    if (dir.parent) {
+      TestHelper.updateDirCache(dir.parent);
+    }
   }
 
 

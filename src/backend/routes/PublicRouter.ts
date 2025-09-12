@@ -74,13 +74,13 @@ export class PublicRouter {
       res.tpl = {};
 
       res.tpl.user = null;
-      if (req.session['user']) {
+      if (req.session.context?.user) {
         res.tpl.user = {
-          id: req.session['user'].id,
-          name: req.session['user'].name,
-          role: req.session['user'].role,
-          usedSharingKey: req.session['user'].usedSharingKey,
-          permissions: req.session['user'].permissions,
+          id: req.session.context.user.id,
+          name: req.session.context.user.name,
+          role: req.session.context.user.role,
+          usedSharingKey: req.session.context.user.usedSharingKey,
+          projectionKey: req.session.context.user.projectionKey,
         } as UserDTO;
 
       }

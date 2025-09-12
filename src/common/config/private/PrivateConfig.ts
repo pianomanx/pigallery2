@@ -293,6 +293,37 @@ export class ServerUserConfig extends ClientUserConfig {
     description: $localize`Creates these users in the DB during startup if they do not exist. If a user with this name exist, it won't be overwritten, even if the role is different.`,
   })
   enforcedUsers: UserConfig[] = [];
+
+
+  @ConfigProperty({
+    type: 'object',
+    tags: {
+      name: $localize`Media allow list`,
+      priority: ConfigPriority.advanced,
+      uiType: 'SearchQuery',
+      githubIssue: 1015
+    },
+    description: $localize`Setting a non empty search query here will make the app to only SHOW photos and videos that match the query. You can override this at every user separately.`,
+  })
+  allowQuery: SearchQueryDTO = {
+    type: SearchQueryTypes.any_text,
+    text: '',
+  } as TextSearch;
+
+  @ConfigProperty({
+    type: 'object',
+    tags: {
+      name: $localize`Media block list`,
+      priority: ConfigPriority.advanced,
+      uiType: 'SearchQuery',
+      githubIssue: 1015
+    },
+    description: $localize`Setting a non empty search query here will make the app to HIDE photos and videos that match the query. You can override this at every user separately.`,
+  })
+  blockQuery: SearchQueryDTO = {
+    type: SearchQueryTypes.any_text,
+    text: '',
+  } as TextSearch;
 }
 
 

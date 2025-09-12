@@ -12,27 +12,28 @@ import {Config} from '../../../../../common/config/public/Config';
 import {UserRoles} from '../../../../../common/entities/UserDTO';
 import {AuthenticationService} from '../../../model/network/authentication.service';
 import {Utils} from '../../../../../common/Utils';
-import { FormsModule } from '@angular/forms';
-import { GallerySearchFieldBaseComponent } from './search-field-base/search-field-base.gallery.component';
-import { NgIconComponent } from '@ng-icons/core';
-import { GallerySearchQueryBuilderComponent } from './query-builder/query-bulder.gallery.component';
-import { NgIf } from '@angular/common';
-import { SavedSearchPopupComponent } from '../../albums/saved-search-popup/saved-search-popup.component';
+import {FormsModule} from '@angular/forms';
+import {GallerySearchFieldBaseComponent} from './search-field-base/search-field-base.gallery.component';
+import {NgIconComponent} from '@ng-icons/core';
+import {GallerySearchQueryBuilderComponent} from './query-builder/query-bulder.gallery.component';
+import {NgIf} from '@angular/common';
+import {SavedSearchPopupComponent} from '../../albums/saved-search-popup/saved-search-popup.component';
+import {SearchQueryUtils} from '../../../../../common/SearchQueryUtils';
 
 @Component({
-    selector: 'app-gallery-search',
-    templateUrl: './search.gallery.component.html',
-    styleUrls: ['./search.gallery.component.css'],
-    providers: [AutoCompleteService, RouterLink],
-    imports: [
-        FormsModule,
-        GallerySearchFieldBaseComponent,
-        RouterLink,
-        NgIconComponent,
-        GallerySearchQueryBuilderComponent,
-        NgIf,
-        SavedSearchPopupComponent,
-    ]
+  selector: 'app-gallery-search',
+  templateUrl: './search.gallery.component.html',
+  styleUrls: ['./search.gallery.component.css'],
+  providers: [AutoCompleteService, RouterLink],
+  imports: [
+    FormsModule,
+    GallerySearchFieldBaseComponent,
+    RouterLink,
+    NgIconComponent,
+    GallerySearchQueryBuilderComponent,
+    NgIf,
+    SavedSearchPopupComponent,
+  ]
 })
 export class GallerySearchComponent implements OnDestroy {
   public searchQueryDTO: SearchQueryDTO = {
@@ -52,12 +53,12 @@ export class GallerySearchComponent implements OnDestroy {
   private saveSearchModalRef: BsModalRef;
 
   constructor(
-      private searchQueryParserService: SearchQueryParserService,
-      private albumService: AlbumsService,
-      private route: ActivatedRoute,
-      public router: Router,
-      private modalService: BsModalService,
-      public authenticationService: AuthenticationService
+    private searchQueryParserService: SearchQueryParserService,
+    private albumService: AlbumsService,
+    private route: ActivatedRoute,
+    public router: Router,
+    private modalService: BsModalService,
+    public authenticationService: AuthenticationService
   ) {
     this.SearchQueryTypes = SearchQueryTypes;
     this.MetadataSearchQueryTypes = MetadataSearchQueryTypes.map((v) => ({
@@ -79,13 +80,13 @@ export class GallerySearchComponent implements OnDestroy {
 
   get CanCreateAlbum(): boolean {
     return (
-        Config.Album.enabled &&
-        this.authenticationService.user.getValue().role >= UserRoles.Admin
+      Config.Album.enabled &&
+      this.authenticationService.user.getValue().role >= UserRoles.Admin
     );
   }
 
   get HTMLSearchQuery(): string {
-    return JSON.stringify(this.searchQueryDTO);
+    return JSON.stringify(SearchQueryUtils.stripFalseNegate(this.searchQueryDTO));
   }
 
   ngOnDestroy(): void {
@@ -124,14 +125,14 @@ export class GallerySearchComponent implements OnDestroy {
     }
 
     this.rawSearchText = this.searchQueryParserService.stringify(
-        this.searchQueryDTO
+      this.searchQueryDTO
     );
   }
 
   validateRawSearchText(): void {
     try {
       this.searchQueryDTO = this.searchQueryParserService.parse(
-          this.rawSearchText
+        this.rawSearchText
       );
     } catch (e) {
       console.error(e);
@@ -140,14 +141,14 @@ export class GallerySearchComponent implements OnDestroy {
 
   Search(): void {
     this.router
-        .navigate(['/search', this.HTMLSearchQuery])
-        .catch(console.error);
+      .navigate(['/search', this.HTMLSearchQuery])
+      .catch(console.error);
   }
 
   async saveSearch(): Promise<void> {
     await this.albumService.addSavedSearch(
-        this.saveSearchName,
-        this.searchQueryDTO
+      this.saveSearchName,
+      SearchQueryUtils.stripFalseNegate(this.searchQueryDTO)
     );
     this.hideSaveSearchModal();
   }

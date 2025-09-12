@@ -31,16 +31,16 @@ export class RenderingMWs {
     res: Response,
     next: NextFunction
   ): void {
-    if (!req.session['user']) {
+    if (!req.session.context?.user) {
       return next(new ErrorDTO(ErrorCodes.GENERAL_ERROR, 'User not exists'));
     }
 
     const user = {
-      id: req.session['user'].id,
-      name: req.session['user'].name,
-      role: req.session['user'].role,
-      usedSharingKey: req.session['user'].usedSharingKey,
-      permissions: req.session['user'].permissions,
+      id: req.session.context.user.id,
+      name: req.session.context.user.name,
+      role: req.session.context.user.role,
+      usedSharingKey: req.session.context.user.usedSharingKey,
+      projectionKey: req.session.context.user.projectionKey,
     } as UserDTO;
 
 
@@ -142,8 +142,8 @@ export class RenderingMWs {
           !(
             forcedDebug ||
             (req.session &&
-              req.session['user'] &&
-              req.session['user'].role >= UserRoles.Developer)
+              req.session.context?.user &&
+              req.session.context?.user.role >= UserRoles.Developer)
           )
         ) {
           delete err.detailsStr;

@@ -1,9 +1,13 @@
 export interface PersonDTO {
+  cache?: PersonCacheDTO;
   id: number;
   name: string;
-  count: number;
   missingThumbnail?: boolean;
   isFavourite: boolean;
+}
+
+export interface PersonCacheDTO {
+  count: number;
 }
 
 

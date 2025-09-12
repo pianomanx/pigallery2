@@ -3,7 +3,7 @@ import {Config} from '../../../common/config/private/Config';
 import * as fs from 'fs';
 import * as path from 'path';
 import {pipeline} from 'stream/promises';
-import { Readable } from 'stream';
+import {Readable} from 'stream';
 import {IObjectManager} from '../database/IObjectManager';
 import {Logger} from '../../Logger';
 import {IExtensionEvents, IExtensionObject} from './IExtension';
@@ -75,7 +75,9 @@ export class ExtensionManager implements IObjectManager {
         CoverManager: {
           getCoverForDirectory: new ExtensionEvent(),
           getCoverForAlbum: new ExtensionEvent(),
-          invalidateDirectoryCovers: new ExtensionEvent(),
+        },
+        ProjectedCacheManager: {
+          invalidateDirectoryCache: new ExtensionEvent()
         },
         DiskManager: {
           excludeDir: new ExtensionEvent(),

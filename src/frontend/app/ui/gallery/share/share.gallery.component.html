@@ -60,25 +60,18 @@
                  name="sharing-dir"
                  id="sharing-dir"
                  class="full-width form-control"
-                 [ngModel]="currentDir">
+                 [ngModel]="galleryService.isSearchResult() ? (currentQuery | searchQuery) : sharingTarget">
         </div>
       </div>
 
-      <div class="row">
-        <div class="col-4">
-          <label class="control-label" for="includeSubfolders" i18n>Include subfolders:</label>
-        </div>
-        <div class="col-8">
-          <div class="form-check form-switch">
-            <input class="form-check-input"
-                   type="checkbox"
-                   role="switch"
-                   id="includeSubfolders"
-                   name="includeSubfolders"
-                   title="Orientation"
-                   (change)="update()"
-                   [(ngModel)]="input.includeSubfolders">
-          </div>
+      <div class="row mt-2">
+        <div class="col-12">
+          <small class="text-muted">
+            <span i18n>Sharing</span>&nbsp;<ng-container *ngIf="currentMediaCountIsLowerBound"><span
+            i18n>at least</span>&nbsp;
+          </ng-container>
+            <span class="fw-bold">{{ currentMediaCount }}</span>&nbsp;<span i18n>photos and videos.</span>&nbsp;<span i18n>Folders are not shared.</span>
+          </small>
         </div>
       </div>
 
@@ -86,7 +79,7 @@
         <div class="col-4">
           <label class="control-label" for="share-password">
             <ng-container i18n>Password</ng-container>
-            <ng-container  *ngIf="passwordRequired">*</ng-container>
+            <ng-container *ngIf="passwordRequired">*</ng-container>
           </label>
         </div>
         <div class="col-8">
@@ -131,7 +124,7 @@
     <a *ngIf="!showSharingList"
        (click)="showSharingList = true"
        class="list-shares-button m-0">
-      <span class="badge text-bg-secondary me-1">{{activeShares.length}}</span>
+      <span class="badge text-bg-secondary me-1">{{ activeShares.length }}</span>
       <ng-container i18n>active share(s) for this folder.
       </ng-container>
       <ng-icon name="ionChevronForwardOutline" class="ms-1"></ng-icon>
@@ -147,9 +140,9 @@
       </thead>
       <tbody>
       <tr *ngFor="let share of activeShares">
-        <td><a [href]="sharingService.getUrl(share)">{{share.sharingKey}}</a></td>
-        <td *ngIf="IsAdmin">{{share.creator.name}}</td>
-        <td>{{share.expires | date}}</td>
+        <td><a [href]="sharingService.getUrl(share)">{{ share.sharingKey }}</a></td>
+        <td *ngIf="IsAdmin">{{ share.creator.name }}</td>
+        <td>{{ share.expires | date }}</td>
         <td>
           <button (click)="deleteSharing(share)"
                   [disabled]="share.sharingKey == sharing?.sharingKey"

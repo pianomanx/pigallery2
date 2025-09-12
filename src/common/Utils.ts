@@ -1,4 +1,4 @@
-import { HTMLChar } from './HTMLCharCodes';
+import {HTMLChar} from './HTMLCharCodes';
 
 export class Utils {
   static GUID(): string {
@@ -29,7 +29,12 @@ export class Utils {
     if (typeof obj !== 'object' || obj == null) {
       return obj;
     }
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if((obj as any)._____removeNullOrEmptyObjvisiting){
+      throw new Error('Recursive call detected');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (obj as any)._____removeNullOrEmptyObjvisiting = true;
     const keys = Object.keys(obj);
     for (const key of keys) {
       if (obj[key] !== null && typeof obj[key] === 'object') {
@@ -42,6 +47,8 @@ export class Utils {
         delete obj[key];
       }
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (obj as any)._____removeNullOrEmptyObjvisiting;
     return obj;
   }
 
@@ -131,7 +138,7 @@ export class Utils {
     if (!(d instanceof Date)) {
       d = new Date(d);
     }
-    d = new Date(new Date(d).toISOString().substring(0,19) + (offset ? offset : '+00:00'))
+    d = new Date(new Date(d).toISOString().substring(0, 19) + (offset ? offset : '+00:00'));
     d.setUTCHours(0);
     d.setUTCMinutes(0);
     d.setUTCSeconds(0);
@@ -144,14 +151,14 @@ export class Utils {
     if (!(d instanceof Date)) {
       d = new Date(d);
     }
-    return new Date(new Date(d).toISOString().substring(0,19) + (offset ? offset : '+00:00')).getUTCFullYear();
+    return new Date(new Date(d).toISOString().substring(0, 19) + (offset ? offset : '+00:00')).getUTCFullYear();
   }
 
   static getFullYear(d: number | Date, offset: string) {
     if (!(d instanceof Date)) {
       d = new Date(d);
     }
-    return new Date(new Date(d).toISOString().substring(0,19) + (offset ? offset : '')).getFullYear();
+    return new Date(new Date(d).toISOString().substring(0, 19) + (offset ? offset : '')).getFullYear();
   }
 
   //function to convert timestamp into milliseconds taking offset into account
@@ -160,10 +167,10 @@ export class Utils {
       return undefined;
     }
     //replace : with - in the yyyy-mm-dd part of the timestamp.
-    let formattedTimestamp = timestamp.substring(0,9).replaceAll(':', '-') + timestamp.substring(9,timestamp.length);
-    if (formattedTimestamp.indexOf("Z") > 0) { //replace Z (and what comes after the Z) with offset
-      formattedTimestamp = formattedTimestamp.substring(0, formattedTimestamp.indexOf("Z")) + (offset ? offset : '+00:00');
-    } else if (formattedTimestamp.indexOf("+") > 0 || timestamp.substring(9,timestamp.length).indexOf("-") > 0) { //don't do anything
+    let formattedTimestamp = timestamp.substring(0, 9).replaceAll(':', '-') + timestamp.substring(9, timestamp.length);
+    if (formattedTimestamp.indexOf('Z') > 0) { //replace Z (and what comes after the Z) with offset
+      formattedTimestamp = formattedTimestamp.substring(0, formattedTimestamp.indexOf('Z')) + (offset ? offset : '+00:00');
+    } else if (formattedTimestamp.indexOf('+') > 0 || timestamp.substring(9, timestamp.length).indexOf('-') > 0) { //don't do anything
     } else { //add offset
       formattedTimestamp = formattedTimestamp + (offset ? offset : '+00:00');
     }
@@ -171,7 +178,7 @@ export class Utils {
     return Date.parse(formattedTimestamp);
   }
 
-  static splitTimestampAndOffset(timestamp: string): [string|undefined, string|undefined] {
+  static splitTimestampAndOffset(timestamp: string): [string | undefined, string | undefined] {
     if (!timestamp) {
       return [undefined, undefined];
     }
@@ -197,12 +204,12 @@ export class Utils {
       gps.GPSTimeStamp) { //else use exif.gps.GPS*Stamp if available
       //GPS timestamp is always UTC (+00:00)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      UTCTimestamp = gps.GPSDateStamp.replaceAll(':', '-') + " " + gps.GPSTimeStamp.map((num: any) => Utils.zeroPrefix(num ,2)).join(':');
+      UTCTimestamp = gps.GPSDateStamp.replaceAll(':', '-') + ' ' + gps.GPSTimeStamp.map((num: any) => Utils.zeroPrefix(num, 2)).join(':');
     }
     if (UTCTimestamp && timestamp) {
       //offset in minutes is the difference between gps timestamp, and given timestamp
       //to calculate this correctly, we have to work with the same offset
-      const offsetMinutes: number = Math.round((Utils.timestampToMS(timestamp, '+00:00')- Utils.timestampToMS(UTCTimestamp, '+00:00')) / 1000 / 60);
+      const offsetMinutes: number = Math.round((Utils.timestampToMS(timestamp, '+00:00') - Utils.timestampToMS(UTCTimestamp, '+00:00')) / 1000 / 60);
       return Utils.getOffsetString(offsetMinutes);
     } else {
       return undefined;
@@ -212,8 +219,8 @@ export class Utils {
   static getOffsetString(offsetMinutes: number) {
     if (-720 <= offsetMinutes && offsetMinutes <= 840) {
       //valid offset is within -12 and +14 hrs (https://en.wikipedia.org/wiki/List_of_UTC_offsets)
-      return (offsetMinutes < 0 ? "-" : "+") +                              //leading +/-
-        Utils.zeroPrefix(Math.trunc(Math.abs(offsetMinutes) / 60), 2) + ":" +        //zeropadded hours and ':'
+      return (offsetMinutes < 0 ? '-' : '+') +                              //leading +/-
+        Utils.zeroPrefix(Math.trunc(Math.abs(offsetMinutes) / 60), 2) + ':' +        //zeropadded hours and ':'
         Utils.zeroPrefix((Math.abs(offsetMinutes) % 60), 2);                         //zeropadded minutes
     } else {
       return undefined;
@@ -224,9 +231,9 @@ export class Utils {
     const regex = /^([+-](0[0-9]|1[0-4]):[0-5][0-9])$/;  //checks if offset is between -14:00 and +14:00.
                                                          //-12:00 is the lowest valid UTC-offset, but we allow down to -14 for efficiency
     if (regex.test(offsetString)) {
-      const hhmm = offsetString.split(":");
+      const hhmm = offsetString.split(':');
       const hours = parseInt(hhmm[0]);
-      return hours < 0 ? ((hours*60) - parseInt(hhmm[1])) : ((hours*60) + parseInt(hhmm[1]));
+      return hours < 0 ? ((hours * 60) - parseInt(hhmm[1])) : ((hours * 60) + parseInt(hhmm[1]));
     } else {
       return undefined;
     }
@@ -249,7 +256,7 @@ export class Utils {
   }
 
   static isLeapYear(year: number) {
-    return (0 == year % 4) && (0 != year % 100) || (0 == year % 400)
+    return (0 == year % 4) && (0 != year % 100) || (0 == year % 400);
   }
 
   static isDateFromLeapYear(date: Date) {
@@ -272,7 +279,7 @@ export class Utils {
   //this function makes sure that if date is the 31st and you add a month, you will get the last day of the next month
   //so adding or subtracting a month from 31st of march will give 30th of april or 28th of february respectively (29th on leap years).
   static addMonthToDate(date: Date, numMonths: number) {
-    const result = new Date(date)
+    const result = new Date(date);
     const expectedMonth = ((date.getMonth() + numMonths) % 12 + 12) % 12; //inner %12 + 12 makes correct handling of negative months
     result.setMonth(result.getMonth() + numMonths);
     if (result.getMonth() !== expectedMonth) {
@@ -434,13 +441,12 @@ export class Utils {
   }
 
 
-
   public static decodeHTMLChars(text: string): string {
     if (text) {
-      const newtext = text.replace(/&#([0-9]{1,3});/gi, function (match, numStr) {
+      const newtext = text.replace(/&#([0-9]{1,3});/gi, function(match, numStr) {
         return String.fromCharCode(parseInt(numStr, 10));
       });
-      return newtext.replace(/&[^;]+;/g, function (match) {
+      return newtext.replace(/&[^;]+;/g, function(match) {
         const char = HTMLChar[match];
         return char ? char : match;
       });
@@ -500,13 +506,13 @@ export class Utils {
     const parts = text.match(/^([0-9]+),([0-9.]+)([EWNS])$/);
     const degrees: number = parseInt(parts[1], 10);
     const minutes: number = parseFloat(parts[2]);
-    const sign = (parts[3] === "N" || parts[3] === "E") ? 1 : -1;
-    return (sign * (degrees + (minutes / 60.0)))
+    const sign = (parts[3] === 'N' || parts[3] === 'E') ? 1 : -1;
+    return (sign * (degrees + (minutes / 60.0)));
   }
 
 
   public static sortableFilename(filename: string): string {
-    const lastDot = filename.lastIndexOf(".");
+    const lastDot = filename.lastIndexOf('.');
 
     // Avoid 0 as well as -1 to prevent empty names for extensionless dot-files
     if (lastDot > 0) {

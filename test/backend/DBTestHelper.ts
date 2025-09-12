@@ -15,6 +15,11 @@ import {TestHelper} from '../TestHelper';
 import {VideoDTO} from '../../src/common/entities/VideoDTO';
 import {PhotoDTO} from '../../src/common/entities/PhotoDTO';
 import {Logger} from '../../src/backend/Logger';
+import {SessionContext} from '../../src/backend/model/SessionContext';
+import {SessionManager} from '../../src/backend/model/database/SessionManager';
+import {DirectoryEntity} from '../../src/backend/model/database/enitites/DirectoryEntity';
+import {MediaEntity} from '../../src/backend/model/database/enitites/MediaEntity';
+import {ProjectedDirectoryCacheEntity} from '../../src/backend/model/database/enitites/ProjectedDirectoryCacheEntity';
 
 declare let describe: any;
 const savedDescribe = describe;
@@ -32,13 +37,13 @@ class GalleryManagerTest extends GalleryManager {
     return super.getDirIdAndTime(connection, directoryName, directoryParent);
   }
 
-  public async getParentDirFromId(connection: Connection, dir: number): Promise<ParentDirectoryDTO> {
-    return super.getParentDirFromId(connection, dir);
+  public async getParentDirFromId(connection: Connection, session: SessionContext, dir: number): Promise<ParentDirectoryDTO> {
+    return super.getParentDirFromId(connection, session, dir);
   }
 
 }
 
-const LOG_TAG = 'DBTestHelper';
+const LOG_TAG = '[DBTestHelper]';
 
 export class DBTestHelper {
 
@@ -77,6 +82,9 @@ export class DBTestHelper {
     p3: null,
     p4: null
   };
+  public static get defaultSession(): SessionContext {
+    return {user: {projectionKey: SessionManager.NO_PROJECTION_KEY}} as any;
+  }
 
   constructor(public dbType: DatabaseType) {
   }
@@ -120,20 +128,20 @@ export class DBTestHelper {
     // await im.saveToDB(subDir2);
 
     if (ObjectManagers.getInstance().IndexingManager &&
-        ObjectManagers.getInstance().IndexingManager.IsSavingInProgress) {
+      ObjectManagers.getInstance().IndexingManager.IsSavingInProgress) {
       await ObjectManagers.getInstance().IndexingManager.SavingReady;
     }
 
     const gm = new GalleryManagerTest();
 
-    const dir = await gm.getParentDirFromId(connection,
-        (await gm.getDirIdAndTime(connection, directory.name, path.join(directory.path, path.sep))).id);
+    const dir = await gm.getParentDirFromId(connection, this.defaultSession,
+      (await gm.getDirIdAndTime(connection, directory.name, path.join(directory.path, path.sep))).id);
 
     const populateDir = async (d: DirectoryBaseDTO) => {
       for (let i = 0; i < d.directories.length; i++) {
-        d.directories[i] = await gm.getParentDirFromId(connection,
-            (await gm.getDirIdAndTime(connection, d.directories[i].name,
-                path.join(DiskManager.pathFromParent(d), path.sep))).id);
+        d.directories[i] = await gm.getParentDirFromId(connection, this.defaultSession,
+          (await gm.getDirIdAndTime(connection, d.directories[i].name,
+            path.join(DiskManager.pathFromParent(d), path.sep))).id);
         await populateDir(d.directories[i]);
       }
     };
@@ -162,7 +170,7 @@ export class DBTestHelper {
   }
 
   public async setUpTestGallery(): Promise<void> {
-    const directory: ParentDirectoryDTO = TestHelper.getDirectoryEntry();
+    const directory: ParentDirectoryDTO = TestHelper.getDirectoryEntry(null, '.');
     this.testGalleyEntities.subDir = TestHelper.getDirectoryEntry(directory, 'The Phantom Menace');
     this.testGalleyEntities.subDir2 = TestHelper.getDirectoryEntry(directory, 'Return of the Jedi');
     this.testGalleyEntities.p = TestHelper.getRandomizedPhotoEntry(directory, 'Photo1');
@@ -184,6 +192,15 @@ export class DBTestHelper {
     this.testGalleyEntities.p3.directory = this.testGalleyEntities.dir.directories[0];
     this.testGalleyEntities.p4 = (this.testGalleyEntities.dir.directories[1].media[0] as any);
     this.testGalleyEntities.p2.directory = this.testGalleyEntities.dir.directories[1];
+  }
+
+  public static async printDB() {
+    const conn = await SQLConnection.getConnection();
+    const dirs = await conn.getRepository(DirectoryEntity).createQueryBuilder('dir').getMany();
+    const dCache = await conn.getRepository(ProjectedDirectoryCacheEntity).createQueryBuilder('c').leftJoinAndSelect('c.cover', 'cover').getMany();
+    const media = await conn.getRepository(MediaEntity).createQueryBuilder('m').getMany();
+
+    return JSON.stringify({dirs, dCache, media}, null, 2);
   }
 
   private async initMySQL(): Promise<void> {

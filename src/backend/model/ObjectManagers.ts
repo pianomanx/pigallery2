@@ -15,10 +15,13 @@ import {PersonManager} from './database/PersonManager';
 import {SharingManager} from './database/SharingManager';
 import {IObjectManager} from './database/IObjectManager';
 import {ExtensionManager} from './extension/ExtensionManager';
+import {ProjectedCacheManager} from './database/ProjectedCacheManager';
+import {SessionManager} from './database/SessionManager';
 
 const LOG_TAG = '[ObjectManagers]';
 
 export class ObjectManagers {
+
   private static instance: ObjectManagers = null;
 
   private readonly managers: IObjectManager[];
@@ -34,6 +37,8 @@ export class ObjectManagers {
   private locationManager: LocationManager;
   private albumManager: AlbumManager;
   private extensionManager: ExtensionManager;
+  private projectedCacheManager: ProjectedCacheManager;
+  private sessionManager: SessionManager;
   private initDone = false;
 
   constructor() {
@@ -51,8 +56,8 @@ export class ObjectManagers {
     Logger.silly(LOG_TAG, 'Object manager reset begin');
     if (ObjectManagers.isReady()) {
       if (
-          ObjectManagers.getInstance().IndexingManager &&
-          ObjectManagers.getInstance().IndexingManager.IsSavingInProgress
+        ObjectManagers.getInstance().IndexingManager &&
+        ObjectManagers.getInstance().IndexingManager.IsSavingInProgress
       ) {
         await ObjectManagers.getInstance().IndexingManager.SavingReady;
       }
@@ -99,6 +104,8 @@ export class ObjectManagers {
     this.JobManager = new JobManager();
     this.LocationManager = new LocationManager();
     this.ExtensionManager = new ExtensionManager();
+    this.ProjectedCacheManager = new ProjectedCacheManager();
+    this.SessionManager = new SessionManager();
 
     for (const manager of ObjectManagers.getInstance().managers) {
       if (manager === ObjectManagers.getInstance().versionManager) {
@@ -111,7 +118,7 @@ export class ObjectManagers {
   }
 
   public async onDataChange(
-      changedDir: ParentDirectoryDTO = null
+    changedDir: ParentDirectoryDTO = null
   ): Promise<void> {
     await this.VersionManager.onNewDataVersion();
 
@@ -180,10 +187,10 @@ export class ObjectManagers {
 
   set CoverManager(value: CoverManager) {
     if (this.coverManager) {
-      this.managers.splice(this.managers.indexOf(this.coverManager), 1);
+      this.managers.splice(this.managers.indexOf(this.coverManager as IObjectManager), 1);
     }
     this.coverManager = value;
-    this.managers.push(this.coverManager);
+    this.managers.push(this.coverManager as IObjectManager);
   }
 
   get IndexingManager(): IndexingManager {
@@ -269,4 +276,28 @@ export class ObjectManagers {
     this.extensionManager = value;
     this.managers.push(this.extensionManager as IObjectManager);
   }
+
+  get ProjectedCacheManager(): ProjectedCacheManager {
+    return this.projectedCacheManager;
+  }
+
+  set ProjectedCacheManager(value: ProjectedCacheManager) {
+    if (this.projectedCacheManager) {
+      this.managers.splice(this.managers.indexOf(this.projectedCacheManager as IObjectManager), 1);
+    }
+    this.projectedCacheManager = value;
+    this.managers.push(this.projectedCacheManager as IObjectManager);
+  }
+  get SessionManager(): SessionManager {
+    return this.sessionManager;
+  }
+
+  set SessionManager(value: SessionManager) {
+    if (this.sessionManager) {
+      this.managers.splice(this.managers.indexOf(this.sessionManager as IObjectManager), 1);
+    }
+    this.sessionManager = value;
+    this.managers.push(this.sessionManager as IObjectManager);
+  }
+
 }

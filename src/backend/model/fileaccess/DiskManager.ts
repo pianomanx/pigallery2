@@ -15,6 +15,8 @@ import {MDFileDTO} from '../../../common/entities/MDFileDTO';
 import {MetadataLoader} from './MetadataLoader';
 import {NotificationManager} from '../NotifocationManager';
 import {ExtensionDecorator} from '../extension/ExtensionDecorator';
+import {ObjectManagers} from '../ObjectManagers';
+import {SessionManager} from '../database/SessionManager';
 
 
 const LOG_TAG = '[DiskManager]';
@@ -128,11 +130,14 @@ export class DiskManager {
       lastModified: this.calcLastModified(stat),
       directories: [],
       isPartial: settings.coverOnly === true,
-      mediaCount: 0,
-      cover: null,
-      validCover: false,
       media: [],
       metaFile: [],
+      cache: {
+        projectionKey: SessionManager.NO_PROJECTION_KEY,
+        mediaCount: 0,
+        cover: null,
+        valid: false
+      }
     };
     if (!settings.coverOnly) {
       directory.lastScanned = Date.now();
@@ -196,10 +201,10 @@ export class DiskManager {
                 : await MetadataLoader.loadPhotoMetadata(fullFilePath),
           } as PhotoDTO;
 
-          if (!directory.cover) {
-            directory.cover = Utils.clone(photo);
+          if (!directory.cache.cover) {
+            directory.cache.cover = Utils.clone(photo);
 
-            directory.cover.directory = {
+            directory.cache.cover.directory = {
               path: directory.path,
               name: directory.name,
             };
@@ -271,20 +276,20 @@ export class DiskManager {
       }
     }
 
-    directory.mediaCount = directory.media.length;
+    directory.cache.mediaCount = directory.media.length;
     if (!directory.isPartial) {
-      directory.youngestMedia = Number.MAX_SAFE_INTEGER;
-      directory.oldestMedia = Number.MIN_SAFE_INTEGER;
+      directory.cache.youngestMedia = Number.MAX_SAFE_INTEGER;
+      directory.cache.oldestMedia = Number.MIN_SAFE_INTEGER;
 
       directory.media.forEach((m) => {
-          directory.youngestMedia = Math.min(Utils.getTimeMS(m.metadata.creationDate, m.metadata.creationDateOffset, Config.Gallery.ignoreTimestampOffset), directory.youngestMedia);
-          directory.oldestMedia = Math.max(Utils.getTimeMS(m.metadata.creationDate, m.metadata.creationDateOffset, Config.Gallery.ignoreTimestampOffset), directory.oldestMedia);
+          directory.cache.youngestMedia = Math.min(Utils.getTimeMS(m.metadata.creationDate, m.metadata.creationDateOffset, Config.Gallery.ignoreTimestampOffset), directory.cache.youngestMedia);
+          directory.cache.oldestMedia = Math.max(Utils.getTimeMS(m.metadata.creationDate, m.metadata.creationDateOffset, Config.Gallery.ignoreTimestampOffset), directory.cache.oldestMedia);
         }
       );
 
       directory.metaFile.forEach(mf => {
         if (DiskManager.isMarkdown(mf.name)) {
-          (mf as MDFileDTO).date = directory.youngestMedia;
+          (mf as MDFileDTO).date = directory.cache.youngestMedia;
         }
       });
     }

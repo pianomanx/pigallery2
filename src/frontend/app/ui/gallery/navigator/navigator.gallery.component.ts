@@ -1,7 +1,7 @@
 import {Component, ElementRef, HostListener, ViewChild} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {DomSanitizer} from '@angular/platform-browser';
-import {UserDTOUtils} from '../../../../../common/entities/UserDTO';
+import {UserRoles} from '../../../../../common/entities/UserDTO';
 import {AuthenticationService} from '../../../model/network/authentication.service';
 import {QueryService} from '../../../model/query.service';
 import {Utils} from '../../../../../common/Utils';
@@ -137,7 +137,7 @@ export class GalleryNavigatorComponent {
           } else {
             arr.push({
               name: this.RootFolderName,
-              route: UserDTOUtils.isDirectoryPathAvailable('/', user.permissions)
+              route: user.role > UserRoles.LimitedGuest // it's basically a sharing. they should not just navigate wherever
                   ? '/'
                   : null,
             });
@@ -151,7 +151,7 @@ export class GalleryNavigatorComponent {
             } else {
               arr.push({
                 name,
-                route: UserDTOUtils.isDirectoryPathAvailable(route, user.permissions)
+                route: user.role > UserRoles.LimitedGuest // it's basically a sharing. they should not just navigate wherever
                     ? route
                     : null,
               });
@@ -191,9 +191,9 @@ export class GalleryNavigatorComponent {
   get ItemCount(): number {
     const c = this.contentLoaderService.content.value;
     return c.directory
-        ? c.directory.mediaCount
+        ? c.directory.cache?.mediaCount
         : c.searchResult
-            ? c.searchResult.media.length
+            ? c.searchResult?.media?.length
             : 0;
   }
 

@@ -71,75 +71,11 @@ export const MetadataSearchQueryTypes = [
     .concat(RangeSearchQueryTypes)
     .concat(TextSearchQueryTypes);
 
-export const rangedTypePairs: any = {};
-rangedTypePairs[SearchQueryTypes.from_date] = SearchQueryTypes.to_date;
-rangedTypePairs[SearchQueryTypes.min_rating] = SearchQueryTypes.max_rating;
-rangedTypePairs[SearchQueryTypes.min_resolution] =
-    SearchQueryTypes.max_resolution;
-// add the other direction too
-for (const key of Object.keys(rangedTypePairs)) {
-  rangedTypePairs[rangedTypePairs[key]] = key;
-}
 
 export enum TextSearchQueryMatchTypes {
   exact_match = 1,
   like = 2,
 }
-
-export const SearchQueryDTOUtils = {
-  getRangedQueryPair: (type: SearchQueryTypes): SearchQueryTypes => {
-    if (rangedTypePairs[type]) {
-      return rangedTypePairs[type];
-    }
-    throw new Error('Unknown ranged type');
-  },
-  negate: (query: SearchQueryDTO): SearchQueryDTO => {
-    switch (query.type) {
-      case SearchQueryTypes.AND:
-        query.type = SearchQueryTypes.OR;
-        (query as SearchListQuery).list = (query as SearchListQuery).list.map(
-            (q) => SearchQueryDTOUtils.negate(q)
-        );
-        return query;
-      case SearchQueryTypes.OR:
-        query.type = SearchQueryTypes.AND;
-        (query as SearchListQuery).list = (query as SearchListQuery).list.map(
-            (q) => SearchQueryDTOUtils.negate(q)
-        );
-        return query;
-
-      case SearchQueryTypes.orientation:
-        (query as OrientationSearch).landscape = !(query as OrientationSearch)
-            .landscape;
-        return query;
-
-      case SearchQueryTypes.from_date:
-      case SearchQueryTypes.to_date:
-      case SearchQueryTypes.min_rating:
-      case SearchQueryTypes.max_rating:
-      case SearchQueryTypes.min_resolution:
-      case SearchQueryTypes.max_resolution:
-      case SearchQueryTypes.distance:
-      case SearchQueryTypes.any_text:
-      case SearchQueryTypes.person:
-      case SearchQueryTypes.position:
-      case SearchQueryTypes.keyword:
-      case SearchQueryTypes.caption:
-      case SearchQueryTypes.file_name:
-      case SearchQueryTypes.directory:
-        (query as NegatableSearchQuery).negate = !(
-            query as NegatableSearchQuery
-        ).negate;
-        return query;
-
-      case SearchQueryTypes.SOME_OF:
-        throw new Error('Some of not supported');
-
-      default:
-        throw new Error('Unknown type' + query.type);
-    }
-  },
-};
 
 export interface SearchQueryDTO {
   type: SearchQueryTypes;
@@ -166,7 +102,7 @@ export interface ORSearchQuery extends SearchQueryDTO, SearchListQuery {
 export interface SomeOfSearchQuery extends SearchQueryDTO, SearchListQuery {
   type: SearchQueryTypes.SOME_OF;
   list: NegatableSearchQuery[];
-  min?: number; // at least this amount of items
+  min?: number; // at least this number of items
 }
 
 export interface TextSearch extends NegatableSearchQuery {

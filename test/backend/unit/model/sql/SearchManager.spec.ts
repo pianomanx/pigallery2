@@ -25,12 +25,9 @@ import {
   TextSearchQueryMatchTypes,
   ToDateSearch
 } from '../../../../../src/common/entities/SearchQueryDTO';
-import {IndexingManager} from '../../../../../src/backend/model/database/IndexingManager';
 import {DirectoryBaseDTO, ParentDirectoryDTO, SubDirectoryDTO} from '../../../../../src/common/entities/DirectoryDTO';
 import {TestHelper} from '../../../../TestHelper';
 import {ObjectManagers} from '../../../../../src/backend/model/ObjectManagers';
-import {GalleryManager} from '../../../../../src/backend/model/database/GalleryManager';
-import {Connection} from 'typeorm';
 import {GPSMetadata, PhotoDTO, PhotoMetadata} from '../../../../../src/common/entities/PhotoDTO';
 import {VideoDTO} from '../../../../../src/common/entities/VideoDTO';
 import {AutoCompleteItem} from '../../../../../src/common/entities/AutoCompleteItem';
@@ -38,7 +35,6 @@ import {Config} from '../../../../../src/common/config/private/Config';
 import {SearchQueryParser} from '../../../../../src/common/SearchQueryParser';
 import {FileDTO} from '../../../../../src/common/entities/FileDTO';
 import {SortByTypes} from '../../../../../src/common/entities/SortingMethods';
-import {LogLevel} from '../../../../../src/common/config/private/PrivateConfig';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
@@ -56,13 +52,6 @@ const tmpDescribe = describe;
 describe = DBTestHelper.describe(); // fake it os IDE plays nicely (recognize the test)
 
 
-class IndexingManagerTest extends IndexingManager {
-
-  public async saveToDB(scannedDirectory: ParentDirectoryDTO): Promise<void> {
-    return super.saveToDB(scannedDirectory);
-  }
-}
-
 class SearchManagerTest extends SearchManager {
 
   public flattenSameOfQueries(query: SearchQueryDTO): SearchQueryDTO {
@@ -71,21 +60,11 @@ class SearchManagerTest extends SearchManager {
 
 }
 
-class GalleryManagerTest extends GalleryManager {
-
-  public async getDirIdAndTime(connection: Connection, directoryName: string, directoryParent: string) {
-    return super.getDirIdAndTime(connection, directoryName, directoryParent);
-  }
-
-  public async getParentDirFromId(connection: Connection, dir: number): Promise<ParentDirectoryDTO> {
-    return super.getParentDirFromId(connection, dir);
-  }
-}
 
 describe('SearchManager', (sqlHelper: DBTestHelper) => {
   describe = tmpDescribe;
   /**
-   * dir
+   * dir  <-- root: '.'
    * |- v
    * |- p
    * |- p2
@@ -115,27 +94,27 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     subDir2 = TestHelper.getDirectoryEntry(directory, 'Return of the Jedi');
     p = TestHelper.getPhotoEntry1(directory);
     p.metadata.creationDate = Date.now();
-    p.metadata.creationDateOffset = "+02:00";
+    p.metadata.creationDateOffset = '+02:00';
     p2 = TestHelper.getPhotoEntry2(directory);
     p2.metadata.creationDate = Date.now() - 60 * 60 * 24 * 1000;
-    p2.metadata.creationDateOffset = "+02:00";
+    p2.metadata.creationDateOffset = '+02:00';
     v = TestHelper.getVideoEntry1(directory);
     v.metadata.creationDate = Date.now() - 60 * 60 * 24 * 7 * 1000;
-    v.metadata.creationDateOffset = "+02:00";
+    v.metadata.creationDateOffset = '+02:00';
     gpx = TestHelper.getRandomizedGPXEntry(directory);
     p4 = TestHelper.getPhotoEntry4(subDir2);
     let d = new Date();
     //set creation date to one year and one day earlier
     p4.metadata.creationDate = d.getTime() - 60 * 60 * 24 * (Utils.isDateFromLeapYear(d) ? 367 : 366) * 1000;
-    p4.metadata.creationDateOffset = "+02:00";
+    p4.metadata.creationDateOffset = '+02:00';
     const pFaceLessTmp = TestHelper.getPhotoEntry3(subDir);
     delete pFaceLessTmp.metadata.faces;
     d = new Date();
     //we create a date 1 month and 1 day before now
     d = Utils.addMonthToDate(d, -1); //subtract 1 month in the "human way"
-    d.setDate(d.getDate()-1); //subtract 1 day
+    d.setDate(d.getDate() - 1); //subtract 1 day
     pFaceLessTmp.metadata.creationDate = d.getTime();
-    pFaceLessTmp.metadata.creationDateOffset = "+02:00";
+    pFaceLessTmp.metadata.creationDateOffset = '+02:00';
 
     dir = await DBTestHelper.persistTestDir(directory);
     subDir = dir.directories[0];
@@ -163,14 +142,15 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
   before(async () => {
     await setUpSqlDB();
-    Config.Search.listDirectories = true;
-    Config.Search.listMetafiles = false;
   });
 
 
   after(async () => {
     await sqlHelper.clearDB();
-    Config.Search.listDirectories = false;
+  });
+  beforeEach(() => {
+    Config.loadSync();
+    Config.Search.listDirectories = true;
     Config.Search.listMetafiles = false;
   });
 
@@ -184,45 +164,47 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       return a.text.localeCompare(b.text);
     };
 
-    expect((await sm.autocomplete('tat', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'tat', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
       new AutoCompleteItem('Tatooine', SearchQueryTypes.position)]);
-    expect((await sm.autocomplete('star', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'star', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
       new AutoCompleteItem('star wars', SearchQueryTypes.keyword),
       new AutoCompleteItem('death star', SearchQueryTypes.keyword)]);
 
-    expect((await sm.autocomplete('wars', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
-      new AutoCompleteItem('star wars', SearchQueryTypes.keyword),
-      new AutoCompleteItem('wars dir', SearchQueryTypes.directory)]);
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'wars', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+      new AutoCompleteItem('star wars', SearchQueryTypes.keyword)]);
 
-    expect((await sm.autocomplete('arch', SearchQueryTypes.any_text))).eql([
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'phantom', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+      new AutoCompleteItem('phantom menace', SearchQueryTypes.keyword),
+      new AutoCompleteItem('The Phantom Menace', SearchQueryTypes.directory)]);
+
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'arch', SearchQueryTypes.any_text))).eql([
       new AutoCompleteItem('Research City', SearchQueryTypes.position)]);
 
     Config.Search.AutoComplete.ItemsPerCategory.maxItems = 99999;
-    expect((await sm.autocomplete('wa', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'wa', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
       new AutoCompleteItem('star wars', SearchQueryTypes.keyword),
       new AutoCompleteItem('Anakin Skywalker', SearchQueryTypes.person),
-      new AutoCompleteItem('Luke Skywalker', SearchQueryTypes.person),
-      new AutoCompleteItem('wars dir', SearchQueryTypes.directory)]);
+      new AutoCompleteItem('Luke Skywalker', SearchQueryTypes.person)]);
 
     Config.Search.AutoComplete.ItemsPerCategory.maxItems = 1;
-    expect((await sm.autocomplete('a', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
-      new AutoCompleteItem('Han Solo', SearchQueryTypes.person),
-      new AutoCompleteItem('Han Solo\'s dice', SearchQueryTypes.caption),
-      new AutoCompleteItem('Research City', SearchQueryTypes.position),
-      new AutoCompleteItem('death star', SearchQueryTypes.keyword),
-      new AutoCompleteItem('wars dir', SearchQueryTypes.directory)]);
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'a', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+      new AutoCompleteItem('Anakin Skywalker', SearchQueryTypes.person),
+      new AutoCompleteItem('Amber stone', SearchQueryTypes.caption),
+      new AutoCompleteItem('Castilon', SearchQueryTypes.position),
+      new AutoCompleteItem('star wars', SearchQueryTypes.keyword),
+      new AutoCompleteItem('The Phantom Menace', SearchQueryTypes.directory)]);
     Config.Search.AutoComplete.ItemsPerCategory.maxItems = 5;
     Config.Search.AutoComplete.ItemsPerCategory.fileName = 5;
     Config.Search.AutoComplete.ItemsPerCategory.fileName = 5;
 
-    expect((await sm.autocomplete('sw', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, 'sw', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
       new AutoCompleteItem('sw1.jpg', SearchQueryTypes.file_name),
       new AutoCompleteItem('sw2.jpg', SearchQueryTypes.file_name),
       new AutoCompleteItem('sw3.jpg', SearchQueryTypes.file_name),
       new AutoCompleteItem('sw4.jpg', SearchQueryTypes.file_name),
       new AutoCompleteItem(v.name, SearchQueryTypes.file_name)]);
 
-    expect((await sm.autocomplete(v.name, SearchQueryTypes.any_text))).to.deep.equalInAnyOrder(
+    expect((await sm.autocomplete(DBTestHelper.defaultSession, v.name, SearchQueryTypes.any_text))).to.deep.equalInAnyOrder(
       [new AutoCompleteItem(v.name, SearchQueryTypes.file_name)]);
 
   });
@@ -231,26 +213,26 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     const tmpDir: DirectoryBaseDTO = m.directory as DirectoryBaseDTO;
     const tmpM = tmpDir.media;
     const tmpD = tmpDir.directories;
-    const tmpP = tmpDir.cover;
+    const tmpP = tmpDir.cache?.cover;
     const tmpMT = tmpDir.metaFile;
     delete tmpDir.directories;
     delete tmpDir.media;
-    delete tmpDir.cover;
-    delete tmpDir.validCover;
+    delete tmpDir.cache?.cover;
+    delete tmpDir.cache?.valid;
     delete tmpDir.metaFile;
     const ret = Utils.clone(m);
     delete (ret.directory as DirectoryBaseDTO).lastScanned;
     delete (ret.directory as DirectoryBaseDTO).lastModified;
-    delete (ret.directory as DirectoryBaseDTO).mediaCount;
-    delete (ret.directory as DirectoryBaseDTO).youngestMedia;
-    delete (ret.directory as DirectoryBaseDTO).oldestMedia;
+    delete (ret.directory as DirectoryBaseDTO).cache;
     if ((ret as PhotoDTO).metadata &&
       ((ret as PhotoDTO).metadata as PhotoMetadata).faces && !((ret as PhotoDTO).metadata as PhotoMetadata).faces.length) {
       delete ((ret as PhotoDTO).metadata as PhotoMetadata).faces;
     }
     tmpDir.directories = tmpD;
     tmpDir.media = tmpM;
-    tmpDir.cover = tmpP;
+    if (tmpDir.cache) {
+      tmpDir.cache.cover = tmpP;
+    }
     tmpDir.metaFile = tmpMT;
     return ret;
   };
@@ -258,7 +240,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
   const searchifyDir = (d: DirectoryBaseDTO): DirectoryBaseDTO => {
     const tmpM = d.media;
     const tmpD = d.directories;
-    const tmpP = d.cover;
+    const tmpP = d.cache.cover;
     const tmpMT = d.metaFile;
     delete d.directories;
     delete d.media;
@@ -266,7 +248,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     const ret = Utils.clone(d);
     d.directories = tmpD;
     d.media = tmpM;
-    d.cover = tmpP;
+    d.cache.cover = tmpP;
     d.metaFile = tmpMT;
     ret.isPartial = true;
     return ret;
@@ -279,12 +261,237 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     return Utils.clone(result);
   };
 
-  describe('advanced search', async () => {
-    afterEach(async () => {
+  describe('projectionQuery (session scoped filter)', () => {
+    it('getCount should respect projectionQuery', async () => {
+      const sm = new SearchManager();
+
+      const projQ = ({
+        text: 'wookiees',
+        matchType: TextSearchQueryMatchTypes.exact_match,
+        type: SearchQueryTypes.keyword
+      } as TextSearch);
+      const session = Utils.clone(DBTestHelper.defaultSession);
+      session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
+
+      const searchQ = {text: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
+
+      // validate projection less count
+      expect(await sm.getCount(DBTestHelper.defaultSession, projQ)).to.equal(1);
+      expect(await sm.getCount(DBTestHelper.defaultSession, searchQ)).to.equal(4);
+
+      // test
+      expect(await sm.getCount(session, searchQ)).to.equal(1);
+
+    });
+
+    it('getNMedia should respect projectionQuery', async () => {
+      const sm = new SearchManager();
+
+      const projQ = ({
+        text: 'wookiees',
+        matchType: TextSearchQueryMatchTypes.exact_match,
+        type: SearchQueryTypes.keyword
+      } as TextSearch);
+      const session = Utils.clone(DBTestHelper.defaultSession);
+      session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
+
+      const searchQ = {text: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
+
+      const media = await sm.getNMedia(session, searchQ, [{
+        method: SortByTypes.Random,
+        ascending: null
+      }], 10, true);
+
+      expect(Utils.clone(media)).to.deep.equalInAnyOrder([searchifyMedia(pFaceLess)]);
+    });
+
+
+    describe('autocomplete', () => {
+      beforeEach(()=>Config.loadSync());
+
+      it('autocomplete should respect projectionQuery', async () => {
+        const sm = new SearchManager();
+
+        const projQ = ({
+          text: 'wookiees',
+          matchType: TextSearchQueryMatchTypes.exact_match,
+          type: SearchQueryTypes.keyword
+        } as TextSearch);
+        const session = await ObjectManagers.getInstance().SessionManager.buildContext({
+          overrideAllowBlockList: true,
+          allowQuery: projQ
+        } as any);
+
+        // validate projection less count
+        expect((await sm.autocomplete(DBTestHelper.defaultSession, 'phantom', SearchQueryTypes.any_text)).length).to.equal(2);
+
+        // test
+        expect((await sm.autocomplete(session, 'star', SearchQueryTypes.any_text)).length).to.equal(1);
+        expect(await sm.autocomplete(session, 'star', SearchQueryTypes.any_text)).to.deep.equal([{
+          text: 'star wars',
+          type: SearchQueryTypes.keyword,
+        }]);
+      });
+
+      it('autocomplete should apply directory projection to directory suggestions', async () => {
+        const sm = new SearchManager();
+        const projQ = ({
+          text: 'The Phantom Menace',
+          matchType: TextSearchQueryMatchTypes.exact_match,
+          type: SearchQueryTypes.directory
+        } as TextSearch);
+        const session = await ObjectManagers.getInstance().SessionManager.buildContext({
+          overrideAllowBlockList: true,
+          allowQuery: projQ
+        } as any);
+
+        // Without projection, searching 'Return' yields the directory suggestion
+        expect(await sm.autocomplete(DBTestHelper.defaultSession, 'Return', SearchQueryTypes.directory))
+          .to.deep.equalInAnyOrder([new AutoCompleteItem('Return of the Jedi', SearchQueryTypes.directory)]);
+
+        // With projection to a different directory, expect no directory suggestion (should be filtered out)
+        expect(await sm.autocomplete(session, 'Return', SearchQueryTypes.directory))
+          .to.deep.equalInAnyOrder([]);
+
+        expect(await sm.autocomplete(session, 'Phantom', SearchQueryTypes.directory))
+          .to.deep.equalInAnyOrder([new AutoCompleteItem('The Phantom Menace', SearchQueryTypes.directory)]);
+      });
+
+      it('autocomplete should apply directory projection to keyword suggestions', async () => {
+        const sm = new SearchManager();
+        const projQ = ({
+          text: 'The Phantom Menace',
+          matchType: TextSearchQueryMatchTypes.exact_match,
+          type: SearchQueryTypes.directory
+        } as TextSearch);
+        const session = await ObjectManagers.getInstance().SessionManager.buildContext({
+          overrideAllowBlockList: true,
+          allowQuery: projQ
+        } as any);
+
+        // Without projection, searching 'Return' yields the directory suggestion
+        expect(await sm.autocomplete(DBTestHelper.defaultSession, 'Natalie', SearchQueryTypes.keyword))
+          .to.deep.equalInAnyOrder([new AutoCompleteItem('Natalie Portman', SearchQueryTypes.keyword)]);
+
+        // With projection to a different directory, expect no directory suggestion (should be filtered out)
+        expect(await sm.autocomplete(session, 'Natalie', SearchQueryTypes.keyword))
+          .to.deep.equalInAnyOrder([]);
+      });
+
+
+      it('autocomplete should apply keyword projection to file_name suggestions', async () => {
+        const sm = new SearchManager();
+        // Project to photos with keyword "wookiees" which earlier narrowed results to pFaceLess
+        const projQ = ({
+          text: 'wookiees',
+          matchType: TextSearchQueryMatchTypes.exact_match,
+          type: SearchQueryTypes.keyword
+        } as TextSearch);
+        const session = await ObjectManagers.getInstance().SessionManager.buildContext({
+          overrideAllowBlockList: true,
+          allowQuery: projQ
+        } as any);
+
+        // Without projection, many sw*.jpg are returned for 'sw'
+        const noProj = await sm.autocomplete(DBTestHelper.defaultSession, 'sw', SearchQueryTypes.file_name);
+        expect(noProj.length).to.be.greaterThan(1);
+
+        // With projection, expect only the single media file name from the projected set
+        const withProj = await sm.autocomplete(session, 'sw', SearchQueryTypes.file_name);
+        expect(withProj).to.deep.equalInAnyOrder([
+          new AutoCompleteItem(pFaceLess.name, SearchQueryTypes.file_name)
+        ]);
+      });
+
+      it('autocomplete should apply projection to person suggestions', async () => {
+        const sm = new SearchManager();
+
+        // Project to photos with "Boba Fett" person, which should include only p (sw1.jpg)
+        // p contains: Boba Fett, Luke Skywalker, Han Solo, Unkle Ben, R2-D2
+        const projQ = ({
+          text: 'Boba Fett',
+          matchType: TextSearchQueryMatchTypes.exact_match,
+          type: SearchQueryTypes.person
+        } as TextSearch);
+        const session = await ObjectManagers.getInstance().SessionManager.buildContext({
+          overrideAllowBlockList: true,
+          allowQuery: projQ
+        } as any);
+
+        // Without projection, searching 'a' should return multiple people
+        const noProj = await sm.autocomplete(DBTestHelper.defaultSession, 'a', SearchQueryTypes.person);
+        expect(noProj.length).to.be.greaterThan(2); // Should include Anakin Skywalker from p2 and p4
+
+        // With projection to Boba Fett photos, expect only people from that photo set
+        // 'a' should match Han Solo (from p/sw1.jpg) but not Anakin Skywalker (from p2/p4)
+        Config.Search.AutoComplete.ItemsPerCategory.person = 999;
+        Config.Search.AutoComplete.ItemsPerCategory.maxItems = 999;
+        const withProj = await sm.autocomplete(session, 'a', SearchQueryTypes.person);
+        expect(withProj).to.deep.equalInAnyOrder([
+          new AutoCompleteItem('Boba Fett', SearchQueryTypes.person),
+          new AutoCompleteItem('Luke Skywalker', SearchQueryTypes.person),
+          new AutoCompleteItem('Han Solo', SearchQueryTypes.person)
+        ]);
+      });
+
+      it('autocomplete should filter out persons with count=0 when projection is applied', async () => {
+        const sm = new SearchManager();
+
+        // Project to photos with keyword "wookiees" which only matches pFaceLess (sw3.jpg)
+        // but pFaceLess has no faces, so all persons should have count=0
+        const projQ = ({
+          text: 'wookiees',
+          matchType: TextSearchQueryMatchTypes.exact_match,
+          type: SearchQueryTypes.keyword
+        } as TextSearch);
+        const session = await ObjectManagers.getInstance().SessionManager.buildContext({
+          overrideAllowBlockList: true,
+          allowQuery: projQ
+        } as any);
+
+        // Without projection, should return people matching the search term
+        const noProj = await sm.autocomplete(DBTestHelper.defaultSession, 'skywalker', SearchQueryTypes.person);
+        expect(noProj.length).to.be.equal(2); // Should find Luke and Anakin Skywalker
+
+        // With projection to photos with no faces, expect no person suggestions (all have count=0)
+        const withProj = await sm.autocomplete(session, 'skywalker', SearchQueryTypes.person);
+        expect(withProj).to.deep.equalInAnyOrder([]);
+
+        // Test with a broader search term
+        const withProjBroad = await sm.autocomplete(session, 'a', SearchQueryTypes.person);
+        expect(withProjBroad).to.deep.equalInAnyOrder([]);
+      });
+    });
+    it('search should respect projectionQuery', async () => {
+      const sm = new SearchManager();
+
+      const projQ = ({
+        text: 'wookiees',
+        matchType: TextSearchQueryMatchTypes.exact_match,
+        type: SearchQueryTypes.keyword
+      } as TextSearch);
+      const session = Utils.clone(DBTestHelper.defaultSession);
+      session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
+
+      const searchQ = {text: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
+
       Config.Search.listDirectories = false;
       Config.Search.listMetafiles = false;
+
+      const result = await sm.search(session, searchQ);
+      expect(removeDir(result)).to.deep.equalInAnyOrder(removeDir({
+        searchQuery: searchQ,
+        directories: [],
+        media: [pFaceLess],
+        metaFile: [],
+        resultOverflow: false
+      } as SearchResultDTO));
     });
-    afterEach(async () => {
+  });
+
+  describe('advanced search', () => {
+    beforeEach(async () => {
+      Config.loadSync();
       Config.Search.listDirectories = false;
       Config.Search.listMetafiles = false;
     });
@@ -298,7 +505,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           {text: p2.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
       } as ANDSearchQuery;
 
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [],
@@ -310,7 +517,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         list: [{text: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
           {text: p.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
       } as ANDSearchQuery);
-      expect(await sm.search(query)).to.deep.equalInAnyOrder(removeDir({
+      expect(await sm.search(DBTestHelper.defaultSession, query)).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p],
@@ -320,7 +527,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       // make sure that this shows both photos. We need this the the rest of the tests
       query = ({text: 'a', type: SearchQueryTypes.person} as TextSearch);
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, p4],
@@ -339,7 +546,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         ]
       } as ANDSearchQuery);
 
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p],
@@ -358,7 +565,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           {text: 'Not a caption', type: SearchQueryTypes.caption} as TextSearch]
       } as ORSearchQuery;
 
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [],
@@ -370,7 +577,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         list: [{text: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
           {text: p2.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
       } as ORSearchQuery);
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2],
@@ -383,7 +590,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         list: [{text: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
           {text: p.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
       } as ORSearchQuery);
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p],
@@ -393,7 +600,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       // make sure that this shows both photos. We need this the the rest of the tests
       query = ({text: 'a', type: SearchQueryTypes.person} as TextSearch);
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, p4],
@@ -412,7 +619,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         ]
       } as ORSearchQuery);
 
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, p4],
@@ -432,7 +639,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         ]
       } as ORSearchQuery);
 
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, pFaceLess],
@@ -451,7 +658,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           {text: 'mp4', type: SearchQueryTypes.file_name} as TextSearch]
       } as SomeOfSearchQuery;
 
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, pFaceLess, p4, v],
@@ -466,7 +673,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           {text: 'Luke', type: SearchQueryTypes.person} as TextSearch]
       } as SomeOfSearchQuery);
 
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, p4],
@@ -477,7 +684,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       query.min = 2;
 
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2, p4],
@@ -487,7 +694,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       query.min = 3;
 
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [],
@@ -504,7 +711,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           {text: 'Han', type: SearchQueryTypes.person} as TextSearch]
       } as SomeOfSearchQuery);
 
-      expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
         media: [p, p2],
@@ -514,378 +721,12 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
     });
 
-    describe('should search text', async () => {
-      it('as any', async () => {
-        const sm = new SearchManager();
-
-        let query = {text: 'sw', type: SearchQueryTypes.any_text} as TextSearch;
-        expect(Utils.clone(await sm.search({text: 'sw', type: SearchQueryTypes.any_text} as TextSearch)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p2, pFaceLess, v, p4],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO), JSON.stringify(query));
-
-        query = ({text: 'sw', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
-
-        expect(removeDir(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO), JSON.stringify(query));
-
-        query = ({text: 'Boba', type: SearchQueryTypes.any_text} as TextSearch);
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO), JSON.stringify(query));
-
-        query = ({text: 'Boba', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
-        expect(removeDir(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p2, pFaceLess, p4],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO), JSON.stringify(query));
-
-        query = ({text: 'Boba', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
-        // all should have faces
-        const sRet = await sm.search(query);
-        for (const item of sRet.media) {
-          if (item.id === pFaceLess.id) {
-            continue;
-          }
-
-          expect((item as PhotoDTO).metadata.faces).to.be.not.an('undefined');
-          expect((item as PhotoDTO).metadata.faces).to.be.lengthOf.above(1);
-        }
-
-
-        query = ({
-          text: 'Boba',
-          type: SearchQueryTypes.any_text,
-          matchType: TextSearchQueryMatchTypes.exact_match
-        } as TextSearch);
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO), JSON.stringify(query));
-
-        query = ({
-          text: 'Boba Fett',
-          type: SearchQueryTypes.any_text,
-          matchType: TextSearchQueryMatchTypes.exact_match
-        } as TextSearch);
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO), JSON.stringify(query));
-
-      });
-
-      it('as position', async () => {
-        const sm = new SearchManager();
-
-
-        const query = {text: 'Tatooine', type: SearchQueryTypes.position} as TextSearch;
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-      });
-
-
-      it('as keyword', async () => {
-        const sm = new SearchManager();
-
-
-        let query = {
-          text: 'kie',
-          type: SearchQueryTypes.keyword
-        } as TextSearch;
-        expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p2, pFaceLess],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-        query = ({
-          text: 'wa',
-          type: SearchQueryTypes.keyword
-        } as TextSearch);
-
-        expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p2, pFaceLess, p4],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-        query = ({
-          text: 'han',
-          type: SearchQueryTypes.keyword
-        } as TextSearch);
-
-        expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-        query = ({
-          text: 'star wars',
-          matchType: TextSearchQueryMatchTypes.exact_match,
-          type: SearchQueryTypes.keyword
-        } as TextSearch);
-
-        expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p2, pFaceLess, p4],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-        query = ({
-          text: 'wookiees',
-          matchType: TextSearchQueryMatchTypes.exact_match,
-          type: SearchQueryTypes.keyword
-        } as TextSearch);
-
-        expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [pFaceLess],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-      });
-
-
-      it('as caption', async () => {
-        const sm = new SearchManager();
-
-
-        const query = {
-          text: 'han',
-          type: SearchQueryTypes.caption
-        } as TextSearch;
-
-        expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-      });
-
-      it('as file_name', async () => {
-        const sm = new SearchManager();
-
-        let query = {
-          text: 'sw',
-          type: SearchQueryTypes.file_name
-        } as TextSearch;
-
-
-        expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p2, pFaceLess, v, p4],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-        query = ({
-          text: 'sw4',
-          type: SearchQueryTypes.file_name
-        } as TextSearch);
-
-        expect(Utils.clone(await sm.search({
-          text: 'sw4',
-          type: SearchQueryTypes.file_name
-        } as TextSearch))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p4],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-      });
-
-      it('as directory', async () => {
-        const sm = new SearchManager();
-
-        let query = {
-          text: 'of the J',
-          type: SearchQueryTypes.directory
-        } as TextSearch;
-
-        expect(removeDir(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p4],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO), JSON.stringify(query));
-
-        query = ({
-          text: 'wars dir',
-          type: SearchQueryTypes.directory
-        } as TextSearch);
-
-        expect(removeDir(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p2, v, pFaceLess, p4],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO), JSON.stringify(query));
-
-        query = ({
-          text: '/wars dir',
-          matchType: TextSearchQueryMatchTypes.exact_match,
-          type: SearchQueryTypes.directory
-        } as TextSearch);
-
-
-        expect(removeDir(await sm.search({
-          text: '/wars dir',
-          matchType: TextSearchQueryMatchTypes.exact_match,
-          type: SearchQueryTypes.directory
-        } as TextSearch))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p2, v],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO), JSON.stringify(query));
-
-
-        query = ({
-          text: '/wars dir/Return of the Jedi',
-          //    matchType: TextSearchQueryMatchTypes.like,
-          type: SearchQueryTypes.directory
-        } as TextSearch);
-
-        expect(removeDir(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p4],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO), JSON.stringify(query));
-
-        query = ({
-          text: '/wars dir/Return of the Jedi',
-          matchType: TextSearchQueryMatchTypes.exact_match,
-          type: SearchQueryTypes.directory
-        } as TextSearch);
-
-        expect(removeDir(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p4],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO), JSON.stringify(query));
-
-
-      });
-
-      it('as person', async () => {
-        const sm = new SearchManager();
-
-        let query = {
-          text: 'Boba',
-          type: SearchQueryTypes.person
-        } as TextSearch;
-
-        expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-        query = ({
-          text: 'Boba',
-          type: SearchQueryTypes.person,
-          matchType: TextSearchQueryMatchTypes.exact_match
-        } as TextSearch);
-
-        expect(Utils.clone(await sm.search(query))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-        query = ({
-          text: 'Boba Fett',
-          type: SearchQueryTypes.person,
-          matchType: TextSearchQueryMatchTypes.exact_match
-        } as TextSearch);
-
-        expect(Utils.clone(await sm.search({
-          text: 'Boba Fett',
-          type: SearchQueryTypes.person,
-          matchType: TextSearchQueryMatchTypes.exact_match
-        } as TextSearch))).to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-      });
-
-    });
-
-
     it('should search date', async () => {
       const sm = new SearchManager();
 
       let query: any = {value: 0, type: SearchQueryTypes.to_date} as ToDateSearch;
 
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -898,7 +739,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         value: p2.metadata.creationDate, type: SearchQueryTypes.from_date
       } as FromDateSearch);
 
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -913,7 +754,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.from_date
       } as FromDateSearch);
 
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -927,7 +768,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.to_date
       } as ToDateSearch);
 
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -937,342 +778,6 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
     });
-    describe('search date pattern', async () => {
-      let p5: PhotoDTO;
-      let p6: PhotoDTO;
-      let p7: PhotoDTO;
-      let sm: SearchManager;
-
-      before(async () => {
-        await sqlHelper.clearDB();
-        await setUpSqlDB();
-        p5 = TestHelper.getBasePhotoEntry(subDir2, 'p5-23h-ago.jpg');
-        p5.metadata.creationDate = Date.now() - 60 * 60 * 24 * 1000 - 1000;
-        //p5.metadata.creationDateOffset = "+02:00";
-        p6 = TestHelper.getBasePhotoEntry(subDir2, 'p6-300d-ago.jpg');
-        p6.metadata.creationDate = Date.now() - 60 * 60 * 24 * 300 * 1000;
-        //p6.metadata.creationDateOffset = "+02:00";
-        p7 = TestHelper.getBasePhotoEntry(subDir2, 'p7-1y-1min-ago.jpg');
-        const d = new Date();
-        d.setUTCFullYear(d.getUTCFullYear() - 1);
-        d.setUTCMinutes(d.getUTCMinutes() - 1);
-        p7.metadata.creationDate = d.getTime();
-        //p7.metadata.creationDateOffset = "+02:00";
-
-        subDir2 = await DBTestHelper.persistTestDir(subDir2) as any;
-        p4 = subDir2.media[0];
-        p4.directory = subDir2;
-        p5 = subDir2.media[1];
-        p5.directory = subDir2;
-        p6 = subDir2.media[2];
-        p6.directory = subDir2;
-        p7 = subDir2.media[3];
-        p7.directory = subDir2;
-        Config.Search.listDirectories = false;
-        Config.Search.listMetafiles = false;
-
-        sm = new SearchManager();
-      });
-
-      //TODO: this is flaky test for mysql
-      it('last-0-days:every-year', async () => {
-
-
-        let query: DatePatternSearch = {
-          daysLength: 0,
-          frequency: DatePatternFrequency.every_year,
-          type: SearchQueryTypes.date_pattern
-        };
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p7],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-        query = {
-          daysLength: 0,
-          negate: true,
-          frequency: DatePatternFrequency.every_year,
-          type: SearchQueryTypes.date_pattern
-        };
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p2, p4, pFaceLess, v, p5, p6],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-      });
-
-      //TODO: this is flaky test for mysql
-      it('last-1-days:every-year', async () => {
-        let query: DatePatternSearch = {
-          daysLength: 1,
-          frequency: DatePatternFrequency.every_year,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p7],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-
-        query = {
-          daysLength: 1,
-          negate: true,
-          frequency: DatePatternFrequency.every_year,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p2, p4, pFaceLess, v, p5, p6],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-      });
-      it('last-2-days:every-year', async () => {
-        let query = {
-          daysLength: 2,
-          frequency: DatePatternFrequency.every_year,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p2, p4, p5, p7],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-        query = {
-          daysLength: 2,
-          negate: true,
-          frequency: DatePatternFrequency.every_year,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [v, pFaceLess, p6],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-      });
-      it('last-1-days:10-days-ago', async () => {
-
-        let query = {
-          daysLength: 1,
-          agoNumber: 10,
-          frequency: DatePatternFrequency.days_ago,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-
-        query = {
-          daysLength: 1,
-          agoNumber: 10,
-          negate: true,
-          frequency: DatePatternFrequency.days_ago,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p2, p4, pFaceLess, v, p5, p6, p7],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-      });
-      it('last-3-days:1-month-ago', async () => {
-        let query = {
-          daysLength: 3,
-          agoNumber: 1,
-          frequency: DatePatternFrequency.months_ago,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [pFaceLess],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-        query = {
-          daysLength: 3,
-          agoNumber: 1,
-          negate: true,
-          frequency: DatePatternFrequency.months_ago,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p2, p4, v, p5, p6, p7],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-      });
-
-      it('last-3-days:12-month-ago', async () => {
-        let query = {
-          daysLength: 3,
-          agoNumber: 12,
-          frequency: DatePatternFrequency.months_ago,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p4, p7],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-        query = {
-          daysLength: 3,
-          agoNumber: 12,
-          negate: true,
-          frequency: DatePatternFrequency.months_ago,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p2, v, p5, p6, pFaceLess],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-      });
-      it('last-366-days:every-year', async () => {
-        let query = {
-          daysLength: 366,
-          frequency: DatePatternFrequency.every_year,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p2, p4, pFaceLess, v, p5, p6, p7],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-        query = {
-          daysLength: 366,
-          negate: true,
-          frequency: DatePatternFrequency.every_year,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-      });
-      it('last-32-days:every-month', async () => {
-        const query = {
-          daysLength: 32,
-          frequency: DatePatternFrequency.every_month,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p2, p4, pFaceLess, v, p5, p6, p7],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-
-      });
-      it('last-364-days:every-year', async () => {
-        let query = {
-          daysLength: 364,
-          frequency: DatePatternFrequency.every_year,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [p, p2, p4, pFaceLess, v, p5, p6, p7],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-        query = {
-          daysLength: 364,
-          negate: true,
-          frequency: DatePatternFrequency.every_year,
-          type: SearchQueryTypes.date_pattern
-        } as DatePatternSearch;
-
-        expect(Utils.clone(await sm.search(query)))
-          .to.deep.equalInAnyOrder(removeDir({
-          searchQuery: query,
-          directories: [],
-          media: [],
-          metaFile: [],
-          resultOverflow: false
-        } as SearchResultDTO));
-
-
-      });
-    });
 
     it('should search rating', async () => {
       const sm = new SearchManager();
@@ -1280,7 +785,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       let query: MinRatingSearch | MaxRatingSearch = {value: 0, type: SearchQueryTypes.max_rating} as MaxRatingSearch;
 
 
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1290,7 +795,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 5, type: SearchQueryTypes.max_rating} as MaxRatingSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1300,7 +805,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 5, negate: true, type: SearchQueryTypes.max_rating} as MaxRatingSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1310,7 +815,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 2, type: SearchQueryTypes.min_rating} as MinRatingSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1320,7 +825,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 2, negate: true, type: SearchQueryTypes.min_rating} as MinRatingSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1337,7 +842,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       let query: MinPersonCountSearch | MaxPersonCountSearch = {value: 0, type: SearchQueryTypes.max_person_count} as MaxPersonCountSearch;
 
 
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1347,7 +852,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 20, type: SearchQueryTypes.max_person_count} as MaxPersonCountSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1357,7 +862,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 20, negate: true, type: SearchQueryTypes.max_person_count} as MaxPersonCountSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1368,7 +873,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
 
       query = ({value: 4, type: SearchQueryTypes.max_person_count} as MaxPersonCountSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1378,7 +883,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 2, type: SearchQueryTypes.min_person_count} as MinPersonCountSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1388,7 +893,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 5, type: SearchQueryTypes.min_person_count} as MinPersonCountSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1398,7 +903,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 2, negate: true, type: SearchQueryTypes.min_person_count} as MinPersonCountSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1414,7 +919,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       let query: MinResolutionSearch | MaxResolutionSearch =
         {value: 0, type: SearchQueryTypes.max_resolution} as MaxResolutionSearch;
 
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1424,7 +929,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 1, type: SearchQueryTypes.max_resolution} as MaxResolutionSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1434,7 +939,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 3, type: SearchQueryTypes.min_resolution} as MinResolutionSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1445,7 +950,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
 
       query = ({value: 3, negate: true, type: SearchQueryTypes.min_resolution} as MinResolutionSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1455,7 +960,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({value: 3, negate: true, type: SearchQueryTypes.max_resolution} as MaxResolutionSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1474,7 +979,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         landscape: false,
         type: SearchQueryTypes.orientation
       } as OrientationSearch;
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1487,7 +992,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         landscape: true,
         type: SearchQueryTypes.orientation
       } as OrientationSearch);
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1516,7 +1021,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.distance
       } as DistanceSearch;
 
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1531,7 +1036,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.distance
       } as DistanceSearch);
 
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1547,7 +1052,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.distance
       } as DistanceSearch);
 
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1561,7 +1066,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.distance
       } as DistanceSearch);
 
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1576,7 +1081,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.distance
       } as DistanceSearch);
 
-      expect(Utils.clone(await sm.search(query)))
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1596,7 +1101,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     (it('should flatter SOME_OF query', () => {
       const sm = new SearchManagerTest();
       const parser = new SearchQueryParser();
-      const alphabet = 'abcdefghijklmnopqrstu';
+      const alphabet = 'abcdefghijklmnopqrs';
 
 
       const shortestDepth = (q: SearchQueryDTO): number => {
@@ -1653,7 +1158,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           text: t
         } as TextSearch))
       };
-      expect(removeDir(await sm.search(query)))
+      expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1668,8 +1173,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       const sm = new SearchManager();
 
       const cloned = Utils.clone(searchifyDir(subDir));
-      cloned.validCover = true;
-      cloned.cover = {
+      cloned.cache.valid = true;
+      cloned.cache.cover = {
         directory: {
           name: subDir.name,
           path: subDir.path
@@ -1680,7 +1185,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         text: subDir.name,
         type: SearchQueryTypes.any_text
       } as TextSearch;
-      expect(removeDir(await sm.search(query)))
+      expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [cloned],
@@ -1689,6 +1194,44 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
     });
+
+
+    it('search result should not return recursively empty directory', async () => {
+      Config.Search.listDirectories = true;
+      const sm = new SearchManager();
+      const session = await ObjectManagers.getInstance().SessionManager.buildContext({
+        allowQuery: {text: 'YOU WONT FIND IT', type: SearchQueryTypes.keyword} as TextSearch,
+        overrideAllowBlockList: true
+      } as any);
+
+      let query = {
+        text: subDir.name,
+        type: SearchQueryTypes.any_text
+      } as TextSearch;
+      expect(removeDir(await sm.search(session, query)))
+        .to.deep.equalInAnyOrder(removeDir({
+        searchQuery: query,
+        directories: [],
+        media: [],
+        metaFile: [],
+        resultOverflow: false
+      } as SearchResultDTO));
+
+
+      query = {
+        text: dir.name,
+        type: SearchQueryTypes.any_text
+      } as TextSearch;
+      expect(removeDir(await sm.search(session, query)))
+        .to.deep.equalInAnyOrder(removeDir({
+        searchQuery: query,
+        directories: [],
+        media: [],
+        metaFile: [],
+        resultOverflow: false
+      } as SearchResultDTO));
+    });
+
     it('search result should return meta files', async () => {
       Config.Search.listMetafiles = true;
       const sm = new SearchManager();
@@ -1698,7 +1241,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.any_text,
         matchType: TextSearchQueryMatchTypes.exact_match
       } as TextSearch;
-      expect(removeDir(await sm.search(query)))
+      expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -1708,8 +1251,705 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
     });
 
-  });
+    describe('should search text', () => {
+      it('as any', async () => {
+        const sm = new SearchManager();
 
+        let query = {text: 'sw', type: SearchQueryTypes.any_text} as TextSearch;
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, {text: 'sw', type: SearchQueryTypes.any_text} as TextSearch)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, pFaceLess, v, p4],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO), JSON.stringify(query));
+
+        query = ({text: 'sw', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
+
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO), JSON.stringify(query));
+
+        query = ({text: 'Boba', type: SearchQueryTypes.any_text} as TextSearch);
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO), JSON.stringify(query));
+
+        query = ({text: 'Boba', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p2, pFaceLess, p4],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO), JSON.stringify(query));
+
+        query = ({text: 'Boba', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
+        // all should have faces
+        const sRet = await sm.search(DBTestHelper.defaultSession, query);
+        for (const item of sRet.media) {
+          if (item.id === pFaceLess.id) {
+            continue;
+          }
+
+          expect((item as PhotoDTO).metadata.faces).to.be.not.an('undefined');
+          expect((item as PhotoDTO).metadata.faces).to.be.lengthOf.above(1);
+        }
+
+
+        query = ({
+          text: 'Boba',
+          type: SearchQueryTypes.any_text,
+          matchType: TextSearchQueryMatchTypes.exact_match
+        } as TextSearch);
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO), JSON.stringify(query));
+
+        query = ({
+          text: 'Boba Fett',
+          type: SearchQueryTypes.any_text,
+          matchType: TextSearchQueryMatchTypes.exact_match
+        } as TextSearch);
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO), JSON.stringify(query));
+
+      });
+
+      it('as position', async () => {
+        const sm = new SearchManager();
+
+
+        const query = {text: 'Tatooine', type: SearchQueryTypes.position} as TextSearch;
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+      });
+
+
+      it('as keyword', async () => {
+        const sm = new SearchManager();
+
+
+        let query = {
+          text: 'kie',
+          type: SearchQueryTypes.keyword
+        } as TextSearch;
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p2, pFaceLess],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        query = ({
+          text: 'wa',
+          type: SearchQueryTypes.keyword
+        } as TextSearch);
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, pFaceLess, p4],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        query = ({
+          text: 'han s',
+          type: SearchQueryTypes.keyword
+        } as TextSearch);
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        query = ({
+          text: 'star wars',
+          matchType: TextSearchQueryMatchTypes.exact_match,
+          type: SearchQueryTypes.keyword
+        } as TextSearch);
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, pFaceLess, p4],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        query = ({
+          text: 'wookiees',
+          matchType: TextSearchQueryMatchTypes.exact_match,
+          type: SearchQueryTypes.keyword
+        } as TextSearch);
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [pFaceLess],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+      });
+
+
+      it('as caption', async () => {
+        const sm = new SearchManager();
+
+
+        const query = {
+          text: 'han',
+          type: SearchQueryTypes.caption
+        } as TextSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+      });
+
+      it('as file_name', async () => {
+        const sm = new SearchManager();
+
+        let query = {
+          text: 'sw',
+          type: SearchQueryTypes.file_name
+        } as TextSearch;
+
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, pFaceLess, v, p4],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        query = ({
+          text: 'sw4',
+          type: SearchQueryTypes.file_name
+        } as TextSearch);
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, {
+          text: 'sw4',
+          type: SearchQueryTypes.file_name
+        } as TextSearch))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p4],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+      });
+
+      it('as directory', async () => {
+        const sm = new SearchManager();
+
+        let query = {
+          text: 'of the J',
+          type: SearchQueryTypes.directory
+        } as TextSearch;
+
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p4],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO), JSON.stringify(query));
+
+        query = ({
+          text: '.',
+          type: SearchQueryTypes.directory
+        } as TextSearch);
+
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, v, pFaceLess, p4],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO), JSON.stringify(query));
+
+        query = ({
+          text: '.',
+          matchType: TextSearchQueryMatchTypes.exact_match,
+          type: SearchQueryTypes.directory
+        } as TextSearch);
+
+
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, v],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO), JSON.stringify(query));
+
+
+        query = ({
+          text: '/Return of the Jedi',
+          //    matchType: TextSearchQueryMatchTypes.like,
+          type: SearchQueryTypes.directory
+        } as TextSearch);
+
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p4],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO), JSON.stringify(query));
+
+        query = ({
+          text: '/Return of the Jedi',
+          matchType: TextSearchQueryMatchTypes.exact_match,
+          type: SearchQueryTypes.directory
+        } as TextSearch);
+
+        expect(removeDir(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p4],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO), JSON.stringify(query));
+
+
+      });
+
+      it('as person', async () => {
+        const sm = new SearchManager();
+
+        let query = {
+          text: 'Boba',
+          type: SearchQueryTypes.person
+        } as TextSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        query = ({
+          text: 'Boba',
+          type: SearchQueryTypes.person,
+          matchType: TextSearchQueryMatchTypes.exact_match
+        } as TextSearch);
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        query = ({
+          text: 'Boba Fett',
+          type: SearchQueryTypes.person,
+          matchType: TextSearchQueryMatchTypes.exact_match
+        } as TextSearch);
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, {
+          text: 'Boba Fett',
+          type: SearchQueryTypes.person,
+          matchType: TextSearchQueryMatchTypes.exact_match
+        } as TextSearch))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+      });
+
+    });
+
+    describe('search date pattern', () => {
+      let p5: PhotoDTO;
+      let p6: PhotoDTO;
+      let p7: PhotoDTO;
+      let sm: SearchManager;
+
+      before(async () => {
+        Config.loadSync();
+        await sqlHelper.clearDB();
+        await setUpSqlDB();
+        p5 = TestHelper.getBasePhotoEntry(subDir2, 'p5-23h-ago.jpg');
+        p5.metadata.creationDate = Date.now() - 60 * 60 * 24 * 1000 - 1000;
+        //p5.metadata.creationDateOffset = "+02:00";
+        p6 = TestHelper.getBasePhotoEntry(subDir2, 'p6-300d-ago.jpg');
+        p6.metadata.creationDate = Date.now() - 60 * 60 * 24 * 300 * 1000;
+        //p6.metadata.creationDateOffset = "+02:00";
+        p7 = TestHelper.getBasePhotoEntry(subDir2, 'p7-1y-1min-ago.jpg');
+        const d = new Date();
+        d.setUTCFullYear(d.getUTCFullYear() - 1);
+        d.setUTCMinutes(d.getUTCMinutes() - 1);
+        p7.metadata.creationDate = d.getTime();
+        //p7.metadata.creationDateOffset = "+02:00";
+
+        subDir2 = await DBTestHelper.persistTestDir(subDir2) as any;
+        p4 = subDir2.media[0];
+        p4.directory = subDir2;
+        p5 = subDir2.media[1];
+        p5.directory = subDir2;
+        p6 = subDir2.media[2];
+        p6.directory = subDir2;
+        p7 = subDir2.media[3];
+        p7.directory = subDir2;
+        Config.Search.listDirectories = false;
+        Config.Search.listMetafiles = false;
+
+        sm = new SearchManager();
+      });
+
+      //TODO: this is flaky test for mysql
+      it('last-0-days:every-year', async () => {
+
+
+        let query: DatePatternSearch = {
+          daysLength: 0,
+          frequency: DatePatternFrequency.every_year,
+          type: SearchQueryTypes.date_pattern
+        };
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p7],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        query = {
+          daysLength: 0,
+          negate: true,
+          frequency: DatePatternFrequency.every_year,
+          type: SearchQueryTypes.date_pattern
+        };
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p2, p4, pFaceLess, v, p5, p6],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+      });
+
+      //TODO: this is flaky test for mysql
+      it('last-1-days:every-year', async () => {
+        let query: DatePatternSearch = {
+          daysLength: 1,
+          frequency: DatePatternFrequency.every_year,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p7],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+
+        query = {
+          daysLength: 1,
+          negate: true,
+          frequency: DatePatternFrequency.every_year,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p2, p4, pFaceLess, v, p5, p6],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+      });
+      it('last-2-days:every-year', async () => {
+        let query = {
+          daysLength: 2,
+          frequency: DatePatternFrequency.every_year,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, p4, p5, p7],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        query = {
+          daysLength: 2,
+          negate: true,
+          frequency: DatePatternFrequency.every_year,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [v, pFaceLess, p6],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+      });
+      it('last-1-days:10-days-ago', async () => {
+
+        let query = {
+          daysLength: 1,
+          agoNumber: 10,
+          frequency: DatePatternFrequency.days_ago,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+
+        query = {
+          daysLength: 1,
+          agoNumber: 10,
+          negate: true,
+          frequency: DatePatternFrequency.days_ago,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, p4, pFaceLess, v, p5, p6, p7],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+      });
+      it('last-3-days:1-month-ago', async () => {
+        let query = {
+          daysLength: 3,
+          agoNumber: 1,
+          frequency: DatePatternFrequency.months_ago,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [pFaceLess],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        query = {
+          daysLength: 3,
+          agoNumber: 1,
+          negate: true,
+          frequency: DatePatternFrequency.months_ago,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, p4, v, p5, p6, p7],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+      });
+
+      it('last-3-days:12-month-ago', async () => {
+        let query = {
+          daysLength: 3,
+          agoNumber: 12,
+          frequency: DatePatternFrequency.months_ago,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p4, p7],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        query = {
+          daysLength: 3,
+          agoNumber: 12,
+          negate: true,
+          frequency: DatePatternFrequency.months_ago,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, v, p5, p6, pFaceLess],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+      });
+      it('last-366-days:every-year', async () => {
+        let query = {
+          daysLength: 366,
+          frequency: DatePatternFrequency.every_year,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, p4, pFaceLess, v, p5, p6, p7],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        query = {
+          daysLength: 366,
+          negate: true,
+          frequency: DatePatternFrequency.every_year,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+      });
+      it('last-32-days:every-month', async () => {
+        const query = {
+          daysLength: 32,
+          frequency: DatePatternFrequency.every_month,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, p4, pFaceLess, v, p5, p6, p7],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+
+      });
+      it('last-364-days:every-year', async () => {
+        let query = {
+          daysLength: 364,
+          frequency: DatePatternFrequency.every_year,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, p4, pFaceLess, v, p5, p6, p7],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        query = {
+          daysLength: 364,
+          negate: true,
+          frequency: DatePatternFrequency.every_year,
+          type: SearchQueryTypes.date_pattern
+        } as DatePatternSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
+          .to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+
+      });
+    });
+  });
 
   it('should get random photo', async () => {
     const sm = new SearchManager();
@@ -1720,17 +1960,21 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     } as TextSearch;
 
     // eslint-disable-next-line
-    expect(await sm.getNMedia(query, [{method: SortByTypes.Random, ascending: null}], 1, true)).to.deep.equalInAnyOrder([]);
+    expect(await sm.getNMedia(DBTestHelper.defaultSession, query, [{
+      method: SortByTypes.Random,
+      ascending: null
+    }], 1, true)).to.deep.equalInAnyOrder([]);
 
     query = ({
       text: 'wookiees',
       matchType: TextSearchQueryMatchTypes.exact_match,
       type: SearchQueryTypes.keyword
     } as TextSearch);
-    expect(Utils.clone(await sm.getNMedia(query, [{
+    expect(Utils.clone(await sm.getNMedia(DBTestHelper.defaultSession, query, [{
       method: SortByTypes.Random,
       ascending: null
     }], 1, true))).to.deep.equalInAnyOrder([searchifyMedia(pFaceLess)]);
   });
+
 
 });

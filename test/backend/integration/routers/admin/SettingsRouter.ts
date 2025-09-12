@@ -1,15 +1,15 @@
 import * as fs from 'fs';
 import {Config} from '../../../../../src/common/config/private/Config';
 import {Server} from '../../../../../src/backend/server';
-import {DatabaseType, LogLevel, ServerConfig} from '../../../../../src/common/config/private/PrivateConfig';
+import {DatabaseType, ServerConfig} from '../../../../../src/common/config/private/PrivateConfig';
 import {ProjectPath} from '../../../../../src/backend/ProjectPath';
 import {TAGS} from '../../../../../src/common/config/public/ClientConfig';
 import {ObjectManagers} from '../../../../../src/backend/model/ObjectManagers';
 import {UserRoles} from '../../../../../src/common/entities/UserDTO';
 import {ExtensionConfigWrapper} from '../../../../../src/backend/model/extension/ExtensionConfigWrapper';
 import {TestHelper} from '../../../../TestHelper';
-import * as chai from "chai";
-import {default as chaiHttp, request} from "chai-http";
+import * as chai from 'chai';
+import {default as chaiHttp, request} from 'chai-http';
 
 process.env.NODE_ENV = 'test';
 const should = chai.should();
@@ -27,7 +27,7 @@ describe('SettingsRouter', () => {
 
     server = new Server(false);
     await server.onStarted.wait();
- //   await ObjectManagers.getInstance().init();
+    //   await ObjectManagers.getInstance().init();
   });
 
 

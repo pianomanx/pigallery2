@@ -2,6 +2,7 @@ import {Column, Entity, ManyToOne, PrimaryGeneratedColumn} from 'typeorm';
 import {SharingDTO} from '../../../../common/entities/SharingDTO';
 import {UserEntity} from './UserEntity';
 import {UserDTO} from '../../../../common/entities/UserDTO';
+import {SearchQueryDTO} from '../../../../common/entities/SearchQueryDTO';
 
 @Entity()
 export class SharingEntity implements SharingDTO {
@@ -11,8 +12,19 @@ export class SharingEntity implements SharingDTO {
   @Column()
   sharingKey: string;
 
-  @Column()
-  path: string;
+  @Column({
+    type: 'text',
+    nullable: false,
+    transformer: {
+      from: (val: string) => {
+        return val ? JSON.parse(val) : null;
+      },
+      to: (val: object) => {
+        return val ? JSON.stringify(val) : null;
+      },
+    },
+  })
+  searchQuery: SearchQueryDTO;
 
   @Column({type: 'text', nullable: true})
   password: string;
@@ -35,9 +47,6 @@ export class SharingEntity implements SharingDTO {
   })
   timeStamp: number;
 
-  @Column()
-  includeSubfolders: boolean;
-
   @ManyToOne(() => UserEntity, {onDelete: 'CASCADE', nullable: false})
-  creator: UserDTO;
+  creator: UserEntity;
 }

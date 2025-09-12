@@ -25,8 +25,7 @@ describe('SharingRouter', () => {
     id: 1,
     name: 'test',
     password: 'test',
-    role: UserRoles.User,
-    permissions: null
+    role: UserRoles.User
   };
   const {password: pass, ...expectedUser} = testUser;
   const tempDir = path.join(__dirname, '../../tmp');
@@ -51,14 +50,6 @@ describe('SharingRouter', () => {
     await fs.promises.rm(tempDir, {recursive: true, force: true});
   };
 
-  const shouldBeValidUser = (result: any, user: any) => {
-
-    result.should.have.status(200);
-    result.body.should.be.a('object');
-    should.equal(result.body.error, null);
-    const {...u} = result.body.result;
-    u.should.deep.equal(user);
-  };
 
   const shareLogin = async (srv: Server, sharingKey: string, password?: string): Promise<any> => {
     return (request.execute(srv.Server) as SuperAgentStatic)
@@ -77,14 +68,14 @@ describe('SharingRouter', () => {
       Config.Sharing.passwordRequired = true;
       const sharing = await RouteTestingHelper.createSharing(testUser, 'secret_pass');
       const res = await shareLogin(server, sharing.sharingKey, sharing.password);
-      shouldBeValidUser(res, RouteTestingHelper.getExpectedSharingUser(sharing));
+      RouteTestingHelper.shouldBeValidUIUser(res, RouteTestingHelper.getExpectedSharingUserForUI(sharing));
     });
 
     it('should login with passworded share when password not required', async () => {
       Config.Sharing.passwordRequired = false;
       const sharing = await RouteTestingHelper.createSharing(testUser, 'secret_pass');
       const res = await shareLogin(server, sharing.sharingKey, sharing.password);
-      shouldBeValidUser(res, RouteTestingHelper.getExpectedSharingUser(sharing));
+      RouteTestingHelper.shouldBeValidUIUser(res, RouteTestingHelper.getExpectedSharingUserForUI(sharing));
     });
 
 
@@ -92,7 +83,7 @@ describe('SharingRouter', () => {
       Config.Sharing.passwordRequired = false;
       const sharing = await RouteTestingHelper.createSharing(testUser );
       const res = await shareLogin(server, sharing.sharingKey, sharing.password);
-      shouldBeValidUser(res, RouteTestingHelper.getExpectedSharingUser(sharing));
+      RouteTestingHelper.shouldBeValidUIUser(res, RouteTestingHelper.getExpectedSharingUserForUI(sharing));
     });
 
 

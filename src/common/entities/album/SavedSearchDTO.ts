@@ -1,13 +1,11 @@
-import {AlbumBaseDTO} from './AlbumBaseDTO';
-import {CoverPhotoDTO} from '../PhotoDTO';
+import {AlbumBaseDTO, AlbumCacheDTO} from './AlbumBaseDTO';
 import {SearchQueryDTO} from '../SearchQueryDTO';
 
 export interface SavedSearchDTO extends AlbumBaseDTO {
   id: number;
   name: string;
-  cover?: CoverPhotoDTO;
-  count: number;
   locked: boolean;
+  cache?: AlbumCacheDTO;
 
   searchQuery: SearchQueryDTO;
 }

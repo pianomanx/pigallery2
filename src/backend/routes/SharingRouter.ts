@@ -101,12 +101,10 @@ export class SharingRouter {
 
   private static addListSharingForDir(app: express.Express): void {
     app.get(
-      [Config.Server.apiPath + '/share/list/:directory(*)',
-        Config.Server.apiPath + '/share/list//',
-        Config.Server.apiPath + '/share/list'],
+      [Config.Server.apiPath + '/share/list/:searchQueryDTO'],
       AuthenticationMWs.authenticate,
       AuthenticationMWs.authorise(UserRoles.User),
-      SharingMWs.listSharingForDir,
+      SharingMWs.listSharingForQuery,
       ServerTimingMWs.addServerTiming,
       RenderingMWs.renderSharingList
     );

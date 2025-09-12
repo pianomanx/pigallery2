@@ -1,61 +1,22 @@
-import {DirectoryPathDTO} from './DirectoryDTO';
-import {Utils} from '../Utils';
+import {SearchQueryDTO} from './SearchQueryDTO';
 
 export enum UserRoles {
-  LimitedGuest = 1,
-  Guest = 2,
-  User = 3,
+  LimitedGuest = 1, // sharing user
+  Guest = 2,  // user when authentication is disabled
+  User = 3, // logged in use
   Admin = 4,
-  Developer = 5,
+  Developer = 5, // admin with more client side logging
 }
 
 export interface UserDTO {
   id: number;
   name: string;
-  password: string;
+  password?: string;
   role: UserRoles;
   usedSharingKey?: string;
-  permissions: string[]; // user can only see these permissions. if ends with *, its recursive
+  projectionKey?: string; // allow- and blocklist projection hash. if null, no projection
+  // Optional per-user query overrides
+  overrideAllowBlockList?: boolean;
+  allowQuery?: SearchQueryDTO | null;
+  blockQuery?: SearchQueryDTO | null;
 }
-
-export const UserDTOUtils = {
-  isDirectoryPathAvailable: (path: string, permissions: string[]): boolean => {
-    if (permissions == null) {
-      return true;
-    }
-    permissions = permissions.map((p) => Utils.canonizePath(p));
-    path = Utils.canonizePath(path);
-    if (permissions.length === 0 || permissions[0] === '/*') {
-      return true;
-    }
-    for (let permission of permissions) {
-      if (permission === '/*') {
-        return true;
-      }
-      if (permission[permission.length - 1] === '*') {
-        permission = permission.slice(0, -1);
-        if (
-            path.startsWith(permission) &&
-            (!path[permission.length] || path[permission.length] === '/')
-        ) {
-          return true;
-        }
-      } else if (path === permission) {
-        return true;
-      } else if (path === '.' && permission === '/') {
-        return true;
-      }
-    }
-    return false;
-  },
-
-  isDirectoryAvailable: (
-      directory: DirectoryPathDTO,
-      permissions: string[]
-  ): boolean => {
-    return UserDTOUtils.isDirectoryPathAvailable(
-        Utils.concatUrls(directory.path, directory.name),
-        permissions
-    );
-  },
-};

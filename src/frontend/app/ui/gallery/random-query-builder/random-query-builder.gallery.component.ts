@@ -1,5 +1,5 @@
 import {Component, OnDestroy, OnInit, TemplateRef} from '@angular/core';
-import {ContentWrapper} from '../../../../../common/entities/ConentWrapper';
+import {ContentWrapper} from '../../../../../common/entities/ContentWrapper';
 import {Config} from '../../../../../common/config/public/Config';
 import {NotificationService} from '../../../model/notification.service';
 import {BsModalService} from 'ngx-bootstrap/modal';
