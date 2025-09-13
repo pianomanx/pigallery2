@@ -13,7 +13,6 @@ import {QueryParams} from '../../common/QueryParams';
 import {VideoProcessing} from '../model/fileaccess/fileprocessing/VideoProcessing';
 import {SearchQueryDTO, SearchQueryTypes,} from '../../common/entities/SearchQueryDTO';
 import {LocationLookupException} from '../exceptions/LocationLookupException';
-import {SupportedFormats} from '../../common/SupportedFormats';
 import {ServerTime} from './ServerTimingMWs';
 import {SortByTypes} from '../../common/entities/SortingMethods';
 
@@ -224,16 +223,16 @@ export class GalleryMWs {
     res: Response,
     next: NextFunction
   ): Promise<void> {
-    if (!req.resultPipe) {
-      return next();
-    }
-    const fullMediaPath = req.resultPipe as string;
-
-    const convertedVideo =
-      VideoProcessing.generateConvertedFilePath(fullMediaPath);
-
-    // check if transcoded video exist
     try {
+      if (!req.resultPipe) {
+        return next();
+      }
+      const fullMediaPath = req.resultPipe as string;
+
+      const convertedVideo =
+        VideoProcessing.generateConvertedFilePath(fullMediaPath);
+
+      // check if transcoded video exist
       await fsp.access(convertedVideo);
       req.resultPipe = convertedVideo;
       // eslint-disable-next-line no-empty
@@ -249,18 +248,18 @@ export class GalleryMWs {
     res: Response,
     next: NextFunction
   ): Promise<void> {
-    if (
-      Config.Search.enabled === false ||
-      !req.params['searchQueryDTO']
-    ) {
-      return next();
-    }
-
-    const query: SearchQueryDTO = JSON.parse(
-      req.params['searchQueryDTO'] as string
-    );
-
     try {
+      if (
+        Config.Search.enabled === false ||
+        !req.params['searchQueryDTO']
+      ) {
+        return next();
+      }
+
+
+      const query: SearchQueryDTO = JSON.parse(
+        req.params['searchQueryDTO'] as string
+      );
       const result = await ObjectManagers.getInstance().SearchManager.search(
         req.session.context,
         query
@@ -293,18 +292,18 @@ export class GalleryMWs {
     res: Response,
     next: NextFunction
   ): Promise<void> {
-    if (Config.Search.AutoComplete.enabled === false) {
-      return next();
-    }
-    if (!req.params['text']) {
-      return next();
-    }
-
-    let type: SearchQueryTypes = SearchQueryTypes.any_text;
-    if (req.query[QueryParams.gallery.search.type]) {
-      type = parseInt(req.query[QueryParams.gallery.search.type] as string, 10);
-    }
     try {
+      if (Config.Search.AutoComplete.enabled === false) {
+        return next();
+      }
+      if (!req.params['text']) {
+        return next();
+      }
+
+      let type: SearchQueryTypes = SearchQueryTypes.any_text;
+      if (req.query[QueryParams.gallery.search.type]) {
+        type = parseInt(req.query[QueryParams.gallery.search.type] as string, 10);
+      }
       req.resultPipe =
         await ObjectManagers.getInstance().SearchManager.autocomplete(
           req.session.context,
@@ -324,14 +323,14 @@ export class GalleryMWs {
     res: Response,
     next: NextFunction
   ): Promise<void> {
-    if (
-      Config.RandomPhoto.enabled === false ||
-      !req.params['searchQueryDTO']
-    ) {
-      return next();
-    }
-
     try {
+      if (
+        Config.RandomPhoto.enabled === false ||
+        !req.params['searchQueryDTO']
+      ) {
+        return next();
+      }
+
       const query: SearchQueryDTO = JSON.parse(
         req.params['searchQueryDTO'] as string
       );
