@@ -905,19 +905,6 @@ export class ServerMediaConfig extends ClientMediaConfig {
   tempFolder: string = 'demo/tmp';
 
   @ConfigProperty({
-    type: 'unsignedInt',
-    tags: {
-      name: $localize`Metadata read buffer`,
-      priority: ConfigPriority.underTheHood,
-      uiResetNeeded: {db: true, server: true},
-      githubIssue: 398,
-      unit: 'bytes'
-    } as TAGS,
-    description: $localize`Only this many bites will be loaded when scanning photo/video for metadata. Increase this number if your photos shows up as square.`,
-  })
-  photoMetadataSize: number = 512 * 1024; // only this many bites will be loaded when scanning photo for metadata
-
-  @ConfigProperty({
     tags: {
       name: $localize`Video`,
       uiIcon: 'ionVideocamOutline',

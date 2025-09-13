@@ -1,26 +1,32 @@
 import * as fs from 'fs';
 
-import { Config } from '../../../common/config/private/Config';
-import { FaceRegion, PhotoMetadata } from '../../../common/entities/PhotoDTO';
-import { VideoMetadata } from '../../../common/entities/VideoDTO';
-import { RatingTypes } from '../../../common/entities/MediaDTO';
-import { Logger } from '../../Logger';
+import {Config} from '../../../common/config/private/Config';
+import {FaceRegion, PhotoMetadata} from '../../../common/entities/PhotoDTO';
+import {VideoMetadata} from '../../../common/entities/VideoDTO';
+import {RatingTypes} from '../../../common/entities/MediaDTO';
+import {Logger} from '../../Logger';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import * as exifr from 'exifr';
-import { FfprobeData } from 'fluent-ffmpeg';
-import { FileHandle } from 'fs/promises';
+import {FfprobeData} from 'fluent-ffmpeg';
 import * as util from 'node:util';
 import * as path from 'path';
-import { Utils } from '../../../common/Utils';
-import { FFmpegFactory } from '../FFmpegFactory';
-import { ExtensionDecorator } from '../extension/ExtensionDecorator';
-import { DateTags } from './MetadataCreationDate';
-const { imageSizeFromFile } = require('image-size/fromFile')
+import {Utils} from '../../../common/Utils';
+import {FFmpegFactory} from '../FFmpegFactory';
+import {ExtensionDecorator} from '../extension/ExtensionDecorator';
+import {DateTags} from './MetadataCreationDate';
+
+const {imageSizeFromFile} = require('image-size/fromFile');
 const LOG_TAG = '[MetadataLoader]';
 const ffmpeg = FFmpegFactory.get();
 
 export class MetadataLoader {
+
+  private static readonly EMPTY_METADATA: PhotoMetadata = {
+    size: {width: 0, height: 0},
+    creationDate: 0,
+    fileSize: 0,
+  };
 
   @ExtensionDecorator(e => e.gallery.MetadataLoader.loadVideoMetadata)
   public static async loadVideoMetadata(fullPath: string): Promise<VideoMetadata> {
@@ -161,17 +167,10 @@ export class MetadataLoader {
     return metadata;
   }
 
-  private static readonly EMPTY_METADATA: PhotoMetadata = {
-    size: { width: 0, height: 0 },
-    creationDate: 0,
-    fileSize: 0,
-  };
-
   @ExtensionDecorator(e => e.gallery.MetadataLoader.loadPhotoMetadata)
   public static async loadPhotoMetadata(fullPath: string): Promise<PhotoMetadata> {
-    let fileHandle: FileHandle;
     const metadata: PhotoMetadata = {
-      size: { width: 0, height: 0 },
+      size: {width: 0, height: 0},
       creationDate: 0,
       fileSize: 0,
     };
@@ -189,12 +188,9 @@ export class MetadataLoader {
       mergeOutput: false //don't merge output, because things like Microsoft Rating (percent) and xmp.rating will be merged
     };
     try {
-      let bufferSize = Config.Media.photoMetadataSize;
       try {
         const stat = fs.statSync(fullPath);
         metadata.fileSize = stat.size;
-        //No reason to make the buffer larger than the actual file
-        bufferSize = Math.min(Config.Media.photoMetadataSize, metadata.fileSize);
         metadata.creationDate = stat.mtime.getTime();
       } catch (err) {
         // ignoring errors
@@ -202,10 +198,10 @@ export class MetadataLoader {
       try {
         //read the actual image size, don't rely on tags for this
         const info = await imageSizeFromFile(fullPath);
-        metadata.size = { width: info.width, height: info.height };
+        metadata.size = {width: info.width, height: info.height};
       } catch (e) {
         //in case of failure, set dimensions to 0 so they may be read via tags
-        metadata.size = { width: 0, height: 0 };
+        metadata.size = {width: 0, height: 0};
       } finally {
         if (isNaN(metadata.size.width) || metadata.size.width == null) {
           metadata.size.width = 0;
@@ -215,21 +211,9 @@ export class MetadataLoader {
         }
       }
 
-
-      const data = Buffer.allocUnsafe(bufferSize);
-      fileHandle = await fs.promises.open(fullPath, 'r');
-      try {
-        await fileHandle.read(data, 0, bufferSize, 0);
-      } catch (err) {
-        Logger.error(LOG_TAG, 'Error during reading photo: ' + fullPath);
-        console.error(err);
-        return MetadataLoader.EMPTY_METADATA;
-      } finally {
-        await fileHandle.close();
-      }
       try {
         try {
-          const exif = await exifr.parse(data, exifrOptions);
+          const exif = await exifr.parse(fullPath, exifrOptions);
           MetadataLoader.mapMetadata(metadata, exif);
         } catch (err) {
           // ignoring errors
@@ -297,6 +281,7 @@ export class MetadataLoader {
     }
 
   }
+
   private static getOrientation(exif: any): number {
     let orientation = 1; //Orientation 1 is normal
     if (exif.ifd0?.Orientation != undefined) {
@@ -360,7 +345,7 @@ export class MetadataLoader {
   }
 
   private static mapCaption(metadata: PhotoMetadata, exif: any) {
-    metadata.caption = exif.dc?.description?.value || Utils.asciiToUTF8(exif.iptc?.Caption) || metadata.caption || exif.ifd0?.ImageDescription || exif.exif?.UserComment?.value || exif.Iptc4xmpCore?.ExtDescrAccessibility?.value ||exif.acdsee?.notes;
+    metadata.caption = exif.dc?.description?.value || Utils.asciiToUTF8(exif.iptc?.Caption) || metadata.caption || exif.ifd0?.ImageDescription || exif.exif?.UserComment?.value || exif.Iptc4xmpCore?.ExtDescrAccessibility?.value || exif.acdsee?.notes;
   }
 
   private static mapTimestampAndOffset(metadata: PhotoMetadata, exif: any) {
@@ -376,7 +361,7 @@ export class MetadataLoader {
         }
         if (!offset) { //still no offset? let's look for a timestamp with offset in the rest of the DateTags list
           const [tsonly, tsoffset] = Utils.splitTimestampAndOffset(ts);
-          for (let j = i+1; j < DateTags.length; j++) {
+          for (let j = i + 1; j < DateTags.length; j++) {
             const [exts, exOffset] = extractTSAndOffset(DateTags[j][0], DateTags[j][1], DateTags[j][2]);
             if (exts && exOffset && Math.abs(Utils.timestampToMS(tsonly, null) - Utils.timestampToMS(exts, null)) < 30000) {
               //if there is an offset and the found timestamp is within 30 seconds of the extra timestamp, we will use the offset from the found timestamp
@@ -397,11 +382,11 @@ export class MetadataLoader {
       const pathElements = path.split('.');
       let currentObject: any = exif;
       for (const pathElm of pathElements) {
-          const tmp = currentObject[pathElm];
-          if (tmp === undefined) {
-              return undefined;
-          }
-          currentObject = tmp;
+        const tmp = currentObject[pathElm];
+        if (tmp === undefined) {
+          return undefined;
+        }
+        currentObject = tmp;
       }
       return currentObject;
     }
@@ -416,7 +401,7 @@ export class MetadataLoader {
         if (!extratype || extratype == 'O') { //offset can be in the timestamp itself
           [ts, offset] = Utils.splitTimestampAndOffset(ts);
           if (extratype == 'O' && !offset) { //offset in the extra tag and not already extracted from main tag
-              offset = getValue(exif, extrapath);
+            offset = getValue(exif, extrapath);
           }
         } else if (extratype == 'T') { //date only in main tag, time in the extra tag
           ts = Utils.toIsoTimestampString(ts, getValue(exif, extrapath));
@@ -465,20 +450,20 @@ export class MetadataLoader {
 
   private static mapGPS(metadata: PhotoMetadata, exif: any) {
     try {
-    if (exif.gps || (exif.exif && exif.exif.GPSLatitude && exif.exif.GPSLongitude)) {
-      metadata.positionData = metadata.positionData || {};
-      metadata.positionData.GPSData = metadata.positionData.GPSData || {};
+      if (exif.gps || (exif.exif && exif.exif.GPSLatitude && exif.exif.GPSLongitude)) {
+        metadata.positionData = metadata.positionData || {};
+        metadata.positionData.GPSData = metadata.positionData.GPSData || {};
 
-      metadata.positionData.GPSData.longitude = Utils.isFloat32(exif.gps?.longitude) ? exif.gps.longitude : Utils.xmpExifGpsCoordinateToDecimalDegrees(exif.exif.GPSLongitude);
-      metadata.positionData.GPSData.latitude = Utils.isFloat32(exif.gps?.latitude) ? exif.gps.latitude : Utils.xmpExifGpsCoordinateToDecimalDegrees(exif.exif.GPSLatitude);
+        metadata.positionData.GPSData.longitude = Utils.isFloat32(exif.gps?.longitude) ? exif.gps.longitude : Utils.xmpExifGpsCoordinateToDecimalDegrees(exif.exif.GPSLongitude);
+        metadata.positionData.GPSData.latitude = Utils.isFloat32(exif.gps?.latitude) ? exif.gps.latitude : Utils.xmpExifGpsCoordinateToDecimalDegrees(exif.exif.GPSLatitude);
 
-      if (metadata.positionData.GPSData.longitude !== undefined) {
-        metadata.positionData.GPSData.longitude = parseFloat(metadata.positionData.GPSData.longitude.toFixed(6))
+        if (metadata.positionData.GPSData.longitude !== undefined) {
+          metadata.positionData.GPSData.longitude = parseFloat(metadata.positionData.GPSData.longitude.toFixed(6));
+        }
+        if (metadata.positionData.GPSData.latitude !== undefined) {
+          metadata.positionData.GPSData.latitude = parseFloat(metadata.positionData.GPSData.latitude.toFixed(6));
+        }
       }
-      if (metadata.positionData.GPSData.latitude !== undefined) {
-        metadata.positionData.GPSData.latitude = parseFloat(metadata.positionData.GPSData.latitude.toFixed(6))
-      }
-    }
     } catch (err) {
       Logger.error(LOG_TAG, 'Error during reading of GPS data: ' + err);
     } finally {
@@ -524,10 +509,10 @@ export class MetadataLoader {
 
   private static mapFaces(metadata: PhotoMetadata, exif: any, orientation: number) {
     //xmp."mwg-rs" section
-    if (exif["mwg-rs"] &&
-      exif["mwg-rs"].Regions) {
+    if (exif['mwg-rs'] &&
+      exif['mwg-rs'].Regions) {
       const faces: FaceRegion[] = [];
-      const regionListVal = Array.isArray(exif["mwg-rs"].Regions.RegionList) ? exif["mwg-rs"].Regions.RegionList : [exif["mwg-rs"].Regions.RegionList];
+      const regionListVal = Array.isArray(exif['mwg-rs'].Regions.RegionList) ? exif['mwg-rs'].Regions.RegionList : [exif['mwg-rs'].Regions.RegionList];
       if (regionListVal) {
         for (const regionRoot of regionListVal) {
           let type;
@@ -613,7 +598,7 @@ export class MetadataLoader {
           box.top = Math.round(Math.max(0, box.top - box.height / 2));
 
 
-          faces.push({ name, box });
+          faces.push({name, box});
         }
       }
       if (faces.length > 0) {
