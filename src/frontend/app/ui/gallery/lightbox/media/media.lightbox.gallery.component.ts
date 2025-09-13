@@ -223,6 +223,23 @@ export class GalleryLightboxMediaComponent implements OnChanges {
     }
   }
 
+  /**
+   * Checks if the available preview size is adequate for lightbox display.
+   * Returns false if the preview would be significantly smaller than the lightbox area.
+   */
+  private isPreviewAdequateForLightbox(): boolean {
+    if (!Config.Gallery.Lightbox.loadFullImageIfPreviewTooSmall) {
+      return true;
+    }
+
+    const selectedSize = this.gridMedia.getMediaSize(window.innerWidth, window.innerHeight);
+    const minDisplaySize = Math.min(window.innerWidth, window.innerHeight);
+
+    // If the selected preview size is less than 50% of the minimum display dimension,
+    // consider it inadequate for lightbox display (e.g., 240px on a 1080p screen)
+    return selectedSize >= minDisplaySize * 0.5;
+  }
+
   private loadPhoto(): void {
     if (!this.gridMedia || !this.loadMedia || !this.gridMedia.isPhoto()) {
       return;
@@ -233,8 +250,15 @@ export class GalleryLightboxMediaComponent implements OnChanges {
       Config.Gallery.Lightbox.loadFullImageOnZoom === false
     ) {
       if (this.photo.src == null) {
-        this.photo.src = this.gridMedia.getBestSizedMediaPath(window.innerWidth, window.innerHeight);
-        this.photo.isBestFit = true;
+        // Check if the preview size is adequate for lightbox display
+        // If not, load the original instead of a tiny preview
+        if (this.isPreviewAdequateForLightbox()) {
+          this.photo.src = this.gridMedia.getBestSizedMediaPath(window.innerWidth, window.innerHeight);
+          this.photo.isBestFit = true;
+        } else {
+          this.photo.src = this.gridMedia.getOriginalMediaPath();
+          this.photo.isBestFit = false;
+        }
       }
       // on zoom load high res photo
     } else if (this.photo.isBestFit === true || this.photo.src == null) {

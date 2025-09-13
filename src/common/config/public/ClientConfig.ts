@@ -968,6 +968,14 @@ export class ClientLightboxConfig {
   })
   loadFullImageOnZoom: boolean = true;
 
+  @ConfigProperty({
+    tags: {
+      name: $localize`Load full image if previews are too small`,
+      priority: ConfigPriority.advanced
+    },
+    description: $localize`When enabled, the lightbox will load the full resolution image if all available preview thumbnails are too small for the current view.`,
+  })
+  loadFullImageIfPreviewTooSmall: boolean = true;
 
   @ConfigProperty({
     tags: {
