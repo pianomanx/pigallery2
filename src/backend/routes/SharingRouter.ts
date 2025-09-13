@@ -2,6 +2,7 @@ import {AuthenticationMWs} from '../middlewares/user/AuthenticationMWs';
 import {UserRoles} from '../../common/entities/UserDTO';
 import {RenderingMWs} from '../middlewares/RenderingMWs';
 import {SharingMWs} from '../middlewares/SharingMWs';
+import {GalleryMWs} from '../middlewares/GalleryMWs';
 import * as express from 'express';
 import {QueryParams} from '../../common/QueryParams';
 import {ServerTimingMWs} from '../middlewares/ServerTimingMWs';
@@ -104,6 +105,7 @@ export class SharingRouter {
       [Config.Server.apiPath + '/share/list/:searchQueryDTO'],
       AuthenticationMWs.authenticate,
       AuthenticationMWs.authorise(UserRoles.User),
+      GalleryMWs.parseSearchQuery,
       SharingMWs.listSharingForQuery,
       ServerTimingMWs.addServerTiming,
       RenderingMWs.renderSharingList

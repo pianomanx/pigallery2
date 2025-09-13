@@ -56,6 +56,7 @@ export class GalleryRouter {
         AuthenticationMWs.authorise(UserRoles.LimitedGuest),
 
         // specific part
+        GalleryMWs.parseSearchQuery,
         ServerTimingMWs.addServerTiming,
         GalleryMWs.zipDirectory
     );
@@ -167,6 +168,7 @@ export class GalleryRouter {
         VersionMWs.injectGalleryVersion,
 
         // specific part
+        GalleryMWs.parseSearchQuery,
         GalleryMWs.getRandomImage,
         GalleryMWs.loadFile,
         ServerTimingMWs.addServerTiming,
@@ -260,6 +262,7 @@ export class GalleryRouter {
         VersionMWs.injectGalleryVersion,
 
         // specific part
+        GalleryMWs.parseSearchQuery,
         GalleryMWs.search,
         ThumbnailGeneratorMWs.addThumbnailInformation,
         GalleryMWs.cleanUpGalleryResults,

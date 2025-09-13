@@ -274,9 +274,10 @@ export class SharingMWs {
       if (Config.Sharing.enabled === false) {
         return next();
       }
-      const query: SearchQueryDTO = JSON.parse(
-        req.params['searchQueryDTO'] as string
-      );
+      if (!req.resultPipe) {
+        return next();
+      }
+      const query: SearchQueryDTO = req.resultPipe as any;
       if (req.session.context?.user.role >= UserRoles.Admin) {
         req.resultPipe =
           await ObjectManagers.getInstance().SharingManager.listAllForQuery(query);

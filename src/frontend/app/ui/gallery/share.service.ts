@@ -8,7 +8,7 @@ import {QueryParams} from '../../../../common/QueryParams';
 import {UserDTO, UserRoles} from '../../../../common/entities/UserDTO';
 import {Utils} from '../../../../common/Utils';
 import {Config} from '../../../../common/config/public/Config';
-import {SearchQueryDTO, SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes} from '../../../../common/entities/SearchQueryDTO';
+import {SearchQueryDTO} from '../../../../common/entities/SearchQueryDTO';
 
 
 @Injectable()
@@ -169,6 +169,23 @@ export class ShareService {
     return this.sharingKey != null;
   }
 
+  public async getSharingListForQuery(
+    query: SearchQueryDTO
+  ): Promise<SharingDTO[]> {
+    return this.networkService.getJson('/share/list/' + encodeURIComponent(JSON.stringify(query)));
+  }
+
+  public getSharingList(): Promise<SharingDTO[]> {
+    if (!Config.Sharing.enabled) {
+      return Promise.resolve([]);
+    }
+    return this.networkService.getJson('/share/listAll');
+  }
+
+  public deleteSharing(sharing: SharingDTO): Promise<void> {
+    return this.networkService.deleteJson('/share/' + encodeURIComponent(sharing.sharingKey));
+  }
+
   private async getSharing(): Promise<void> {
     try {
       this.sharingSubject.next(null);
@@ -193,24 +210,5 @@ export class ShareService {
       this.sharingIsValid.next(false);
       console.error(e);
     }
-  }
-
-
-  public async getSharingListForQuery(
-    query: SearchQueryDTO
-  ): Promise<SharingDTO[]> {
-    return this.networkService.getJson('/share/list/' + JSON.stringify(query));
-  }
-
-
-  public getSharingList(): Promise<SharingDTO[]> {
-    if (!Config.Sharing.enabled) {
-      return Promise.resolve([]);
-    }
-    return this.networkService.getJson('/share/listAll');
-  }
-
-  public deleteSharing(sharing: SharingDTO): Promise<void> {
-    return this.networkService.deleteJson('/share/' + sharing.sharingKey);
   }
 }

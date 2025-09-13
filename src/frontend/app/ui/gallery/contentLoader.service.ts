@@ -108,7 +108,7 @@ export class ContentLoaderService {
     let cw = this.galleryCacheService.getSearch(JSON.parse(query));
     if (!cw || cw.searchResult == null) {
       try {
-        cw = await this.networkService.getJson<ContentWrapperWithError>('/search/' + query);
+        cw = await this.networkService.getJson<ContentWrapperWithError>('/search/' + encodeURIComponent(query));
         this.galleryCacheService.setSearch(cw);
       } catch (e) {
         cw = cw || {

@@ -17,6 +17,45 @@ import {ServerTime} from './ServerTimingMWs';
 import {SortByTypes} from '../../common/entities/SortingMethods';
 
 export class GalleryMWs {
+  /**
+   * Middleware to safely parse searchQueryDTO from URL parameters
+   * Handles URL decoding and JSON parsing with proper error handling
+   */
+  public static parseSearchQuery(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): void {
+    try {
+      if (!req.params['searchQueryDTO']) {
+        return next();
+      }
+
+      let rawQueryParam = req.params['searchQueryDTO'] as string;
+
+      let query: SearchQueryDTO;
+      try {
+        query = JSON.parse(rawQueryParam);
+      } catch (parseError) {
+        return next(
+          new ErrorDTO(
+            ErrorCodes.INPUT_ERROR,
+            'Invalid search query JSON: ' + parseError.message,
+            parseError
+          )
+        );
+      }
+
+      // Store the parsed query for use by subsequent middlewares
+      req.resultPipe = query;
+      return next();
+    } catch (err) {
+      return next(
+        new ErrorDTO(ErrorCodes.GENERAL_ERROR, 'Error parsing search query', err)
+      );
+    }
+  }
+
   @ServerTime('1.db', 'List Directory')
   public static async listDirectory(
     req: Request,
@@ -78,13 +117,13 @@ export class GalleryMWs {
       return next();
     }
 
-    if (Config.Search.enabled === false || !req.params['searchQueryDTO']) {
+    if (Config.Search.enabled === false || !req.resultPipe) {
       return next();
     }
 
     // Handle search-query-based zip
     try {
-      const query: SearchQueryDTO = JSON.parse(req.params['searchQueryDTO'] as string);
+      const query: SearchQueryDTO = req.resultPipe as any;
 
       // Get all media items from search
       const searchResult = await ObjectManagers.getInstance().SearchManager.search(
@@ -251,15 +290,12 @@ export class GalleryMWs {
     try {
       if (
         Config.Search.enabled === false ||
-        !req.params['searchQueryDTO']
+        !req.resultPipe
       ) {
         return next();
       }
 
-
-      const query: SearchQueryDTO = JSON.parse(
-        req.params['searchQueryDTO'] as string
-      );
+      const query: SearchQueryDTO = req.resultPipe as any;
       const result = await ObjectManagers.getInstance().SearchManager.search(
         req.session.context,
         query
@@ -326,14 +362,12 @@ export class GalleryMWs {
     try {
       if (
         Config.RandomPhoto.enabled === false ||
-        !req.params['searchQueryDTO']
+        !req.resultPipe
       ) {
         return next();
       }
 
-      const query: SearchQueryDTO = JSON.parse(
-        req.params['searchQueryDTO'] as string
-      );
+      const query: SearchQueryDTO = req.resultPipe as any;
 
       const photos =
         await ObjectManagers.getInstance().SearchManager.getNMedia(
