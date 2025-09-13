@@ -434,6 +434,19 @@ export class Utils {
 
   public static asciiToUTF8(text: string): string {
     if (text) {
+      // Check for corrupted IPTC data - very long strings with binary content indicate corruption
+      // The specific corruption we observed: 25k+ chars with mix of high-ASCII and control chars
+      if (text.length > 1000) {
+        // Count characters that are likely binary corruption (high-ASCII and control chars)
+        const printableAscii = text.replace(/[^\x20-\x7E]/g, '').length;
+        const nonPrintableRatio = (text.length - printableAscii) / text.length;
+
+        // If more than 30% are non-printable ASCII, it's likely corrupted binary data
+        if (nonPrintableRatio > 0.3) {
+          return undefined;
+        }
+      }
+
       return Buffer.from(text, 'ascii').toString('utf-8');
     } else {
       return text;
