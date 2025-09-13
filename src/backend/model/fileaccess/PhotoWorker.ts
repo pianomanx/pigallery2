@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import * as sharp from 'sharp';
-import {Metadata, Sharp} from 'sharp';
+import {Metadata, Sharp, SharpOptions} from 'sharp';
 import {Logger} from '../../Logger';
 import {FfmpegCommand, FfprobeData} from 'fluent-ffmpeg';
 import {FFmpegFactory} from '../FFmpegFactory';
@@ -47,7 +47,6 @@ interface RendererInput {
   outPath?: string;
   quality: number;
   useLanczos3: boolean;
-  animate: boolean; // animates the output. Used for Gifs
   cut?: {
     left: number;
     top: number;
@@ -59,6 +58,8 @@ interface RendererInput {
 export interface MediaRendererInput extends RendererInput {
   mediaPath: string;
   smartSubsample: boolean;
+  sharpOptions: SharpOptions;
+  animate: boolean; // animates the output. Used for Gifs
 }
 
 export interface SvgRendererInput extends RendererInput {
@@ -142,7 +143,10 @@ export class ImageRendererFactory {
         ', size:' +
         input.size
       );
-      image = sharp((input as MediaRendererInput).mediaPath, {failOnError: false, animated: input.animate});
+      image = sharp((input as MediaRendererInput).mediaPath, {
+        failOnError: false,
+        animated: (input as MediaRendererInput).animate, ...((input as MediaRendererInput).sharpOptions || {})
+      });
     } else {
       const svg_buffer = Buffer.from((input as SvgRendererInput).svgString);
       image = sharp(svg_buffer, {density: 450});

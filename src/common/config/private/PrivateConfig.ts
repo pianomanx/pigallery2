@@ -360,6 +360,18 @@ export class ServerPhotoConfig extends ClientPhotoConfig {
   smartSubsample = true;
 
   @ConfigProperty({
+    type: 'object',
+    tags:
+      {
+        name: $localize`Sharp options`,
+        priority: ConfigPriority.underTheHood,
+        githubIssue: 980
+      },
+    description: $localize`Add any sharp options here. They will be added to sharp constructor as raw params. See: https://sharp.pixelplumbing.com/api-constructor/.`
+  })
+  sharpOptions={test:444};
+
+  @ConfigProperty({
     type: 'float',
     tags:
       {

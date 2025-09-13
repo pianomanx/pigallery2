@@ -182,8 +182,8 @@ export class PhotoProcessing {
       return false;
     }
 
-    const qualityStr =convertedPath.substring(nextIndex,
-      nextIndex+convertedPath.substring(nextIndex).search(/[A-Za-z]/)); // end of quality string
+    const qualityStr = convertedPath.substring(nextIndex,
+      nextIndex + convertedPath.substring(nextIndex).search(/[A-Za-z]/)); // end of quality string
 
     const quality = parseInt(qualityStr, 10);
 
@@ -216,12 +216,12 @@ export class PhotoProcessing {
       ) != 'cs') {
         return false;
       }
-      nextIndex+=2;
+      nextIndex += 2;
     }
 
-    if(convertedPath.substring(
+    if (convertedPath.substring(
       nextIndex
-    ).toLowerCase() !== path.extname(convertedPath)){
+    ).toLowerCase() !== path.extname(convertedPath)) {
       return false;
     }
 
@@ -281,6 +281,8 @@ export class PhotoProcessing {
       useLanczos3: Config.Media.Photo.useLanczos3,
       quality: Config.Media.Photo.quality,
       smartSubsample: Config.Media.Photo.smartSubsample,
+      sharpOptions: Config.Media.Photo.sharpOptions,
+      animate: Config.Media.Photo.animateGif
     } as MediaRendererInput;
 
     const outDir = path.dirname(input.outPath);
