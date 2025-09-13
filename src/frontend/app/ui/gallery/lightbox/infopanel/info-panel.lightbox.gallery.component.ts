@@ -229,4 +229,28 @@ export class InfoPanelLightboxComponent implements OnInit, OnChanges {
       distance: 1 // 1km radius
     } as DistanceSearch);
   }
+
+  getDateSearchQuery(): string {
+    // Search for photos taken on the same date (within 24 hours)
+    const creationDate = new Date(this.media.metadata.creationDate);
+    const startOfDay = new Date(creationDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(creationDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return JSON.stringify({
+      type: SearchQueryTypes.AND,
+      list: [
+        {
+          type: SearchQueryTypes.from_date,
+          value: startOfDay.getTime()
+        },
+        {
+          type: SearchQueryTypes.to_date,
+          value: endOfDay.getTime()
+        }
+      ]
+    });
+  }
+
 }
