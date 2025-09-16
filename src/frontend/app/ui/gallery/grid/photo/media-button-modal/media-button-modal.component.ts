@@ -1,9 +1,10 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit, HostListener} from '@angular/core';
 import {MediaButtonModalData, MediaButtonModalService} from './media-button-modal.service';
 import {Subscription} from 'rxjs';
 import {NgFor, NgIf} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {IClientMediaFields} from '../../../../../../../common/entities/extension/IClientUIConfig';
+
 @Component({
   selector: 'app-media-button-modal',
   templateUrl: './media-button-modal.component.html',
@@ -31,15 +32,6 @@ export class MediaButtonModalComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.subscription) {
       this.subscription.unsubscribe();
-    }
-  }
-
-  private initFormData(): void {
-    this.formData = {};
-    if (this.modalData?.button.popup?.fields) {
-      this.modalData.button.popup.fields.forEach(field => {
-        this.formData[field] = this.getFieldValue(field);
-      });
     }
   }
 
@@ -102,13 +94,78 @@ export class MediaButtonModalComponent implements OnInit, OnDestroy {
     this.modalService.hideModal();
   }
 
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Escape' && this.modalData?.visible) {
+      this.closeModal();
+    }
+  }
+
   executeAction(): void {
-    if (this.modalData) {
+    if (this.modalData && this.isFormValid()) {
       this.modalService.executeButtonAction(
         this.modalData.button,
         this.modalData.media,
         this.formData
       );
+    }
+  }
+
+  isFormValid(): boolean {
+    if (!this.modalData?.button?.popup?.customFields) {
+      return true;
+    }
+
+    // Check if all required custom fields are properly filled
+    for (const field of this.modalData.button.popup.customFields) {
+      if (field.required) {
+        const fieldKey = 'custom_' + field.id;
+        const value = this.formData[fieldKey];
+
+        // For boolean fields, required means it must be checked (true)
+        if (field.type === 'boolean' && !value) {
+          return false;
+        }
+
+        // For string fields, required means not empty
+        if (field.type === 'string' && (!value || value.trim() === '')) {
+          return false;
+        }
+
+        // For number fields, required means not null/undefined (0 is valid)
+        if (field.type === 'number' && (value === null || value === undefined || value === '')) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  private initFormData(): void {
+    this.formData = {};
+    if (this.modalData?.button?.popup?.fields) {
+      this.modalData.button.popup.fields.forEach(field => {
+        this.formData[field] = this.getFieldValue(field);
+      });
+    }
+    if (this.modalData?.button?.popup?.customFields) {
+      this.modalData.button.popup.customFields.forEach(field => {
+        this.formData['custom_' + field.id] = field.defaultValue ?? this.getDefaultValueForType(field.type);
+      });
+    }
+  }
+
+  private getDefaultValueForType(type: 'string' | 'number' | 'boolean'): any {
+    switch (type) {
+      case 'string':
+        return '';
+      case 'number':
+        return 0;
+      case 'boolean':
+        return false;
+      default:
+        return '';
     }
   }
 }

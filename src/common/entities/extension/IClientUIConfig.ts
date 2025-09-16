@@ -16,6 +16,30 @@ export interface IClientSVGIconConfig {
   items: string;
 }
 
+export interface IClientMediaButtonPopupFields {
+  /**
+   * Id of the field. This how it will listed in the body.
+   */
+  id: string;
+  /**
+   * Type of the field.
+   */
+  type: 'string' | 'number' | 'boolean';
+  /**
+   * Label of the field. This string will be shown in the popup.
+   */
+  label: string;
+  /**
+   * Default value of the field. Should appropriately to the type.
+   */
+  defaultValue?: string | number | boolean;
+  /**
+   * If true, the field will be required.
+   * If boolean, the field will be required to be true to click the button.
+   */
+  required?: boolean;
+}
+
 export interface IClientMediaButtonPopupConfig {
   /**
    * Header of the popup.
@@ -33,6 +57,10 @@ export interface IClientMediaButtonPopupConfig {
    * Fields to show in the popup as editable text fields.
    */
   fields?: IClientMediaFields[];
+  /**
+   * Custom fields to show in the popup.
+   */
+  customFields?: IClientMediaButtonPopupFields[];
 }
 
 export interface IClientMediaButtonConfig {
@@ -78,10 +106,10 @@ export interface IClientMediaButtonConfig {
    * Upon invalidation, the whole directory will be recalculated.
    * If you change any media file, you should set this to false.
    */
-  skipDirectoryInvalidation:boolean;
+  skipDirectoryInvalidation?: boolean;
 }
 
-export interface UIExtensionDTO{
+export interface UIExtensionDTO {
   extensionBasePath: string;
   mediaButtons: IClientMediaButtonConfig[];
 }
