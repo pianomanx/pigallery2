@@ -18,6 +18,21 @@
     <ng-icon name="ionVideocamOutline"></ng-icon>
   </div>
 
+  <!-- Media buttons -->
+  <div class="media-buttons" *ngIf="mediaButtons.length > 0">
+    <button *ngFor="let button of mediaButtons"
+            class="media-button"
+            [title]="button.name"
+            (click)="onMediaButtonClick(button, $event)">
+      <svg xmlns="http://www.w3.org/2000/svg"
+           class="media-button-icon"
+           fill="currentcolor"
+           [attr.viewBox]="button.svgIcon.viewBox || '0 0 512 512'"
+           [innerHtml]="button.svgIcon.items | safeHtml">
+      </svg>
+    </button>
+  </div>
+
 
   <!--Info box -->
   <div class="info rounded-bottom"

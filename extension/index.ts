@@ -1,2 +1,2 @@
-export {IServerExtension,IExtensionObject} from './lib/backend/model/extension/IExtension';
+export {IServerExtension, IExtensionObject} from './lib/backend/model/extension/IExtension';
 

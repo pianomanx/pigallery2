@@ -1,0 +1,79 @@
+import {Injectable} from '@angular/core';
+import {BehaviorSubject} from 'rxjs';
+import {GridMedia} from '../../GridMedia';
+import {IClientMediaButtonConfigWithBaseApiPath} from '../photo.grid.gallery.component';
+import {NotificationService} from '../../../../../model/notification.service';
+import {NetworkService} from '../../../../../model/network/network.service';
+import {Utils} from '../../../../../../../common/Utils';
+
+export interface MediaButtonModalData {
+  button: IClientMediaButtonConfigWithBaseApiPath;
+  media: GridMedia;
+  visible: boolean;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class MediaButtonModalService {
+  private modalData$ = new BehaviorSubject<MediaButtonModalData | null>(null);
+
+  constructor(
+    private notificationService: NotificationService,
+    private networkService: NetworkService
+  ) {
+  }
+
+  get modalData() {
+    return this.modalData$.asObservable();
+  }
+
+  showModal(button: IClientMediaButtonConfigWithBaseApiPath, media: GridMedia): void {
+    this.modalData$.next({
+      button,
+      media,
+      visible: true
+    });
+  }
+
+  hideModal(): void {
+    this.modalData$.next(null);
+  }
+
+  async executeButtonAction(button: IClientMediaButtonConfigWithBaseApiPath, media: GridMedia, formData?: any): Promise<void> {
+    try {
+      // Construct the full API path using base path and button's API path
+      const apiPath = Utils.concatUrls(button.extensionBasePath, button.apiPath);
+
+      // Prepare the request payload with media info and form data
+      const payload = {
+        media: Utils.concatUrls(media.media.directory.path, media.media.directory.name, media.media.name),
+        data: formData
+      };
+
+      // Make the API call
+      await this.networkService.postJson(apiPath, payload);
+
+      // Show success notification
+      this.notificationService.success($localize`Action completed successfully`);
+
+    } catch (error) {
+      // Show error notification
+      this.notificationService.error($localize`Action failed: ${error.message || error}`);
+      console.error('Media button action failed:', error);
+    }
+
+    // Handle post-action behaviors
+    if (button.reloadContent) {
+      // TODO: Trigger gallery content reload
+      console.log('Reload content requested');
+    }
+
+    if (button.reloadSite) {
+      console.log('Reload site requested');
+      window.location.reload();
+    }
+
+    this.hideModal();
+  }
+}

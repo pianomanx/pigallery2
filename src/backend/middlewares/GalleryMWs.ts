@@ -392,4 +392,28 @@ export class GalleryMWs {
       );
     }
   }
+
+  public static async getMediaEntry(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+
+      if (!req.params['mediaPath']) {
+        return next();
+      }
+      const mediaPath = req.params['mediaPath'];
+
+      req.resultPipe = await ObjectManagers.getInstance().GalleryManager.getMedia(req.session.context, mediaPath);
+      return next();
+    } catch (e) {
+      return next(
+        new ErrorDTO(
+          ErrorCodes.GENERAL_ERROR,
+          'Can\'t get random photo: ' + e.toString()
+        )
+      );
+    }
+  }
 }

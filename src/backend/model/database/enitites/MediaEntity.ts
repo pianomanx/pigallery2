@@ -85,7 +85,7 @@ export class PositionMetaDataEntity implements PositionMetaData {
 
 export class MediaMetadataEntity implements MediaMetadata {
   @Column('text')
-  caption: string;
+  caption?: string;
 
   @Column('text')
   title?: string;

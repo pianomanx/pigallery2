@@ -7,6 +7,7 @@ import {createLoggerWrapper} from '../../Logger';
 import * as express from 'express';
 import {ExtensionMessengerHandler} from './ExtensionMessengerHandler';
 import {ExtensionConfig} from './ExtensionConfig';
+import {UIExtension} from './UIExtension';
 
 export class ExtensionObject<C> implements IExtensionObject<C> {
 
@@ -18,6 +19,7 @@ export class ExtensionObject<C> implements IExtensionObject<C> {
   public readonly events;
   public readonly RESTApi;
   public readonly messengers;
+  public readonly ui;
 
   constructor(public readonly extensionId: string,
               public readonly extensionName: string,
@@ -33,6 +35,7 @@ export class ExtensionObject<C> implements IExtensionObject<C> {
     this.events = events;
     this.RESTApi = new ExpressRouterWrapper(extensionRouter, extensionId, logger);
     this.messengers = new ExtensionMessengerHandler(logger);
+    this.ui = new UIExtension(this);
   }
 
 }

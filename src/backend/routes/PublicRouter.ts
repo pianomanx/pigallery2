@@ -13,6 +13,7 @@ import {ClientConfig, TAGS} from '../../common/config/public/ClientConfig';
 import {QueryParams} from '../../common/QueryParams';
 import {PhotoProcessing} from '../model/fileaccess/fileprocessing/PhotoProcessing';
 import {Utils} from '../../common/Utils';
+import {ObjectManagers} from '../model/ObjectManagers';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -101,6 +102,8 @@ export class PublicRouter {
       res.tpl.customHTMLHead = Config.Server.customHTMLHead;
       const selectedTheme = Config.Gallery.Themes.availableThemes.find(th => th.name === Config.Gallery.Themes.selectedTheme)?.theme || '';
       res.tpl.usedTheme = selectedTheme;
+
+      res.tpl.UIExtensionConfigs = ObjectManagers.getInstance().ExtensionManager.getUIExtensionConfigs();
 
       return next();
     };

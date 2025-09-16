@@ -19,6 +19,8 @@ import {ServerExtensionsEntryConfig} from '../../../common/config/private/subcon
 import {ExtensionRepository} from './ExtensionRepository';
 import {ExtensionListItem} from '../../../common/entities/extension/ExtensionListItem';
 import {ExtensionConfigTemplateLoader} from './ExtensionConfigTemplateLoader';
+import {Utils} from '../../../common/Utils';
+import {UIExtensionDTO} from '../../../common/entities/extension/IClientUIConfig';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const exec = util.promisify(require('child_process').exec);
 const LOG_TAG = '[ExtensionManager]';
@@ -65,6 +67,79 @@ export class ExtensionManager implements IObjectManager {
     });
   }
 
+  public async cleanUp() {
+    if (!Config.Extensions.enabled) {
+      return;
+    }
+    this.initEvents(); // reset events
+    await this.cleanUpExtensions();
+    Server.instance?.app.use(ExtensionManager.EXTENSION_API_PATH, this.router);
+    this.extObjects = {};
+  }
+
+  public async installExtension(extensionId: string): Promise<void> {
+    if (!Config.Extensions.enabled) {
+      throw new Error('Extensions are disabled');
+    }
+
+    Logger.debug(LOG_TAG, `Installing extension with ID: ${extensionId}`);
+
+    // Get the extension list
+    const extensionList = await this.repository.getExtensionList();
+
+    // Find the extension with the given ID
+    const extension = extensionList.find(ext => ext.id.toLowerCase() === extensionId.toLowerCase());
+
+    if (!extension) {
+      throw new Error(`Extension with ID ${extensionId} not found`);
+    }
+
+    if (!extension.zipUrl) {
+      throw new Error(`Extension ${extensionId} does not have a zip URL`);
+    }
+
+    // Download the zip file
+    const zipFilePath = path.join(ProjectPath.ExtensionFolder, `${extensionId}.zip`);
+    Logger.silly(LOG_TAG, `Downloading extension from ${extension.zipUrl} to ${zipFilePath}`);
+
+    await this.downloadFile(extension.zipUrl, zipFilePath);
+
+    // Create the extension directory
+    const extensionDir = path.join(ProjectPath.ExtensionFolder, extensionId);
+    if (!fs.existsSync(extensionDir)) {
+      await fs.promises.mkdir(extensionDir, {recursive: true});
+    }
+
+    // Unzip the file
+    Logger.silly(LOG_TAG, `Unzipping extension to ${extensionDir}`);
+    await this.unzipFile(zipFilePath, extensionDir);
+
+    // Update the configuration
+    Logger.silly(LOG_TAG, `Updating configuration for extension ${extensionId}`);
+
+    ExtensionConfigTemplateLoader.Instance.loadSingleExtension(extensionId, Config);
+
+    // Initialize the extension
+    Logger.silly(LOG_TAG, `Initializing extension ${extensionId}`);
+    await this.initSingleExtension(extensionId);
+
+    // Clean up the temporary file
+    if (fs.existsSync(zipFilePath)) {
+      fs.unlinkSync(zipFilePath);
+    }
+
+    Logger.debug(LOG_TAG, `Extension ${extensionId} installed successfully`);
+  }
+
+  getUIExtensionConfigs(): UIExtensionDTO[] {
+    return Object.values(this.extObjects)
+      .filter(obj => !!obj.ui?.buttonConfigs?.length)
+      .map(obj => ({
+        mediaButtons: obj.ui.buttonConfigs,
+        extensionBasePath: Utils.concatUrls('/extension', obj.extensionId)
+      }));
+  }
+
   private initEvents() {
     this.events = {
       gallery: {
@@ -90,7 +165,6 @@ export class ExtensionManager implements IObjectManager {
     };
     ExtensionDecoratorObject.init(this.events);
   }
-
 
   private createUniqueExtensionObject(name: string, folder: string): IExtensionObject<unknown> {
     let id = name;
@@ -185,71 +259,6 @@ export class ExtensionManager implements IObjectManager {
     }
   }
 
-
-  public async cleanUp() {
-    if (!Config.Extensions.enabled) {
-      return;
-    }
-    this.initEvents(); // reset events
-    await this.cleanUpExtensions();
-    Server.instance?.app.use(ExtensionManager.EXTENSION_API_PATH, this.router);
-    this.extObjects = {};
-  }
-
-  public async installExtension(extensionId: string): Promise<void> {
-    if (!Config.Extensions.enabled) {
-      throw new Error('Extensions are disabled');
-    }
-
-    Logger.debug(LOG_TAG, `Installing extension with ID: ${extensionId}`);
-
-    // Get the extension list
-    const extensionList = await this.repository.getExtensionList();
-
-    // Find the extension with the given ID
-    const extension = extensionList.find(ext => ext.id.toLowerCase() === extensionId.toLowerCase());
-
-    if (!extension) {
-      throw new Error(`Extension with ID ${extensionId} not found`);
-    }
-
-    if (!extension.zipUrl) {
-      throw new Error(`Extension ${extensionId} does not have a zip URL`);
-    }
-
-    // Download the zip file
-    const zipFilePath = path.join(ProjectPath.ExtensionFolder, `${extensionId}.zip`);
-    Logger.silly(LOG_TAG, `Downloading extension from ${extension.zipUrl} to ${zipFilePath}`);
-
-    await this.downloadFile(extension.zipUrl, zipFilePath);
-
-    // Create the extension directory
-    const extensionDir = path.join(ProjectPath.ExtensionFolder, extensionId);
-    if (!fs.existsSync(extensionDir)) {
-      await fs.promises.mkdir(extensionDir, {recursive: true});
-    }
-
-    // Unzip the file
-    Logger.silly(LOG_TAG, `Unzipping extension to ${extensionDir}`);
-    await this.unzipFile(zipFilePath, extensionDir);
-
-    // Update the configuration
-    Logger.silly(LOG_TAG, `Updating configuration for extension ${extensionId}`);
-
-    ExtensionConfigTemplateLoader.Instance.loadSingleExtension(extensionId, Config);
-
-    // Initialize the extension
-    Logger.silly(LOG_TAG, `Initializing extension ${extensionId}`);
-    await this.initSingleExtension(extensionId);
-
-    // Clean up the temporary file
-    if (fs.existsSync(zipFilePath)) {
-      fs.unlinkSync(zipFilePath);
-    }
-
-    Logger.debug(LOG_TAG, `Extension ${extensionId} installed successfully`);
-  }
-
   private async downloadFile(url: string, outputPath: string): Promise<void> {
     const response = await fetch(url);
 
@@ -314,5 +323,4 @@ export class ExtensionManager implements IObjectManager {
       throw new Error(`Failed to unzip file: ${error}`);
     }
   }
-
 }

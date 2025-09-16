@@ -313,6 +313,79 @@ export class GalleryManager {
     dir.isPartial = true;
   }
 
+  async getMedia(session: SessionContext, mediaPath: string): Promise<MediaEntity> {
+    // Validate media is available under projectionQuery
+    const fileName = path.basename(mediaPath);
+    const dirRelPath = path.dirname(mediaPath);
+    const directoryName = path.basename(dirRelPath);
+    const directoryParent = path.join(path.dirname(dirRelPath), path.sep);
+
+    const connection = await SQLConnection.getConnection();
+    const qb = connection
+      .getRepository(MediaEntity)
+      .createQueryBuilder('media')
+      .innerJoinAndSelect('media.directory', 'directory')
+      .where('media.name = :name', {name: fileName})
+      .andWhere('directory.name = :dname AND directory.path = :dpath', {dname: directoryName, dpath: directoryParent});
+    if (session.projectionQuery) {
+      qb.andWhere(session.projectionQuery);
+    }
+    return await qb.getOne();
+  }
+
+  async authoriseMedia(session: SessionContext, mediaPath: string) {
+    // If no projection set for session, proceed
+    if (!session?.projectionQuery) {
+      return true;
+    }
+
+    // Validate media is available under projectionQuery
+    const fileName = path.basename(mediaPath);
+    const dirRelPath = path.dirname(mediaPath);
+    const directoryName = path.basename(dirRelPath);
+    const directoryParent = path.join(path.dirname(dirRelPath), path.sep);
+
+    const connection = await SQLConnection.getConnection();
+    const qb = connection
+      .getRepository(MediaEntity)
+      .createQueryBuilder('media')
+      .innerJoin('media.directory', 'directory')
+      .where('media.name = :name', {name: fileName})
+      .andWhere('directory.name = :dname AND directory.path = :dpath', {dname: directoryName, dpath: directoryParent})
+      .andWhere(session.projectionQuery);
+
+    const count = await qb.getCount();
+
+    return count !== 0;
+  }
+
+  async authoriseMetaFile(session: SessionContext, p: string) {
+    // If no projection set for session, proceed
+    if (!session?.projectionQuery) {
+      return true;
+    }
+
+    // Authorize metafile if its directory contains any media that matches the projectionQuery
+    const dirRelPath = path.dirname(p);
+    const directoryName = path.basename(dirRelPath);
+    const directoryParent = path.join(path.dirname(dirRelPath), path.sep);
+
+    const connection = await SQLConnection.getConnection();
+    const qb = connection
+      .getRepository(MediaEntity)
+      .createQueryBuilder('media')
+      .innerJoin('media.directory', 'directory')
+      .where('directory.name = :dname AND directory.path = :dpath', {
+        dname: directoryName,
+        dpath: directoryParent,
+      })
+      .andWhere(session.projectionQuery);
+
+    const count = await qb.getCount();
+
+    return count !== 0;
+  }
+
   protected async getDirIdAndTime(connection: Connection, name: string, path: string): Promise<{
     id: number,
     lastScanned: number,
@@ -418,58 +491,5 @@ export class GalleryManager {
       Logger.debug(LOG_TAG, query.getQuery(), query.getParameters());
       throw e;
     }
-  }
-
-  async authoriseMedia(session: SessionContext, mediaPath: string) {
-    // If no projection set for session, proceed
-    if (!session?.projectionQuery) {
-      return true;
-    }
-
-    // Validate media is available under projectionQuery
-    const fileName = path.basename(mediaPath);
-    const dirRelPath = path.dirname(mediaPath);
-    const directoryName = path.basename(dirRelPath);
-    const directoryParent = path.join(path.dirname(dirRelPath), path.sep);
-
-    const connection = await SQLConnection.getConnection();
-    const qb = connection
-      .getRepository(MediaEntity)
-      .createQueryBuilder('media')
-      .innerJoin('media.directory', 'directory')
-      .where('media.name = :name', {name: fileName})
-      .andWhere('directory.name = :dname AND directory.path = :dpath', {dname: directoryName, dpath: directoryParent})
-      .andWhere(session.projectionQuery);
-
-    const count = await qb.getCount();
-
-    return count !== 0;
-  }
-
-  async authoriseMetaFile(session: SessionContext, p: string) {
-    // If no projection set for session, proceed
-    if (!session?.projectionQuery) {
-      return true;
-    }
-
-    // Authorize metafile if its directory contains any media that matches the projectionQuery
-    const dirRelPath = path.dirname(p);
-    const directoryName = path.basename(dirRelPath);
-    const directoryParent = path.join(path.dirname(dirRelPath), path.sep);
-
-    const connection = await SQLConnection.getConnection();
-    const qb = connection
-      .getRepository(MediaEntity)
-      .createQueryBuilder('media')
-      .innerJoin('media.directory', 'directory')
-      .where('directory.name = :dname AND directory.path = :dpath', {
-        dname: directoryName,
-        dpath: directoryParent,
-      })
-      .andWhere(session.projectionQuery);
-
-    const count = await qb.getCount();
-
-    return count !== 0;
   }
 }

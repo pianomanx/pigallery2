@@ -27,6 +27,7 @@ import { DirectoriesComponent } from './directories/directories.component';
 import { GalleryBlogComponent } from './blog/blog.gallery.component';
 import { GalleryMapComponent } from './map/map.gallery.component';
 import { PhotoFilterPipe } from '../../pipes/PhotoFilterPipe';
+import { MediaButtonModalComponent } from './grid/photo/media-button-modal/media-button-modal.component';
 
 @Component({
     selector: 'app-gallery',
@@ -44,6 +45,7 @@ import { PhotoFilterPipe } from '../../pipes/PhotoFilterPipe';
         GalleryGridComponent,
         GPXFilesFilterPipe,
         PhotoFilterPipe,
+        MediaButtonModalComponent,
     ]
 })
 export class GalleryComponent implements OnInit, OnDestroy {

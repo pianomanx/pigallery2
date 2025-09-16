@@ -6,7 +6,7 @@ import {ProjectPathClass} from '../../ProjectPath';
 import {ILogger} from '../../Logger';
 import {UserDTO, UserRoles} from '../../../common/entities/UserDTO';
 import {ParamsDictionary} from 'express-serve-static-core';
-import {Connection} from 'typeorm';
+import {Connection, Repository} from 'typeorm';
 import {DynamicConfig} from '../../../common/entities/DynamicConfig';
 import {MediaDTOWithThPath} from '../messenger/Messenger';
 import {PhotoMetadata} from '../../../common/entities/PhotoDTO';
@@ -17,6 +17,8 @@ import {CoverPhotoDTOWithID} from '../database/CoverManager';
 import {ParentDirectoryDTO} from '../../../common/entities/DirectoryDTO';
 import {DirectoryScanSettings} from '../fileaccess/DiskManager';
 import {SessionContext} from '../SessionContext';
+import {IClientMediaButtonConfig} from '../../../common/entities/extension/IClientUIConfig';
+import {MediaEntity} from '../database/enitites/MediaEntity';
 
 
 export type IExtensionBeforeEventHandler<I extends unknown[], O> = (input: I, event: { stopPropagation: boolean }) => Promise<I | O>;
@@ -96,6 +98,16 @@ export interface IExtensionApp {
 }
 
 export interface IExtensionRESTRoute {
+  /**
+   * Looks for req.body.media for the media path and calls the callback with that media entry.
+   * Sends a pigallery2 standard JSON object with payload or error message back to the client.
+   * @param paths RESTapi path, relative to the extension base endpoint
+   * @param minRole set to null to omit auer check (ie make the endpoint public)
+   * @param cb function callback
+   * @return newly added REST api path
+   */
+  mediaJsonResponse(paths: string[], minRole: UserRoles, cb: (params: ParamsDictionary, body: any, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => Promise<unknown> | unknown): string;
+
   /**
    * Sends a pigallery2 standard JSON object with payload or error message back to the client.
    * @param paths RESTapi path, relative to the extension base endpoint
@@ -210,6 +222,23 @@ export interface IExtensionObject<C = void> {
    * One type of message is a list of selected photos.
    */
   messengers: IExtensionMessengers;
+
+  /**
+   * Use this to add UI changes to the app.
+   * This is the place to add new buttons, change the UI, etc..
+   */
+  ui: IUIExtension<C>;
+}
+
+export interface IUIExtension<C> {
+  /**
+   * Adds a new button on to UI to all media (photo, video).
+   * Implement the server-side click action in the serverSB function.
+   * @param buttonConfig
+   * @param serverSB
+   */
+
+  addMediaButton(buttonConfig: IClientMediaButtonConfig, serverSB: (params: ParamsDictionary, body: any, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => Promise<void>): void;
 }
 
 export interface IExtensionConfigInit<C> {
@@ -226,18 +255,18 @@ export interface IExtensionConfigInit<C> {
  */
 export interface IServerExtension<C> {
 
+  cleanUp?: (extension: IExtensionObject<C>) => Promise<void>;
+
   /**
    * Extension init function. Extension should at minimum expose this function.
    * @param extension
    */
   init(extension: IExtensionObject<C>): Promise<void>;
-
-  cleanUp?: (extension: IExtensionObject<C>) => Promise<void>;
 }
 
 
 /**
- * Extension config interface. All extension can implement and export these methods.
+ * Extension config interface. All extensions can implement and export these methods.
  * This is the content of the config.js file.
  */
 export interface IServerExtensionConfig<C> {
