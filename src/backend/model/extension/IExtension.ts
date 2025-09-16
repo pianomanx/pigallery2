@@ -102,11 +102,13 @@ export interface IExtensionRESTRoute {
    * Looks for req.body.media for the media path and calls the callback with that media entry.
    * Sends a pigallery2 standard JSON object with payload or error message back to the client.
    * @param paths RESTapi path, relative to the extension base endpoint
+   * @param invalidateDirectory set to false to prevent invalidating the directory.
+   * Invalidation is resource-intensive and should be avoided if media or its directory is not changed.
    * @param minRole set to null to omit auer check (ie make the endpoint public)
    * @param cb function callback
    * @return newly added REST api path
    */
-  mediaJsonResponse(paths: string[], minRole: UserRoles, cb: (params: ParamsDictionary, body: any, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => Promise<unknown> | unknown): string;
+  mediaJsonResponse(paths: string[], minRole: UserRoles, invalidateDirectory: boolean, cb: (params: ParamsDictionary, body: any, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => Promise<unknown> | unknown): string;
 
   /**
    * Sends a pigallery2 standard JSON object with payload or error message back to the client.

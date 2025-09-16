@@ -22,18 +22,19 @@ export class ContentLoaderService {
   };
   private searchId: number;
   private ongoingSearch: string = null;
+  private currentContentRequest: { type: 'directory' | 'search', value: string } = null;
 
   constructor(
-      private networkService: NetworkService,
-      private galleryCacheService: GalleryCacheService,
-      private shareService: ShareService,
-      private navigationService: NavigationService,
+    private networkService: NetworkService,
+    private galleryCacheService: GalleryCacheService,
+    private shareService: ShareService,
+    private navigationService: NavigationService,
   ) {
     this.content = new BehaviorSubject<ContentWrapperWithError>(
-        new ContentWrapperWithError()
+      new ContentWrapperWithError()
     );
     this.originalContent = this.content.pipe(
-        map((c) => (c.directory ? c.directory : c.searchResult))
+      map((c) => (c.directory ? c.directory : c.searchResult))
     );
 
   }
@@ -42,7 +43,7 @@ export class ContentLoaderService {
     this.content.next(content);
   }
 
-  public async loadDirectory(directoryName: string): Promise<void> {
+  public async loadDirectory(directoryName: string, forceReload = false): Promise<void> {
 
     // load from cache
     const cw = this.galleryCacheService.getDirectory(directoryName);
@@ -50,32 +51,34 @@ export class ContentLoaderService {
     ContentWrapper.unpack(cw);
     this.setContent(cw);
     this.lastRequest.directory = directoryName;
+    this.currentContentRequest = {type: 'directory', value: directoryName};
 
     // prepare server request
     const params: { [key: string]: unknown } = {};
     if (Config.Sharing.enabled === true) {
       if (this.shareService.isSharing()) {
         params[QueryParams.gallery.sharingKey_query] =
-            this.shareService.getSharingKey();
+          this.shareService.getSharingKey();
       }
     }
 
     if (
-        cw.directory &&
-        cw.directory.lastModified &&
-        cw.directory.lastScanned &&
-        !cw.directory.isPartial
+      !forceReload &&
+      cw.directory &&
+      cw.directory.lastModified &&
+      cw.directory.lastScanned &&
+      !cw.directory.isPartial
     ) {
       params[QueryParams.gallery.knownLastModified] =
-          cw.directory.lastModified;
+        cw.directory.lastModified;
       params[QueryParams.gallery.knownLastScanned] =
-          cw.directory.lastScanned;
+        cw.directory.lastScanned;
     }
 
     try {
       const cw = await this.networkService.getJson<ContentWrapperWithError>(
-          '/gallery/content/' + encodeURIComponent(directoryName),
-          params
+        '/gallery/content/' + encodeURIComponent(directoryName),
+        params
       );
 
       if (!cw || cw.notModified === true) {
@@ -97,16 +100,17 @@ export class ContentLoaderService {
     }
   }
 
-  public async search(query: string): Promise<void> {
+  public async search(query: string, forceReload = false): Promise<void> {
     if (this.searchId != null) {
       clearTimeout(this.searchId);
     }
 
     this.ongoingSearch = query;
+    this.currentContentRequest = {type: 'search', value: query};
 
     this.setContent(new ContentWrapperWithError());
     let cw = this.galleryCacheService.getSearch(JSON.parse(query));
-    if (!cw || cw.searchResult == null) {
+    if (forceReload || (!cw || cw.searchResult == null)) {
       try {
         cw = await this.networkService.getJson<ContentWrapperWithError>('/search/' + encodeURIComponent(query));
         this.galleryCacheService.setSearch(cw);
@@ -133,6 +137,18 @@ export class ContentLoaderService {
 
   isSearchResult(): boolean {
     return !!this.content.value.searchResult;
+  }
+
+  public async reloadCurrentContent(): Promise<void> {
+    if (!this.currentContentRequest) {
+      return;
+    }
+
+    if (this.currentContentRequest.type === 'directory') {
+      await this.loadDirectory(this.currentContentRequest.value, true);
+    } else if (this.currentContentRequest.type === 'search') {
+      await this.search(this.currentContentRequest.value, true);
+    }
   }
 }
 

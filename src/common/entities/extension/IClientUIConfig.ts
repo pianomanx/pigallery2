@@ -73,6 +73,12 @@ export interface IClientMediaButtonConfig {
    * If set, the button will only be shown to users with this role or higher.
    */
   minUserRole?: UserRoles;
+  /**
+   * If set, the button click will not invalidate the directory.
+   * Upon invalidation, the whole directory will be recalculated.
+   * If you change any media file, you should set this to false.
+   */
+  skipDirectoryInvalidation:boolean;
 }
 
 export interface UIExtensionDTO{

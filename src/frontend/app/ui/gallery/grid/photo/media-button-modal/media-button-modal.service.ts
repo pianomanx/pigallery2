@@ -5,6 +5,7 @@ import {IClientMediaButtonConfigWithBaseApiPath} from '../photo.grid.gallery.com
 import {NotificationService} from '../../../../../model/notification.service';
 import {NetworkService} from '../../../../../model/network/network.service';
 import {Utils} from '../../../../../../../common/Utils';
+import {ContentLoaderService} from '../../../contentLoader.service';
 
 export interface MediaButtonModalData {
   button: IClientMediaButtonConfigWithBaseApiPath;
@@ -20,7 +21,8 @@ export class MediaButtonModalService {
 
   constructor(
     private notificationService: NotificationService,
-    private networkService: NetworkService
+    private networkService: NetworkService,
+    private contentLoader: ContentLoaderService
   ) {
   }
 
@@ -63,10 +65,11 @@ export class MediaButtonModalService {
       console.error('Media button action failed:', error);
     }
 
+    this.hideModal();
+
     // Handle post-action behaviors
     if (button.reloadContent) {
-      // TODO: Trigger gallery content reload
-      console.log('Reload content requested');
+      await this.contentLoader.reloadCurrentContent();
     }
 
     if (button.reloadSite) {
@@ -74,6 +77,5 @@ export class MediaButtonModalService {
       window.location.reload();
     }
 
-    this.hideModal();
   }
 }

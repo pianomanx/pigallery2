@@ -12,6 +12,7 @@ import {GalleryMWs} from '../../middlewares/GalleryMWs';
 import {MediaEntity} from '../database/enitites/MediaEntity';
 import {SQLConnection} from '../database/SQLConnection';
 import {Repository} from 'typeorm';
+import {ObjectManagers} from '../ObjectManagers';
 
 
 export class ExpressRouterWrapper implements IExtensionRESTApi {
@@ -51,7 +52,7 @@ export class ExpressRouteWrapper implements IExtensionRESTRoute {
               private readonly extLogger: ILogger) {
   }
 
-  public mediaJsonResponse(paths: string[], minRole: UserRoles, cb: (params: ParamsDictionary, body: any, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => Promise<unknown> | unknown): string {
+  public mediaJsonResponse(paths: string[], minRole: UserRoles, invalidateDirectory: boolean, cb: (params: ParamsDictionary, body: any, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => Promise<unknown> | unknown): string {
     const fullPaths = paths.map(p => (Utils.concatUrls('/' + this.name + '/' + p)));
     this.router[this.func](fullPaths,
       ...(this.getAuthMWs(minRole).concat([
@@ -71,6 +72,9 @@ export class ExpressRouteWrapper implements IExtensionRESTRoute {
               req.session.context.user,
               media,
               connection.getRepository(MediaEntity));
+            if (invalidateDirectory) {
+              await ObjectManagers.getInstance().onDataChange(media.directory);
+            }
             req.resultPipe = 'ok';
             next();
           } catch (e) {
