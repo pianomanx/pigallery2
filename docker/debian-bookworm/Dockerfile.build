@@ -25,8 +25,13 @@ ENV NODE_ENV=production \
     PI_DOCKER=true
 
 EXPOSE 80
+ARG TARGETARCH
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates wget ffmpeg libvips42 \
+    && if [ "$TARGETARCH" = "amd64" ]; then \
+        echo "Building for amd64, adding intel-media-va-driver" && \
+        apt-get install -y --no-install-recommends intel-media-va-driver; \
+    fi \
     && apt-get clean -q -y \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app /app

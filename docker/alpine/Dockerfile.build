@@ -28,8 +28,13 @@ ENV NODE_ENV=production \
     PI_DOCKER=true
 
 EXPOSE 80
+ARG TARGETARCH
 RUN apk add --no-cache \
     vips vips-cpp vips-heif vips-magick ffmpeg \
+    && if [ "$TARGETARCH" = "amd64" ]; then \
+        echo "Building for amd64, adding intel-media-driver" && \
+        apk add --no-cache intel-media-driver; \
+    fi \
     && rm -rf /var/cache/apk/*
 COPY --from=builder /app /app
 
