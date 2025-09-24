@@ -32,11 +32,28 @@ export class BlogService {
             Math.min(Utils.getTimeMS(m.metadata.creationDate, m.metadata.creationDateOffset, Config.Gallery.ignoreTimestampOffset), p), Number.MAX_SAFE_INTEGER);
         }
 
-        const files = this.mdFilesFilterPipe.transform(content.metaFile)
+        const files = (this.mdFilesFilterPipe.transform(content.metaFile) || [])
           .map(f => this.splitMarkDown(f, dates, firstMedia));
 
         return (await Promise.all(files)).flat();
       }), shareReplay(1));
+  }
+
+  public getMarkDown(file: FileDTO): Promise<string> {
+    const filePath = Utils.concatUrls(
+      file.directory.path,
+      file.directory.name,
+      file.name
+    );
+    if (!this.cache[filePath]) {
+      this.cache[filePath] = this.networkService.getText(
+        '/gallery/content/' + filePath
+      );
+      (this.cache[filePath] as Promise<string>).then((val: string) => {
+        this.cache[filePath] = val;
+      });
+    }
+    return Promise.resolve(this.cache[filePath]);
   }
 
   private async splitMarkDown(file: MDFileDTO, dates: number[], firstMedia: number): Promise<GroupedMarkdown[]> {
@@ -133,23 +150,6 @@ export class BlogService {
 
     ret.forEach(md => md.textShort = md.text.substring(0, 200));
     return ret;
-  }
-
-  public getMarkDown(file: FileDTO): Promise<string> {
-    const filePath = Utils.concatUrls(
-      file.directory.path,
-      file.directory.name,
-      file.name
-    );
-    if (!this.cache[filePath]) {
-      this.cache[filePath] = this.networkService.getText(
-        '/gallery/content/' + filePath
-      );
-      (this.cache[filePath] as Promise<string>).then((val: string) => {
-        this.cache[filePath] = val;
-      });
-    }
-    return Promise.resolve(this.cache[filePath]);
   }
 }
 
