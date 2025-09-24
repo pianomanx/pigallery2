@@ -25,7 +25,7 @@
         {{ user.role | stringifyRole }}
       </td>
       <td>
-        <button [disabled]="!canDeleteUser(user)" (click)="canDeleteUser(user)"
+        <button [disabled]="!canDeleteUser(user)" (click)="deleteUser(user)"
                 [ngClass]="canDeleteUser(user)? 'btn-danger':'btn-secondary'"
                 class="btn float-end ms-2">
           <ng-icon name="ionTrashOutline" title="Delete" i18n-title></ng-icon>
