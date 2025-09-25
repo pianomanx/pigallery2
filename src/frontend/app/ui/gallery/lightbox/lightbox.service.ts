@@ -8,4 +8,5 @@ export class LightboxService {
   public captionAlwaysOn = Config.Gallery.Lightbox.captionAlwaysOn;
   public facesAlwaysOn = Config.Gallery.Lightbox.facesAlwaysOn;
   public loopVideos = Config.Gallery.Lightbox.loopVideos;
+  public loopSlideshow = Config.Gallery.Lightbox.loopSlideshow;
 }

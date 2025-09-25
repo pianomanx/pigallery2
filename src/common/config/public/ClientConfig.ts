@@ -362,11 +362,6 @@ export class MapLayers {
 @SubConfigClass({tags: {client: true}, softReadonly: true})
 export class SVGIconConfig {
 
-  constructor(viewBox: string = '0 0 512 512', items: string = '') {
-    this.viewBox = viewBox;
-    this.items = items;
-  }
-
   @ConfigProperty({
     tags: {
       name: $localize`SVG icon viewBox`,
@@ -375,7 +370,6 @@ export class SVGIconConfig {
     description: $localize`SVG path viewBox. See: https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/viewBox`,
   })
   viewBox: string = '0 0 512 512';
-
   @ConfigProperty({
     tags: {
       name: $localize`SVG Items`,
@@ -384,17 +378,16 @@ export class SVGIconConfig {
     description: $localize`Content elements (paths, circles, rects) of the SVG icon. Icons used on the map: fontawesome.com/icons.`,
   })
   items: string = '';
+
+  constructor(viewBox: string = '0 0 512 512', items: string = '') {
+    this.viewBox = viewBox;
+    this.items = items;
+  }
 }
 
 @SubConfigClass({tags: {client: true}, softReadonly: true})
 export class PathThemeConfig {
 
-
-  constructor(color: string = '', dashArray: string = '', svgIcon: SVGIconConfig = new SVGIconConfig()) {
-    this.color = color;
-    this.dashArray = dashArray;
-    this.svgIcon = svgIcon;
-  }
 
   @ConfigProperty({
     tags: {
@@ -404,7 +397,6 @@ export class PathThemeConfig {
     description: $localize`Color of the path. Use any valid css colors.`,
   })
   color: string = '';
-
   @ConfigProperty({
     tags: {
       name: $localize`Dash pattern`,
@@ -414,8 +406,6 @@ export class PathThemeConfig {
     description: $localize`Dash pattern of the path. Represents the spacing and length of the dash. Read more about dash array at: https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray.`,
   })
   dashArray: string = '';
-
-
   @ConfigProperty({
     type: SVGIconConfig,
     tags: {
@@ -426,16 +416,16 @@ export class PathThemeConfig {
     description: $localize`Set the icon of the map marker pin.`,
   })
   svgIcon: SVGIconConfig = new SVGIconConfig();
+
+  constructor(color: string = '', dashArray: string = '', svgIcon: SVGIconConfig = new SVGIconConfig()) {
+    this.color = color;
+    this.dashArray = dashArray;
+    this.svgIcon = svgIcon;
+  }
 }
 
 @SubConfigClass({tags: {client: true}, softReadonly: true})
 export class MapPathGroupThemeConfig {
-
-
-  constructor(matchers: string[] = [], theme: PathThemeConfig = new PathThemeConfig()) {
-    this.matchers = matchers;
-    this.theme = theme;
-  }
 
 
   @ConfigProperty({
@@ -447,7 +437,6 @@ export class MapPathGroupThemeConfig {
     description: $localize`List of regex string to match the name of the path. Case insensitive. Empty list matches everything.`,
   })
   matchers: string[] = [];
-
   @ConfigProperty({
     type: PathThemeConfig,
     tags: {
@@ -457,16 +446,16 @@ export class MapPathGroupThemeConfig {
     description: $localize`List of regex string to match the name of the path.`,
   })
   theme: PathThemeConfig = new PathThemeConfig();
+
+  constructor(matchers: string[] = [], theme: PathThemeConfig = new PathThemeConfig()) {
+    this.matchers = matchers;
+    this.theme = theme;
+  }
 }
 
 @SubConfigClass({tags: {client: true}, softReadonly: true})
 export class MapPathGroupConfig {
 
-
-  constructor(name: string = '', matchers: MapPathGroupThemeConfig[] = []) {
-    this.name = name;
-    this.matchers = matchers;
-  }
 
   @ConfigProperty({
     tags: {
@@ -476,7 +465,6 @@ export class MapPathGroupConfig {
     description: $localize`Name of the marker and path group on the map.`,
   })
   name: string = '';
-
   @ConfigProperty({
     arrayType: MapPathGroupThemeConfig,
     tags: {
@@ -486,6 +474,11 @@ export class MapPathGroupConfig {
     description: $localize`Matchers for a given map and path theme.`,
   })
   matchers: MapPathGroupThemeConfig[] = [];
+
+  constructor(name: string = '', matchers: MapPathGroupThemeConfig[] = []) {
+    this.name = name;
+    this.matchers = matchers;
+  }
 }
 
 @SubConfigClass({tags: {client: true}, softReadonly: true})
@@ -686,11 +679,6 @@ export class NavigationLinkConfig {
 
 @SubConfigClass<TAGS>({tags: {client: true}, softReadonly: true})
 export class ClientSortingConfig implements SortingMethod {
-  constructor(method: number = SortByTypes.Date, ascending: boolean = true) {
-    this.method = method;
-    this.ascending = ascending;
-  }
-
   @ConfigProperty({
     type: SortByTypes,
     tags: {
@@ -698,23 +686,22 @@ export class ClientSortingConfig implements SortingMethod {
     },
   })
   method: number = SortByTypes.Date;
-
   @ConfigProperty({
     tags: {
       name: $localize`Ascending`,
     },
   })
   ascending: boolean = true;
+
+  constructor(method: number = SortByTypes.Date, ascending: boolean = true) {
+    this.method = method;
+    this.ascending = ascending;
+  }
 }
 
 
 @SubConfigClass<TAGS>({tags: {client: true}, softReadonly: true})
 export class ClientGroupingConfig implements GroupingMethod {
-  constructor(method: number = GroupByTypes.Date, ascending: boolean = true) {
-    this.method = method;
-    this.ascending = ascending;
-  }
-
   @ConfigProperty({
     type: GroupByTypes,
     tags: {
@@ -722,13 +709,17 @@ export class ClientGroupingConfig implements GroupingMethod {
     },
   })
   method: number = GroupByTypes.Date;
-
   @ConfigProperty({
     tags: {
       name: $localize`Ascending`,
     },
   })
   ascending: boolean = true;
+
+  constructor(method: number = GroupByTypes.Date, ascending: boolean = true) {
+    this.method = method;
+    this.ascending = ascending;
+  }
 }
 
 
@@ -958,6 +949,14 @@ export class ClientLightboxConfig {
   })
   loopVideos: boolean = false;
 
+  @ConfigProperty({
+    tags: {
+      name: $localize`Loop Slideshow`,
+      priority: ConfigPriority.underTheHood,
+    },
+    description: $localize`If enabled, lightbox will start from the first photo when it reached the last one.`
+  })
+  loopSlideshow: boolean = false;
 
   @ConfigProperty({
     tags: {
@@ -991,11 +990,6 @@ export class ClientLightboxConfig {
 @SubConfigClass<TAGS>({tags: {client: true}, softReadonly: true})
 export class ThemeConfig {
 
-  constructor(name?: string, theme?: string) {
-    this.name = name;
-    this.theme = theme;
-  }
-
   @ConfigProperty({
     tags: {
       name: $localize`Name`,
@@ -1010,6 +1004,11 @@ export class ThemeConfig {
     description: $localize`Adds these css settings as it is to the end of the body tag of the page.`
   })
   theme: string;
+
+  constructor(name?: string, theme?: string) {
+    this.name = name;
+    this.theme = theme;
+  }
 }
 
 @SubConfigClass<TAGS>({tags: {client: true}, softReadonly: true})
@@ -1106,8 +1105,8 @@ export class ClientGalleryConfig {
     },
     description: $localize`If enabled, timestamp offsets are ignored, meaning that the local times of pictures are used for searching, sorting and grouping. If disabled, global time is used and pictures with no timestamp are assumed to be in UTC (offset +00:00).`
   })
-  //DEVELOPER NOTE: The Database model stores the timestamp (creationDate) as milliseconds since 1970-01-01 UTC (global time). And stores and offset (creationDateOffset) as minutes.
-  //Ignoring timestamp for the user is the opposite for the database. If the user wants to ignore the offset, we have to add the offset to the creationDate to give the user the right experience.
+    //DEVELOPER NOTE: The Database model stores the timestamp (creationDate) as milliseconds since 1970-01-01 UTC (global time). And stores and offset (creationDateOffset) as minutes.
+    //Ignoring timestamp for the user is the opposite for the database. If the user wants to ignore the offset, we have to add the offset to the creationDate to give the user the right experience.
   ignoreTimestampOffset: boolean = true;
 
 
@@ -1254,7 +1253,16 @@ export class ClientPhotoConfig {
     description: 'Updated to match he number of CPUs. This manny thumbnail will be concurrently generated.',
   })
   concurrentThumbnailGenerations: number = 1;
-
+  @ConfigProperty({
+    arrayType: 'string',
+    tags: {
+      name: $localize`Supported photo formats`,
+      priority: ConfigPriority.underTheHood,
+      uiResetNeeded: {db: true}
+    },
+    description: $localize`Photo formats that are supported. Browser needs to support these formats natively. Also sharp (libvips) package should be able to convert these formats.`,
+  })
+  supportedFormats: string[] = ['gif', 'jpeg', 'jpg', 'jpe', 'png', 'webp', 'svg', 'avif', 'heic', 'dng', 'arw'];
 
   /**
    * Generates a map for bitwise operation from icon and normal thumbnails
@@ -1273,17 +1281,6 @@ export class ClientPhotoConfig {
   generateThumbnailMapEntries(): { size: number, bit: number }[] {
     return Object.entries(this.generateThumbnailMap()).map(v => ({size: parseInt(v[0]), bit: v[1]}));
   }
-
-  @ConfigProperty({
-    arrayType: 'string',
-    tags: {
-      name: $localize`Supported photo formats`,
-      priority: ConfigPriority.underTheHood,
-      uiResetNeeded: {db: true}
-    },
-    description: $localize`Photo formats that are supported. Browser needs to support these formats natively. Also sharp (libvips) package should be able to convert these formats.`,
-  })
-  supportedFormats: string[] = ['gif', 'jpeg', 'jpg', 'jpe', 'png', 'webp', 'svg', 'avif', 'heic', 'dng', 'arw'];
 }
 
 @SubConfigClass({tags: {client: true}, softReadonly: true})

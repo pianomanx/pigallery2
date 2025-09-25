@@ -295,6 +295,10 @@ export class ControlsLightboxComponent implements OnDestroy, OnInit, OnChanges {
   }
 
   private showNextMedia = () => {
+    if(!this.navigation.hasNext){
+      this.pauseClicked();
+      return;
+    }
     if (this.mediaElement.imageLoadFinished.this === false ||
       this.mediaElement.imageLoadFinished.next === false) {
       return;

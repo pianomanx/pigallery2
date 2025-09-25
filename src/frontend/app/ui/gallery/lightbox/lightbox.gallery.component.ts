@@ -20,6 +20,7 @@ import {PiTitleService} from '../../../model/pi-title.service';
 import {NgFor, NgIf} from '@angular/common';
 import {NgIconComponent} from '@ng-icons/core';
 import {InfoPanelLightboxComponent} from './infopanel/info-panel.lightbox.gallery.component';
+import {LightboxService} from './lightbox.service';
 
 export enum LightboxStates {
   Open = 1,
@@ -88,7 +89,8 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
     private queryService: QueryService,
     private route: ActivatedRoute,
     private piTitleService: PiTitleService,
-    private wakeLockService: WakeLockService
+    private wakeLockService: WakeLockService,
+    private lightboxService: LightboxService,
   ) {
   }
 
@@ -100,9 +102,16 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
   }
 
   get NexGridMedia(): GridMedia {
+    if (!this.gridPhotoQL?.length) {
+      return null;
+    }
     if (this.activePhotoId + 1 < this.gridPhotoQL?.length) {
       return this.gridPhotoQL.get(this.activePhotoId + 1)?.gridMedia;
     }
+    if (this.lightboxService.loopSlideshow) {
+      return this.gridPhotoQL.get(0)?.gridMedia;
+    }
+
     return null;
   }
 
@@ -535,7 +544,7 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
       );
     }
     this.navigation.hasPrev = photoIndex > 0;
-    this.navigation.hasNext = photoIndex + 1 < this.gridPhotoQL.length;
+    this.navigation.hasNext = !!this.NexGridMedia;
 
     const to = this.activePhoto.getDimension();
 

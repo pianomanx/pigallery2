@@ -67,7 +67,8 @@
             </div>
           </li>
           <li role="menuitem">
-            <div class="dropdown-item d-flex justify-content-between">
+            <div class="dropdown-item d-flex justify-content-between  align-items-center
+">
               <span title="key: c" i18n-title i18n>Always show captions</span>
               <div class="form-check form-switch">
                 <input class="form-check-input"
@@ -80,7 +81,8 @@
             </div>
           </li>
           <li role="menuitem">
-            <div class="dropdown-item d-flex justify-content-between">
+            <div class="dropdown-item d-flex justify-content-between  align-items-center
+">
               <span title="key: a" i18n-title i18n>Always show faces</span>
               <div class="form-check form-switch">
                 <input class="form-check-input"
@@ -92,10 +94,25 @@
               </div>
             </div>
           </li>
+          <li role="menuitem">
+            <div class="dropdown-item d-flex justify-content-between  align-items-center
+">
+              <span title="key: l" i18n-title i18n>Loop Slideshow</span>
+              <div class="form-check form-switch">
+                <input class="form-check-input"
+                       type="checkbox"
+                       role="switch"
+                       name="loop-slideshow-switch"
+                       id="loop-slideshow-switch"
+                       [(ngModel)]="lightboxService.loopSlideshow">
+              </div>
+            </div>
+          </li>
           <li
             *ngIf="activePhoto && activePhoto.gridMedia.isVideo()"
             role="menuitem">
-            <div class="dropdown-item d-flex justify-content-between">
+            <div class="dropdown-item d-flex justify-content-between  align-items-center
+">
               <span title="key: l" i18n-title i18n>Loop videos</span>
 
               <div class="form-check form-switch">
