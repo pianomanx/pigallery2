@@ -485,7 +485,9 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
       .then(() => {
         this.piTitleService.setMediaTitle(this.gridPhotoQL.get(photoIndex).gridMedia);
       })
-      .catch(console.error);
+      .catch((err) => {
+        console.error(`Cant navigate to photo ${photoIndex}`, err);
+      });
   }
 
   private showPhoto(photoIndex: number, resize = true): void {
