@@ -84,21 +84,10 @@ export class GalleryManager {
 
       if (dir.lastModified !== lastModified) {
         Logger.silly(LOG_TAG, 'Reindexing reason: lastModified mismatch: known: ' + dir.lastModified + ', current:' + lastModified);
-        if (session?.projectionQuery) {
           // Need to wait for save, then return a DB-based result with projection
           await ObjectManagers.getInstance().IndexingManager.indexDirectory(relativeDirectoryName, true);
           return await this.getParentDirFromId(connection, session, dir.id);
-        } else {
-          const ret =
-            await ObjectManagers.getInstance().IndexingManager.indexDirectory(relativeDirectoryName);
-          for (const subDir of ret.directories) {
-            if (!subDir.cache.cover) {
-              // if subdirectories do not have photos, so cannot show a cover, try getting one from DB
-              await this.fillCacheForSubDir(connection, session, subDir);
-            }
-          }
-          return ret;
-        }
+
       }
 
       // not indexed since a while, index it lazily

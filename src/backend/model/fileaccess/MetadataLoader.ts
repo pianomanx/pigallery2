@@ -150,7 +150,8 @@ export class MetadataLoader {
           if (fs.existsSync(sidecarPath)) {
             const sidecarData: any = await exifr.sidecar(sidecarPath);
             if (sidecarData !== undefined) {
-              MetadataLoader.mapMetadata(metadata, sidecarData);
+              // sidecar should not change the video dimension
+              MetadataLoader.mapMetadata(metadata, sidecarData, false);
             }
           }
         }
@@ -214,7 +215,7 @@ export class MetadataLoader {
       try {
         try {
           const exif = await exifr.parse(fullPath, exifrOptions);
-          MetadataLoader.mapMetadata(metadata, exif);
+          MetadataLoader.mapMetadata(metadata, exif, true);
         } catch (err) {
           // ignoring errors
         }
@@ -234,7 +235,8 @@ export class MetadataLoader {
               const sidecarData: any = await exifr.sidecar(sidecarPath, exifrOptions);
               if (sidecarData !== undefined) {
                 //note that since side cars are loaded last, data loaded here overwrites embedded metadata (in Pigallery2, not in the actual files)
-                MetadataLoader.mapMetadata(metadata, sidecarData);
+                // sidecar should not change the image dimension
+                MetadataLoader.mapMetadata(metadata, sidecarData, false);
                 break;
               }
             }
@@ -260,14 +262,16 @@ export class MetadataLoader {
     return metadata;
   }
 
-  private static mapMetadata(metadata: PhotoMetadata, exif: any) {
+  private static mapMetadata(metadata: PhotoMetadata | VideoMetadata, exif: any, mapDimension = true) {
     //replace adobe xap-section with xmp to reuse parsing
     if (Object.hasOwn(exif, 'xap')) {
       exif['xmp'] = exif['xap'];
       delete exif['xap'];
     }
     const orientation = MetadataLoader.getOrientation(exif);
-    MetadataLoader.mapImageDimensions(metadata, exif, orientation);
+    if (mapDimension) {
+      MetadataLoader.mapImageDimensions(metadata, exif, orientation);
+    }
     MetadataLoader.mapKeywords(metadata, exif);
     MetadataLoader.mapTitle(metadata, exif);
     MetadataLoader.mapCaption(metadata, exif);
@@ -279,13 +283,15 @@ export class MetadataLoader {
     if (Config.Faces.enabled) {
       MetadataLoader.mapFaces(metadata, exif, orientation);
     }
-
   }
 
   private static getOrientation(exif: any): number {
     let orientation = 1; //Orientation 1 is normal
     if (exif.ifd0?.Orientation != undefined) {
       orientation = parseInt(exif.ifd0.Orientation as any, 10) as number;
+    } else if (exif.tiff?.Orientation != undefined) {
+      // Fallback to tiff.Orientation for XMP sidecars
+      orientation = parseInt(exif.tiff.Orientation as any, 10) as number;
     }
     return orientation;
   }
@@ -298,7 +304,7 @@ export class MetadataLoader {
       metadata.size.height = exif.ifd0?.ImageHeight || exif.exif?.ExifImageHeight || metadata.size.height;
     }
     metadata.size.height = Math.max(metadata.size.height, 1); //ensure height dimension is positive
-    metadata.size.width = Math.max(metadata.size.width, 1); //ensure width  dimension is positive
+    metadata.size.width = Math.max(metadata.size.width, 1); //ensure the width dimension is positive
 
     //we need to switch width and height for images that are rotated sideways
     if (4 < orientation) { //Orientation is sideways (rotated 90% or 270%)
