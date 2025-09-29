@@ -250,7 +250,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
       setStatTime(1); // FS says 1 -> mismatch
 
       const res = await gm.listDirectory(sessionNoProj, './');
-      expect(res).to.be.an('DB_RESULT');
+      expect(res).to.equal('DB_RESULT');
       expect(calledArgs[0]).to.equal('./');
       expect(calledArgs[1]).to.be.undefined; // no waitForSave
     });
