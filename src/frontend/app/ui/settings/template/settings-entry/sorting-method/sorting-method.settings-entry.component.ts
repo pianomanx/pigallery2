@@ -24,7 +24,6 @@ import { StringifySortingMethod } from '../../../../../pipes/StringifySortingMet
     styleUrls: ['./sorting-method.settings-entry.component.css'],
     providers: [
         AutoCompleteService,
-        RouterLink,
         {
             provide: NG_VALUE_ACCESSOR,
             useExisting: forwardRef(() => SortingMethodSettingsEntryComponent),

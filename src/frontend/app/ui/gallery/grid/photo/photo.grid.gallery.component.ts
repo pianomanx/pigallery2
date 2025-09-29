@@ -26,7 +26,6 @@ export interface IClientMediaButtonConfigWithBaseApiPath extends IClientMediaBut
   selector: 'app-gallery-grid-photo',
   templateUrl: './photo.grid.gallery.component.html',
   styleUrls: ['./photo.grid.gallery.component.css'],
-  providers: [RouterLink],
   imports: [
     NgIf,
     GalleryPhotoLoadingComponent,

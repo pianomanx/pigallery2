@@ -14,7 +14,7 @@ import {GallerySortingService} from './sorting.service';
 import {PageHelper} from '../../../model/page.helper';
 import { BsDropdownDirective, BsDropdownToggleDirective, BsDropdownMenuDirective } from 'ngx-bootstrap/dropdown';
 import {FilterService} from '../filter/filter.service';
-import {ContentLoaderService, ContentWrapperWithError, DirectoryContent} from '../contentLoader.service';
+import {ContentLoaderService, DirectoryContent} from '../contentLoader.service';
 import {GalleryNavigatorService} from './navigator.service';
 import {GridSizes} from '../../../../../common/entities/GridSizes';
 import { NgIf, NgFor, AsyncPipe } from '@angular/common';
@@ -25,12 +25,12 @@ import { GalleryFilterComponent } from '../filter/filter.gallery.component';
 import { StringifySortingMethod } from '../../../pipes/StringifySortingMethod';
 import { StringifySearchQuery } from '../../../pipes/StringifySearchQuery';
 import { StringifyGridSize } from '../../../pipes/StringifyGridSize';
+import {ContentWrapperWithError} from '../../../../../common/entities/ContentWrapper';
 
 @Component({
     selector: 'app-gallery-navbar',
     styleUrls: ['./navigator.gallery.component.css'],
     templateUrl: './navigator.gallery.component.html',
-    providers: [RouterLink],
     imports: [
         NgIf,
         NgFor,
@@ -171,8 +171,8 @@ export class GalleryNavigatorComponent {
   }
 
   private isExactDirectorySearch(content: ContentWrapperWithError): boolean {
-    const searchQuery = content.searchResult?.searchQuery as TextSearch;
-    return !!content.searchResult &&
+    const searchQuery = content?.searchResult?.searchQuery as TextSearch;
+    return !!content?.searchResult &&
       searchQuery?.type === SearchQueryTypes.directory &&
       searchQuery?.matchType === TextSearchQueryMatchTypes.exact_match &&
       !searchQuery?.negate;
@@ -180,20 +180,20 @@ export class GalleryNavigatorComponent {
 
   get isDirectory(): boolean {
     const content = this.contentLoaderService.content.value;
-    return !!content.directory || this.isExactDirectorySearch(content);
+    return !!content?.directory || this.isExactDirectorySearch(content);
   }
 
   get isSearch(): boolean {
     const content = this.contentLoaderService.content.value;
-    return !!content.searchResult && !this.isExactDirectorySearch(content);
+    return !!content?.searchResult && !this.isExactDirectorySearch(content);
   }
 
   get ItemCount(): number {
     const c = this.contentLoaderService.content.value;
-    return c.directory
-        ? c.directory.cache?.mediaCount
-        : c.searchResult
-            ? c.searchResult?.media?.length
+    return c?.directory
+        ? c?.directory.cache?.mediaCount
+        : c?.searchResult
+            ? c?.searchResult?.media?.length
             : 0;
   }
 

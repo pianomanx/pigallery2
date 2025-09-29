@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {NetworkService} from '../../model/network/network.service';
-import {ContentWrapper} from '../../../../common/entities/ContentWrapper';
+import {ContentWrapper, ContentWrapperWithError} from '../../../../common/entities/ContentWrapper';
 import {SubDirectoryDTO,} from '../../../../common/entities/DirectoryDTO';
 import {GalleryCacheService} from './cache.gallery.service';
 import {BehaviorSubject, Observable} from 'rxjs';
@@ -152,9 +152,6 @@ export class ContentLoaderService {
   }
 }
 
-export class ContentWrapperWithError extends ContentWrapper {
-  public error?: string;
-}
 
 export interface DirectoryContent {
   directories: SubDirectoryDTO[];

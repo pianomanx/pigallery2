@@ -14,7 +14,6 @@ import { IconComponent } from '../../../../icon.component';
     selector: 'app-gallery-directory',
     templateUrl: './directory.gallery.component.html',
     styleUrls: ['./directory.gallery.component.css'],
-    providers: [RouterLink],
     imports: [
         RouterLink,
         NgIf,

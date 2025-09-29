@@ -67,14 +67,14 @@ export class GallerySortingService {
   }
 
   getDefaultSorting(cw: ContentWrapper): SortingMethod {
-    if (cw.directory && cw.directory.metaFile) {
+    if (cw?.directory && cw?.directory.metaFile) {
       for (const file in PG2ConfMap.sorting) {
         if (cw.directory.metaFile.some((f) => f.name === file)) {
           return (PG2ConfMap.sorting)[file];
         }
       }
     }
-    if (cw.searchResult) {
+    if (cw?.searchResult) {
       return Config.Gallery.NavBar.SortingGrouping.defaultSearchSortingMethod;
     }
     return Config.Gallery.NavBar.SortingGrouping.defaultPhotoSortingMethod;
@@ -82,7 +82,7 @@ export class GallerySortingService {
 
 
   getDefaultGrouping(cw: ContentWrapper): GroupingMethod {
-    if (cw.searchResult) {
+    if (cw?.searchResult) {
       return Config.Gallery.NavBar.SortingGrouping.defaultSearchGroupingMethod;
     }
     return Config.Gallery.NavBar.SortingGrouping.defaultPhotoGroupingMethod;

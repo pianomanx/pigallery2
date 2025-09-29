@@ -7,8 +7,7 @@ import {MediaDTO} from '../../../../common/entities/MediaDTO';
 import {GroupingMethod, SortingMethod} from '../../../../common/entities/SortingMethods';
 import {VersionService} from '../../model/version.service';
 import {SearchQueryDTO, SearchQueryTypes,} from '../../../../common/entities/SearchQueryDTO';
-import {ContentWrapper} from '../../../../common/entities/ContentWrapper';
-import {ContentWrapperWithError} from './contentLoader.service';
+import {ContentWrapper, ContentWrapperWithError} from '../../../../common/entities/ContentWrapper';
 import {ThemeModes} from '../../../../common/config/public/ClientConfig';
 import {GridSizes} from '../../../../common/entities/GridSizes';
 

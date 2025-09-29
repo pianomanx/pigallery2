@@ -162,11 +162,11 @@ export class GalleryGridComponent
       clearTimeout(this.renderDelayTimer);
       this.renderDelayTimer = null;
     }
-    if (this.subscriptions.route !== null) {
+    if (this.subscriptions.route) {
       this.subscriptions.route.unsubscribe();
       this.subscriptions.route = null;
     }
-    if (this.subscriptions.girdSize !== null) {
+    if (this.subscriptions.girdSize) {
       this.subscriptions.girdSize.unsubscribe();
       this.subscriptions.girdSize = null;
     }

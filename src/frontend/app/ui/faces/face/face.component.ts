@@ -14,7 +14,6 @@ import { NgIconComponent } from '@ng-icons/core';
     selector: 'app-face',
     templateUrl: './face.component.html',
     styleUrls: ['./face.component.css'],
-    providers: [RouterLink],
     imports: [
         RouterLink,
         NgIf,

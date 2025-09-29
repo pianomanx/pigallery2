@@ -598,3 +598,7 @@ export class ContentWrapper {
     return cw;
   }
 }
+
+export class ContentWrapperWithError extends ContentWrapper {
+  public error?: string;
+}

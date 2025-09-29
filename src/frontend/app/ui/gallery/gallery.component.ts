@@ -17,7 +17,7 @@ import {FilterService} from './filter/filter.service';
 import {PiTitleService} from '../../model/pi-title.service';
 import {GPXFilesFilterPipe} from '../../pipes/GPXFilesFilterPipe';
 import {MDFilesFilterPipe} from '../../pipes/MDFilesFilterPipe';
-import {ContentLoaderService, ContentWrapperWithError} from './contentLoader.service';
+import {ContentLoaderService} from './contentLoader.service';
 import { GalleryLightboxComponent } from './lightbox/lightbox.gallery.component';
 import { FrameComponent } from '../frame/frame.component';
 import { NgIf } from '@angular/common';
@@ -28,6 +28,7 @@ import { GalleryBlogComponent } from './blog/blog.gallery.component';
 import { GalleryMapComponent } from './map/map.gallery.component';
 import { PhotoFilterPipe } from '../../pipes/PhotoFilterPipe';
 import { MediaButtonModalComponent } from './grid/photo/media-button-modal/media-button-modal.component';
+import {ContentWrapperWithError} from '../../../../common/entities/ContentWrapper';
 
 @Component({
     selector: 'app-gallery',

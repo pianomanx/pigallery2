@@ -124,7 +124,11 @@ bootstrapApplication(AppComponent, {
             ionCloudOutline, ionChatboxOutline, ionServerOutline, ionFileTrayFullOutline, ionBrushOutline,
             ionBrowsersOutline, ionUnlinkOutline, ionSquareOutline, ionGridOutline,
             ionAppsOutline, ionOpenOutline, ionRefresh, ionExtensionPuzzleOutline, ionList, ionPencil
-        }), ClipboardModule, TooltipModule.forRoot(), ToastrModule.forRoot(), ModalModule.forRoot(), CollapseModule.forRoot(), PopoverModule.forRoot(), BsDropdownModule.forRoot(), BsDatepickerModule.forRoot(), TimepickerModule.forRoot(), LoadingBarModule, LeafletModule, LeafletMarkerClusterModule, MarkdownModule.forRoot({ loader: HttpClient })),
+        }), ClipboardModule, TooltipModule.forRoot(), ToastrModule.forRoot(),
+          ModalModule.forRoot(), CollapseModule.forRoot(), PopoverModule.forRoot(),
+          BsDropdownModule.forRoot(), BsDatepickerModule.forRoot(), TimepickerModule.forRoot(),
+          LoadingBarModule, LeafletModule, LeafletMarkerClusterModule,
+          MarkdownModule.forRoot({ loader: HttpClient })),
         { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
         { provide: UrlSerializer, useClass: CustomUrlSerializer },
         { provide: HAMMER_GESTURE_CONFIG, useClass: MyHammerConfig },

@@ -10,7 +10,6 @@ import { FormsModule } from '@angular/forms';
     selector: 'app-gallery-filter',
     styleUrls: ['./filter.gallery.component.css'],
     templateUrl: './filter.gallery.component.html',
-    providers: [RouterLink],
     imports: [
         NgIf,
         NgFor,

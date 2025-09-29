@@ -24,7 +24,7 @@ import {SearchQueryUtils} from '../../../../../common/SearchQueryUtils';
   selector: 'app-gallery-search',
   templateUrl: './search.gallery.component.html',
   styleUrls: ['./search.gallery.component.css'],
-  providers: [AutoCompleteService, RouterLink],
+  providers: [AutoCompleteService],
   imports: [
     FormsModule,
     GallerySearchFieldBaseComponent,

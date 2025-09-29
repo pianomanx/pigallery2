@@ -27,7 +27,6 @@ import { FormsModule } from '@angular/forms';
     selector: 'app-frame',
     templateUrl: './frame.component.html',
     styleUrls: ['./frame.component.css'],
-    providers: [RouterLink],
     encapsulation: ViewEncapsulation.Emulated,
     imports: [
         LoadingBarModule,
