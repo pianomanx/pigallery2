@@ -34,7 +34,7 @@ export class ContentLoaderService {
       new ContentWrapperWithError()
     );
     this.originalContent = this.content.pipe(
-      map((c) => (c.directory ? c.directory : c.searchResult))
+      map((c) => (c?.directory ? c?.directory : c?.searchResult))
     );
 
   }
@@ -64,15 +64,15 @@ export class ContentLoaderService {
 
     if (
       !forceReload &&
-      cw.directory &&
-      cw.directory.lastModified &&
-      cw.directory.lastScanned &&
-      !cw.directory.isPartial
+      cw?.directory &&
+      cw?.directory.lastModified &&
+      cw?.directory.lastScanned &&
+      !cw?.directory.isPartial
     ) {
       params[QueryParams.gallery.knownLastModified] =
-        cw.directory.lastModified;
+        cw?.directory.lastModified;
       params[QueryParams.gallery.knownLastScanned] =
-        cw.directory.lastScanned;
+        cw?.directory.lastScanned;
     }
 
     try {

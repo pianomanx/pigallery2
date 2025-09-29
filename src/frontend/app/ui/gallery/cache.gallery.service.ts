@@ -314,8 +314,8 @@ export class GalleryCacheService {
 
     const key =
         GalleryCacheService.CONTENT_PREFIX +
-        Utils.concatUrls(cw.directory.path, cw.directory.name);
-    if (cw.directory.isPartial === true && localStorage.getItem(key)) {
+        Utils.concatUrls(cw?.directory.path, cw?.directory.name);
+    if (cw?.directory?.isPartial === true && localStorage.getItem(key)) {
       return;
     }
 

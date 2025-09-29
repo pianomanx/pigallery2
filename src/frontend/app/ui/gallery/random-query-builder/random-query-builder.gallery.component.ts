@@ -73,7 +73,7 @@ export class RandomQueryBuilderGalleryComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.contentSubscription = this.contentLoaderService.content.subscribe(
         (content: ContentWrapper) => {
-          this.enabled = !!content.directory;
+          this.enabled = !!content?.directory;
           if (!this.enabled) {
             return;
           }

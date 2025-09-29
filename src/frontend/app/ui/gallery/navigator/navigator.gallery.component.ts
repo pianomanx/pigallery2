@@ -93,18 +93,18 @@ export class GalleryNavigatorComponent {
     this.routes = this.contentLoaderService.content.pipe(
         map((c) => {
           this.parentPath = null;
-          if (!c.directory && !this.isExactDirectorySearch(c)) {
+          if (!c?.directory && !this.isExactDirectorySearch(c)) {
             return [];
           }
 
           let path: string;
           let name: string;
-          if (c.directory) {
+          if (c?.directory) {
             path = c.directory.path;
             name = c.directory.name;
           } else {
             // Handle exact directory search
-            const searchQuery = c.searchResult.searchQuery as TextSearch;
+            const searchQuery = c?.searchResult.searchQuery as TextSearch;
             path = searchQuery.text.replace(/^\.\//, ''); // Remove leading ./ if present
             const lastSlashIndex = path.lastIndexOf('/');
             if (lastSlashIndex !== -1) {
@@ -265,7 +265,7 @@ export class GalleryNavigatorComponent {
       searchQuery = {
         type: SearchQueryTypes.directory,
         matchType: TextSearchQueryMatchTypes.exact_match,
-        text: Utils.concatUrls('./', c.directory.path, c.directory.name)
+        text: Utils.concatUrls('./', c?.directory.path, c?.directory.name)
       } as TextSearch;
     } else {
       return null;
@@ -293,7 +293,7 @@ export class GalleryNavigatorComponent {
     return JSON.stringify({
       type: SearchQueryTypes.directory,
       matchType: TextSearchQueryMatchTypes.like,
-      text: Utils.concatUrls('./', c.directory.path, c.directory.name),
+      text: Utils.concatUrls('./', c?.directory.path, c?.directory.name),
     } as TextSearch);
   }
 

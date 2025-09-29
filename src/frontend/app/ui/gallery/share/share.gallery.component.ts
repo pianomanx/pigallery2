@@ -86,23 +86,23 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
     this.contentSubscription = this.galleryService.content.subscribe(
         async (content: ContentWrapper) => {
           this.activeShares = [];
-          this.enabled = !!(content.directory || (content as any).searchResult);
+          this.enabled = !!(content?.directory || (content as any)?.searchResult);
           this.currentDir = '';
           this.currentQuery = null;
           this.sharingTarget = '';
           this.currentMediaCount = 0;
           this.currentMediaCountIsLowerBound = false;
 
-          if ((content as any).searchResult) {
+          if ((content as any)?.searchResult) {
             const sr = (content as any).searchResult;
             this.currentQuery = sr.searchQuery as SearchQueryDTO;
             this.sharingTarget = $localize`Search query`;
             this.currentMediaCount = (sr.media ? sr.media.length : 0);
             this.currentMediaCountIsLowerBound = !!sr.resultOverflow;
-          } else if (content.directory) {
+          } else if (content?.directory) {
             this.currentDir = Utils.concatUrls(
-              content.directory.path,
-              content.directory.name
+              content?.directory.path,
+              content?.directory.name
             );
             this.currentQuery = {
               type: SearchQueryTypes.directory,
@@ -111,7 +111,7 @@ export class GalleryShareComponent implements OnInit, OnDestroy {
             } as TextSearch;
             this.sharingTarget = this.currentDir;
             // Prefer mediaCount, fallback to media length if needed
-            this.currentMediaCount = (typeof content.directory.cache?.mediaCount === 'number' ? content.directory.cache?.mediaCount : (content.directory.media ? content.directory.media.length : 0));
+            this.currentMediaCount = (typeof content?.directory.cache?.mediaCount === 'number' ? content.directory.cache?.mediaCount : (content.directory.media ? content.directory.media.length : 0));
             this.currentMediaCountIsLowerBound = false;
           }
 

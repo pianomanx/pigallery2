@@ -17,7 +17,7 @@ describe('ContentWrapper', () => {
       delete cw.notModified;
     }
 
-    const content = (cw.directory ? cw.directory : cw.searchResult);
+    const content = (cw?.directory ? cw.directory : cw?.searchResult);
     for (let i = 0; i < content.media.length; ++i) {
       const m = content.media[i];
       if (MediaDTOUtils.isPhoto(m)) {

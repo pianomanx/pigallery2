@@ -565,7 +565,7 @@ export class ContentWrapper {
       lens: new Map(), camera: new Map(), directories: new Map()
     };
 
-    if (cw.directory) {
+    if (cw?.directory) {
       ContentWrapper.packDirectory(cw, cw.directory);
     } else if (cw.searchResult) {
       ContentWrapper.packDirectory(cw, cw.searchResult, true);
@@ -589,7 +589,7 @@ export class ContentWrapper {
     if (!cw || cw.notModified) {
       return cw;
     }
-    if (cw.directory) {
+    if (cw?.directory) {
       ContentWrapper.unPackDirectory(cw, cw.directory);
     } else if (cw.searchResult) {
       ContentWrapper.unPackDirectory(cw, cw.searchResult, true);
