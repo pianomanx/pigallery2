@@ -84,9 +84,9 @@ export class GalleryManager {
 
       if (dir.lastModified !== lastModified) {
         Logger.silly(LOG_TAG, 'Reindexing reason: lastModified mismatch: known: ' + dir.lastModified + ', current:' + lastModified);
-          // Need to wait for save, then return a DB-based result with projection
-          await ObjectManagers.getInstance().IndexingManager.indexDirectory(relativeDirectoryName, true);
-          return await this.getParentDirFromId(connection, session, dir.id);
+        // Need to wait for save, then return a DB-based result with projection
+        await ObjectManagers.getInstance().IndexingManager.indexDirectory(relativeDirectoryName, true);
+        return await this.getParentDirFromId(connection, session, dir.id);
 
       }
 
@@ -436,10 +436,6 @@ export class GalleryManager {
         q.orWhere('directories.id is NULL');
       }));
     }
-    if (!session.projectionQuery) {
-      query.leftJoinAndSelect('directory.media', 'media');
-    }
-
     // TODO: do better filtering
     // NOTE: it should not cause an issue as it also do not save to the DB
     if (
@@ -462,18 +458,17 @@ export class GalleryManager {
         }
       }
 
-      // TODO: transform projection query to plain SQL query (String) and
-      //  use it as leftJoinAndSelect on the dir query for performance improvement
+      const mQuery = connection.getRepository(MediaEntity)
+        .createQueryBuilder('media')
+        .leftJoin('media.directory', 'directory')
+        .where('media.directory = :id', {
+          id: partialDirId
+        });
       if (session.projectionQuery) {
-        const mQuery = connection.getRepository(MediaEntity)
-          .createQueryBuilder('media')
-          .leftJoin('media.directory', 'directory')
-          .where('media.directory = :id', {
-            id: partialDirId
-          })
-          .andWhere(session.projectionQuery);
-        dir.media = await mQuery.getMany();
+        mQuery.andWhere(session.projectionQuery);
       }
+      dir.media = await mQuery.getMany();
+
       return dir;
     } catch (e) {
       Logger.error(LOG_TAG, 'Failed to get parent directory: ' + e);
