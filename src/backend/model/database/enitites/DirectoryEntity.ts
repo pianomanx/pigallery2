@@ -1,4 +1,4 @@
-import {Column, Entity, Index, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique,} from 'typeorm';
+import {Column, Entity, Index, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, Unique,} from 'typeorm';
 import {ParentDirectoryDTO, SubDirectoryDTO,} from '../../../../common/entities/DirectoryDTO';
 import {MediaEntity} from './MediaEntity';
 import {FileEntity} from './FileEntity';
@@ -59,7 +59,7 @@ export class DirectoryEntity
   @OneToMany(() => DirectoryEntity, (dir) => dir.parent)
   public directories: DirectoryEntity[];
 
-  @OneToMany(() => ProjectedDirectoryCacheEntity, (pdc) => pdc.directory)
+  @OneToOne(() => ProjectedDirectoryCacheEntity, (pdc) => pdc.directory)
   public cache: ProjectedDirectoryCacheEntity;
 
   @OneToMany(() => MediaEntity, (media) => media.directory)

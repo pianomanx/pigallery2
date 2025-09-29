@@ -421,6 +421,7 @@ export class GalleryManager {
         'cover.name',
         'coverDirectory.name',
         'coverDirectory.path',
+        'dcache',
         'dcover.name',
         'dcoverDirectory.name',
         'dcoverDirectory.path',

@@ -72,57 +72,48 @@ export class IndexingManager {
    * Indexes a dir, but returns early with the scanned version,
    * does not wait for the DB to be saved
    */
-  public indexDirectory(
+  public async indexDirectory(
     relativeDirectoryName: string,
     waitForSave = false
   ): Promise<ParentDirectoryDTO> {
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise(async (resolve, reject): Promise<void> => {
-      try {
-        // Check if root is still a valid (non-empty) folder
-        // With weak devices, it is possible that the media that stores
-        // the galley gets unmounted that triggers a full gallery wipe.
-        // Prevent it by stopping indexing on an empty folder.
-        if (fs.readdirSync(ProjectPath.ImageFolder).length === 0) {
-          return reject(new Error('Root directory is empty. This is probably error and would erase gallery database. Stopping indexing.'));
-        }
-
-        const scannedDirectory = await DiskManager.scanDirectory(
-          relativeDirectoryName
-        );
-
-
-        const dirClone = Utils.clone(scannedDirectory);
-        // filter server side only config from returning
-        dirClone.metaFile = dirClone.metaFile.filter(
-          (m) => !ServerPG2ConfMap[m.name]
-        );
-
-        DirectoryDTOUtils.addReferences(dirClone);
-
-        if (waitForSave === true) {
-          // save directory to DB and wait until saving finishes
-          try {
-            await this.queueForSave(scannedDirectory);
-          } catch (e) {
-            // bubble up save error
-            return reject(e);
-          }
-          return resolve(dirClone);
-        }
-
-        // save directory to DB in the background
-        resolve(dirClone);
-        this.queueForSave(scannedDirectory).catch(console.error);
-      } catch (error) {
-        NotificationManager.warning(
-          'Unknown indexing error for: ' + relativeDirectoryName,
-          error.toString()
-        );
-        console.error(error);
-        return reject(error);
+    try {
+      // Check if root is still a valid (non-empty) folder
+      // With weak devices, it is possible that the media that stores
+      // the galley gets unmounted that triggers a full gallery wipe.
+      // Prevent it by stopping indexing on an empty folder.
+      if (fs.readdirSync(ProjectPath.ImageFolder).length === 0) {
+        throw new Error('Root directory is empty. This is probably error and would erase gallery database. Stopping indexing.');
       }
-    });
+
+      const scannedDirectory = await DiskManager.scanDirectory(
+        relativeDirectoryName
+      );
+
+      const dirClone = Utils.clone(scannedDirectory);
+      // filter server side only config from returning
+      dirClone.metaFile = dirClone.metaFile.filter(
+        (m) => !ServerPG2ConfMap[m.name]
+      );
+
+      DirectoryDTOUtils.addReferences(dirClone);
+
+      if (waitForSave === true) {
+        // save directory to DB and wait until saving finishes
+        await this.queueForSave(scannedDirectory);
+        return dirClone;
+      }
+
+      // save directory to DB in the background
+      this.queueForSave(scannedDirectory).catch(console.error);
+      return dirClone;
+    } catch (error) {
+      NotificationManager.warning(
+        'Unknown indexing error for: ' + relativeDirectoryName,
+        error.toString()
+      );
+      console.error(error);
+      throw error;
+    }
   }
 
   async resetDB(): Promise<void> {
