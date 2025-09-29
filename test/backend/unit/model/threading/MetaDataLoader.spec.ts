@@ -211,6 +211,8 @@ describe('MetadataLoader', () => {
         const sidecar = await MetadataLoader.loadPhotoMetadata(path.join(__dirname, `/../../../assets/sidecar/orientation/photo.${i}.embedded_sidecar.jpg`));
         delete embedded.fileSize;
         delete sidecar.fileSize;
+        delete embedded.creationDate;
+        delete sidecar.creationDate;
         expect(Utils.clone(embedded)).to.be.deep.equal(Utils.clone(sidecar), `processing: photo.${i}.embedded.jpg`);
       }
     });

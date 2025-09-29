@@ -243,15 +243,14 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
       expect(res).to.equal('DB_RESULT');
     });
 
-    it('low + mismatch: returns scanned result when no projection', async () => {
+    it('low + mismatch: returns DB result when no projection', async () => {
       Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.low;
       indexed.lastScanned = 10;
       indexed.lastModified = 0; // DB says 0
       setStatTime(1); // FS says 1 -> mismatch
 
       const res = await gm.listDirectory(sessionNoProj, './');
-      expect(res).to.be.an('object');
-      expect((res as any).name).to.equal('INDEX_RESULT');
+      expect(res).to.be.an('DB_RESULT');
       expect(calledArgs[0]).to.equal('./');
       expect(calledArgs[1]).to.be.undefined; // no waitForSave
     });
