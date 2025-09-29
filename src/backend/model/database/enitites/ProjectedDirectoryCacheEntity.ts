@@ -5,6 +5,8 @@ import {DirectoryCacheDTO} from '../../../../common/entities/DirectoryDTO';
 
 @Entity()
 @Unique(['projectionKey', 'directory'])
+@Index(['directory', 'projectionKey', 'valid']) // Composite index for join optimization
+@Index(['projectionKey', 'valid']) // Index for projection key + valid queries
 export class ProjectedDirectoryCacheEntity implements DirectoryCacheDTO {
   @PrimaryGeneratedColumn({unsigned: true})
   id: number;
@@ -35,6 +37,7 @@ export class ProjectedDirectoryCacheEntity implements DirectoryCacheDTO {
   @ManyToOne(() => MediaEntity, {onDelete: 'SET NULL', nullable: true})
   cover: MediaEntity;
 
+  @Index() // Add index for valid column used in joins
   @Column({type: 'boolean', default: false})
   valid: boolean;
 }
