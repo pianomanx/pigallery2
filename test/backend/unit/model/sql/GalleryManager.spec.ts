@@ -252,7 +252,7 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
       const res = await gm.listDirectory(sessionNoProj, './');
       expect(res).to.equal('DB_RESULT');
       expect(calledArgs[0]).to.equal('./');
-      expect(calledArgs[1]).to.be.undefined; // no waitForSave
+      expect(calledArgs[1]).to.equal(true); // waitForSave
     });
 
     it('low + mismatch: waits for save and returns DB result when projection set', async () => {
