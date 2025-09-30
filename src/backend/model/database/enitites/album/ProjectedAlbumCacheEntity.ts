@@ -10,7 +10,7 @@ export class ProjectedAlbumCacheEntity implements AlbumCacheDTO {
   id: number;
 
   @Index()
-  @Column({type: 'text', select: false}) // don't select it, we only use it to get the right cache for the given context
+  @Column({type: 'char', length: 32, select: false}) // don't select it, we only use it to get the right cache for the given context
   projectionKey: string; // it's a hash of the projection search query
 
   @Index()

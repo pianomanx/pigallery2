@@ -13,7 +13,7 @@ export class ProjectedPersonCacheEntity implements PersonCacheDTO{
 
   // hash key of the projection (built by SessionManager)
   @Index()
-  @Column({ type: 'text', select: false }) // not needed in payloads; used to select the right cache per session
+  @Column({type: 'char', length: 32, select: false}) // not needed in payloads; used to select the right cache per session
   projectionKey: string;
 
   // the person this cache row is about
