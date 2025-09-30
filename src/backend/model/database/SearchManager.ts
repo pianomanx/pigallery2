@@ -419,6 +419,7 @@ export class SearchManager {
           .limit(Config.Search.maxDirectoryResult + 1)
           .select([
             'directory',
+            'cache.valid',
             'cache.oldestMedia',
             'cache.youngestMedia',
             'cache.mediaCount',

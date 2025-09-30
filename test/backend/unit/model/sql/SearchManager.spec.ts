@@ -246,6 +246,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     delete d.media;
     delete d.metaFile;
     const ret = Utils.clone(d);
+    delete ret.cache?.id;
     d.directories = tmpD;
     d.media = tmpM;
     d.cache.cover = tmpP;
