@@ -12,7 +12,7 @@ export class ProjectedDirectoryCacheEntity implements DirectoryCacheDTO {
   id: number;
 
   @Index()
-  @Column({type: 'char', length: 32, select: false}) // don't select it, we only use it to get the right cache for the given context
+  @Column({type: 'varchar', length: 32, select: false}) // don't select it, we only use it to get the right cache for the given context
   projectionKey: string; //it's a hash of the projection search query
 
   @Index()
