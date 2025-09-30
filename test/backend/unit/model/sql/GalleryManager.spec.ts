@@ -11,6 +11,7 @@ import {SQLConnection} from '../../../../../src/backend/model/database/SQLConnec
 import {Config} from '../../../../../src/common/config/private/Config';
 import {ReIndexingSensitivity} from '../../../../../src/common/config/private/PrivateConfig';
 import {IndexingManager} from '../../../../../src/backend/model/database/IndexingManager';
+import {ProjectedDirectoryCacheEntity} from '../../../../../src/backend/model/database/enitites/ProjectedDirectoryCacheEntity';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
@@ -487,6 +488,30 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
         const metaPath = path.join(subDir.path, subDir.name, 'info.md');
         expect(await gm.authoriseMetaFile(session, metaPath)).to.equal(false);
       });
+    });
+  });
+
+  describe('Cache optimization tests', () => {
+    before(async () => {
+      await sqlHelper.initDB();
+      await sqlHelper.setUpTestGallery();
+      await ObjectManagers.getInstance().init();
+    });
+
+    after(async () => {
+      await sqlHelper.clearDB();
+    });
+    it('should not call setAndGetCacheForDirectory when gallery is fully indexed with valid caches', async () => {
+
+      // make sure gallery is fully indexed and caches are valid
+      await ObjectManagers.getInstance().GalleryManager.listDirectory(DBTestHelper.defaultSession, './');
+      const fn =  ObjectManagers.getInstance().ProjectedCacheManager.setAndGetCacheForDirectory;
+      ObjectManagers.getInstance().ProjectedCacheManager.setAndGetCacheForDirectory = async (...args) => {
+        await fn(...args);
+        throw new Error('Should not be called');
+      }
+      await ObjectManagers.getInstance().GalleryManager.listDirectory(DBTestHelper.defaultSession, './');
+      ObjectManagers.getInstance().ProjectedCacheManager.setAndGetCacheForDirectory = fn;
     });
   });
 });

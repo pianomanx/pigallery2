@@ -15,6 +15,7 @@ import {DuplicatesDTO} from '../../../common/entities/DuplicatesDTO';
 import {ReIndexingSensitivity} from '../../../common/config/private/PrivateConfig';
 import {DiskManager} from '../fileaccess/DiskManager';
 import {SessionContext} from '../SessionContext';
+import {FileEntity} from './enitites/FileEntity';
 
 const LOG_TAG = '[GalleryManager]';
 
@@ -406,51 +407,45 @@ export class GalleryManager {
       .where('directory.id = :id', {
         id: partialDirId
       })
-      .leftJoinAndSelect('directory.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: session.user.projectionKey})
-      .leftJoinAndSelect('cache.cover', 'cover')
-      .leftJoinAndSelect('cover.directory', 'coverDirectory')
+      .leftJoinAndSelect('directory.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: session.user.projectionKey});
 
-      .leftJoinAndSelect('directory.directories', 'directories')
-      .leftJoinAndSelect('directories.cache', 'dcache', 'dcache.projectionKey = :pk AND dcache.valid = 1', {pk: session.user.projectionKey})
-      .leftJoinAndSelect('dcache.cover', 'dcover')
-      .leftJoinAndSelect('dcover.directory', 'dcoverDirectory')
 
-      .select([
-        'directory',
-        'directories',
-        'cover.name',
-        'coverDirectory.name',
-        'coverDirectory.path',
-        'dcover.name',
-        'dcoverDirectory.name',
-        'dcoverDirectory.path',
-      ]);
-
-    // search does not return a directory if that is recursively having 0 media
-    // gallery listing should otherwise, we won't be able to trigger lazy indexing
-    // this behavior lets us explicitly hid a directory if it is explicitly blocked
-    if (session.projectionQueryForSubDir) {
-      query.andWhere(new Brackets(q => {
-        q.where(session.projectionQueryForSubDir);
-        // also select directories when they have no child dirs.
-        q.orWhere('directories.id is NULL');
-      }));
-    }
-    // TODO: do better filtering
-    // NOTE: it should not cause an issue as it also do not save to the DB
-    if (
-      Config.MetaFile.gpx === true ||
-      Config.MetaFile.pg2conf === true ||
-      Config.MetaFile.markdown === true
-    ) {
-      query.leftJoinAndSelect('directory.metaFile', 'metaFile');
-    }
     try {
       const dir = await query.getOne();
 
       if (!dir.cache?.valid) {
         dir.cache = await ObjectManagers.getInstance().ProjectedCacheManager.setAndGetCacheForDirectory(connection, session, dir);
       }
+
+      const dirQuery = connection
+        .getRepository(DirectoryEntity)
+        .createQueryBuilder('directories')
+        .where('directories.parent = :id', {id: partialDirId})
+        .leftJoinAndSelect('directories.cache', 'dcache', 'dcache.projectionKey = :pk AND dcache.valid = 1', {pk: session.user.projectionKey})
+        .leftJoinAndSelect('dcache.cover', 'dcover')
+        .leftJoinAndSelect('dcover.directory', 'dcoverDirectory')
+        .select([
+          'directories',
+          'dcache',
+          'dcover.name',
+          'dcoverDirectory.name',
+          'dcoverDirectory.path',
+        ]);
+
+      // search does not return a directory if that is recursively having 0 media
+      // gallery listing should otherwise, we won't be able to trigger lazy indexing
+      // this behavior lets us explicitly hid a directory if it is explicitly blocked
+      if (session.projectionQueryForSubDir) {
+        dirQuery.andWhere(new Brackets(q => {
+          q.where(session.projectionQueryForSubDir);
+          // also select directories when they have no child dirs.
+          q.orWhere('directories.id is NULL');
+        }));
+      }
+
+      dir.directories = await dirQuery.getMany();
+
+
 
       if (dir.directories) {
         for (const item of dir.directories) {
@@ -468,6 +463,20 @@ export class GalleryManager {
         mQuery.andWhere(session.projectionQuery);
       }
       dir.media = await mQuery.getMany();
+
+      // Separate query for meta files
+      if (
+        Config.MetaFile.gpx === true ||
+        Config.MetaFile.pg2conf === true ||
+        Config.MetaFile.markdown === true
+      ) {
+        const metaFileQuery = connection
+          .getRepository(FileEntity)
+          .createQueryBuilder('metaFile')
+          .where('metaFile.directory = :id', {id: partialDirId});
+
+        dir.metaFile = await metaFileQuery.getMany();
+      }
 
       return dir;
     } catch (e) {
