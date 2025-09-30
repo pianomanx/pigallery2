@@ -11,7 +11,7 @@ const LOG_TAG = '[SessionManager]';
 
 export class SessionManager {
 
-  public static readonly NO_PROJECTION_KEY = 'pr:' + crypto.createHash('md5').update('No Key').digest('hex');
+  public static readonly NO_PROJECTION_KEY = crypto.createHash('md5').update('No Key').digest('hex');
 
   private getQueryForUser(user: ContextUser) {
     let blockQuery = user.overrideAllowBlockList ? user.blockQuery : Config.Users.blockQuery;
@@ -55,7 +55,7 @@ export class SessionManager {
 
   public createProjectionKey(q: SearchQueryDTO) {
     const canonical = SearchQueryUtils.stringifyForComparison(q);
-    return 'pr:' + crypto.createHash('md5').update(canonical).digest('hex');
+    return crypto.createHash('md5').update(canonical).digest('hex');
   }
 
   public async buildContext(user: ContextUser): Promise<SessionContext> {

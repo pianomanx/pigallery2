@@ -15,7 +15,7 @@ export class VersionMWs {
     try {
       // DB version from the client perspective depends on the projection and if the DB was updated
       const version = await ObjectManagers.getInstance().VersionManager.getDataVersion();
-      const projectionKey = req.session.context?.user?.projectionKey ?? '';
+      const projectionKey = 'pr:' + (req.session.context?.user?.projectionKey ?? '');
       res.header(
         CustomHeaders.dataVersion,
         version + projectionKey
