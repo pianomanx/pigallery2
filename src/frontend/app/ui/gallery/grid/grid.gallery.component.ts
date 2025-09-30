@@ -447,14 +447,12 @@ export class GalleryGridComponent
    */
   private shouldRenderMore(offset = 0): boolean {
     const bottomOffset = this.getMaxRowHeight() * 2;
+    const maxScroll = PageHelper.MaxScrollY + offset;
+
     return (
       Config.Gallery.enableOnScrollRendering === false ||
-      PageHelper.ScrollY >=
-      document.body.clientHeight +
-      offset -
-      window.innerHeight -
-      bottomOffset ||
-      (document.body.clientHeight + offset) * 0.85 < window.innerHeight
+      PageHelper.ScrollY >= maxScroll - bottomOffset ||
+      maxScroll * 0.85 < window.innerHeight
     );
   }
 
