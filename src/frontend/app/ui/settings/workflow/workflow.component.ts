@@ -121,7 +121,7 @@ export class WorkflowComponent implements ControlValueAccessor, Validator, OnIni
   }
 
   atTimeLocal(atTime: number): Date {
-    if (!atTime) {
+    if (isNaN(atTime)) {
       return null;
     }
     const d = new Date();

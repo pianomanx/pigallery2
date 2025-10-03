@@ -369,7 +369,7 @@ export class ServerPhotoConfig extends ClientPhotoConfig {
       },
     description: $localize`Add any sharp options here. They will be added to sharp constructor as raw params. See: https://sharp.pixelplumbing.com/api-constructor/.`
   })
-  sharpOptions={test:444};
+  sharpOptions = {test: 444};
 
   @ConfigProperty({
     type: 'float',
@@ -573,14 +573,35 @@ export class ServerLogConfig {
   logServerTiming: boolean = false;
 }
 
+/**
+ * This is a "Hack" for the typeconfig
+ * The config should contain all the fields that are settable,
+ * otherwise change detection won't work, and we can't save the config.
+ * WARN: Do not use this class directly, use the separate Trigger classes below
+ */
 @SubConfigClass({softReadonly: true})
-export class NeverJobTriggerConfig implements NeverJobTrigger {
+export class JobTriggerConfigBase{
+
+  @ConfigProperty({type: JobTriggerType})
+  readonly type: JobTriggerType = JobTriggerType.never;
+  @ConfigProperty({type: 'unsignedInt'})
+  time?: number | undefined; // data time
+  @ConfigProperty({type: 'unsignedInt', max: 7})
+  periodicity?: number | undefined = 7; // 0-6: week days 7 every day
+  @ConfigProperty({type: 'unsignedInt', max: 23 * 60 + 59})
+  atTime?: number | undefined = 0; // daytime
+  @ConfigProperty({type: 'string'})
+  afterScheduleName?: string | undefined; // runs after schedule
+}
+
+@SubConfigClass({softReadonly: true})
+export class NeverJobTriggerConfig extends JobTriggerConfigBase implements NeverJobTrigger {
   @ConfigProperty({type: JobTriggerType})
   readonly type = JobTriggerType.never;
 }
 
 @SubConfigClass({softReadonly: true})
-export class ScheduledJobTriggerConfig implements ScheduledJobTrigger {
+export class ScheduledJobTriggerConfig extends JobTriggerConfigBase implements ScheduledJobTrigger {
   @ConfigProperty({type: JobTriggerType})
   readonly type = JobTriggerType.scheduled;
 
@@ -589,23 +610,24 @@ export class ScheduledJobTriggerConfig implements ScheduledJobTrigger {
 }
 
 @SubConfigClass({softReadonly: true})
-export class PeriodicJobTriggerConfig implements PeriodicJobTrigger {
+export class PeriodicJobTriggerConfig extends JobTriggerConfigBase implements PeriodicJobTrigger {
   @ConfigProperty({type: JobTriggerType})
   readonly type = JobTriggerType.periodic;
   @ConfigProperty({type: 'unsignedInt', max: 7})
   periodicity: number | undefined = 7; // 0-6: week days 7 every day
   @ConfigProperty({type: 'unsignedInt', max: 23 * 60 + 59})
-  atTime: number | undefined = 0; // day time
+  atTime: number | undefined = 0; // daytime
 }
 
 @SubConfigClass({softReadonly: true})
-export class AfterJobTriggerConfig implements AfterJobTrigger {
+export class AfterJobTriggerConfig extends JobTriggerConfigBase implements AfterJobTrigger {
   @ConfigProperty({type: JobTriggerType})
   readonly type = JobTriggerType.after;
   @ConfigProperty()
   afterScheduleName: string | undefined; // runs after schedule
 
   constructor(afterScheduleName?: string) {
+    super();
     this.afterScheduleName = afterScheduleName;
   }
 }
@@ -621,7 +643,7 @@ export class JobScheduleConfig implements JobScheduleDTO {
   @ConfigProperty()
   allowParallelRun: boolean = false;
   @ConfigProperty({
-    type: NeverJobTriggerConfig,
+    type: JobTriggerConfigBase,
     typeBuilder: (v: JobTrigger) => {
       const type = typeof v.type === 'number' ? v.type : JobTriggerType[v.type];
       switch (type) {
@@ -971,7 +993,7 @@ export class ServerServiceConfig extends ClientServiceConfig {
     },
     description: $localize`Should the backend trust proxies to extract remote Client IP. See express docs, for valid values: https://expressjs.com/en/guide/behind-proxies.html`,
   })
-  trustProxy: string = "false";
+  trustProxy: string = 'false';
 
   @ConfigProperty({
     tags: {
