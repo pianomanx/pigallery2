@@ -26,7 +26,6 @@ import {
   ServerVideoConfig,
 } from '../../../common/config/private/PrivateConfig';
 import {SearchQueryTypes, TextSearch,} from '../../../common/entities/SearchQueryDTO';
-import {Utils} from '../../../common/Utils';
 import {SearchQueryUtils} from '../../../common/SearchQueryUtils';
 import {JobRepository} from '../jobs/JobRepository';
 import {ConfigClassBuilder} from '../../../../node_modules/typeconfig/node';
@@ -327,6 +326,8 @@ export class ConfigDiagnostics {
       }
     }
     if (removedSome) {
+      const sharp = require('sharp');
+      Logger.silly(LOG_TAG, 'Sharp supports:' + JSON.stringify(sharp.versions));
       SupportedFormats.init();
     }
   }
