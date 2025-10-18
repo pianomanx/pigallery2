@@ -15,7 +15,7 @@ WORKDIR /tmp
 RUN wget https://github.com/libvips/libvips/releases/download/v${VIPS_VERSION}/vips-${VIPS_VERSION}.tar.xz && \
     tar -xf vips-${VIPS_VERSION}.tar.xz && \
     cd vips-${VIPS_VERSION} && \
-    meson setup build --libdir lib -Dintrospection=auto -Dexamples=false --buildtype=release && \
+    meson setup build --libdir lib -Dintrospection=disabled -Dexamples=false --buildtype=release && \
     cd build && \
     meson compile && \
     meson install && \
