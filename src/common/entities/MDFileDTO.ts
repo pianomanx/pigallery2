@@ -5,6 +5,6 @@ export interface MDFileDTO extends FileDTO {
   id: number;
   name: string;
   directory: DirectoryPathDTO;
-  date: number;
+  date: number;  // same date as the youngest photo in a folder
 }
 

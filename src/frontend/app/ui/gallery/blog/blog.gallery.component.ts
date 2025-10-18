@@ -21,9 +21,11 @@ import { FileDTOToRelativePathPipe } from '../../../pipes/FileDTOToRelativePathP
 })
 export class GalleryBlogComponent implements OnChanges {
   @Input() open: boolean;
+  /**
+   * Blog is inserted to the top (when date is null) and to all date groups, when date is set
+   */
   @Input() date: Date;
   @Output() openChange = new EventEmitter<boolean>();
-  public markdowns: string[] = [];
   mkObservable: Observable<GroupedMarkdown[]>;
 
   constructor(public blogService: BlogService) {

@@ -10,8 +10,8 @@ import {Config} from '../../../../../common/config/public/Config';
 
 @Injectable()
 export class BlogService {
-  cache: { [key: string]: Promise<string> | string } = {};
   public groupedMarkdowns: Observable<GroupedMarkdown[]>;
+  private cache: { [key: string]: string } = {};
 
   constructor(private networkService: NetworkService,
               private galleryService: ContentService,
@@ -39,23 +39,47 @@ export class BlogService {
       }), shareReplay(1));
   }
 
-  public getMarkDown(file: FileDTO): Promise<string> {
+  /**
+   * Loads a Markdown file from the server and caches it
+   * @param file
+   * @private
+   */
+  private async getMarkDown(file: FileDTO): Promise<string> {
     const filePath = Utils.concatUrls(
       file.directory.path,
       file.directory.name,
       file.name
     );
     if (!this.cache[filePath]) {
-      this.cache[filePath] = this.networkService.getText(
+      this.cache[filePath] = await this.networkService.getText(
         '/gallery/content/' + filePath
       );
-      (this.cache[filePath] as Promise<string>).then((val: string) => {
-        this.cache[filePath] = val;
-      });
     }
-    return Promise.resolve(this.cache[filePath]);
+    return this.cache[filePath];
   }
 
+  /**
+   * Splits a markdown file into date groups.
+   *
+   * Rules:
+   * - If a MD part does not have a date tag, it goes to the top (date=null)
+   *   UNLESS file.date !== firstMedia, then it goes
+   *   around the date group of the first media of the MD file's folder.
+   * - If a MD part has a date tag, it goes to the closest date group.
+   * - Date groups span a full day (UTC midnight to midnight).
+   *
+   * Example with date groups: [2025-02-01, 2025-02-03, 2025-02-04, 2025-02-10]
+   * - MD part: 2025-02-01 00:00 → goes to 2025-02-01
+   * - MD part: 2025-02-02 00:00 → goes to 2025-02-01 (closest younger)
+   * - MD part: 2025-02-03 00:00 → goes to 2025-02-03
+   * - MD part: 2025-02-03 23:59 → goes to 2025-02-03
+   * - MD part: 2025-02-04 00:00 → goes to 2025-02-04
+   *
+   * @param file The markdown file to split
+   * @param dates Array of date group timestamps (in milliseconds, UTC midnight)
+   * @param firstMedia The timestamp of the first media in the current gallery view
+   * @private
+   */
   private async splitMarkDown(file: MDFileDTO, dates: number[], firstMedia: number): Promise<GroupedMarkdown[]> {
     const markdown = (await this.getMarkDown(file)).trim();
 
@@ -63,8 +87,8 @@ export class BlogService {
       return [];
     }
 
-    // there is no date group by
-    if (dates.length == 0) {
+    // No date groups exist - return entire markdown with no date
+    if (dates.length === 0) {
       return [{
         text: markdown,
         file: file,
@@ -73,83 +97,155 @@ export class BlogService {
       }];
     }
 
-    dates.sort((a, b) => a - b);
+    // Keep dates in their original order from mediaGroups (respects sorting direction)
 
-    const splitterRgx = new RegExp(/^\s*<!--\s*@pg-date:?\s*\d{4}-\d{1,2}-\d{1,2}\s*-->/, 'gim');
-    const dateRgx = new RegExp(/\d{4}-\d{1,2}-\d{1,2}/);
+    // Parse markdown for date-tagged sections
+    const sections = this.parseMarkdownSections(markdown);
 
-    const ret: GroupedMarkdown[] = [];
-    const matches = Array.from(markdown.matchAll(splitterRgx));
-
-    const getDateGroup = (date: Date) => {
-      // get UTC midnight date
-      const dateNum = Utils.makeUTCMidnight(date, undefined).getTime();
-      let groupDate = dates.find((d, i) => i > dates.length - 1 ? false : dates[i + 1] > dateNum);   //dates are sorted
-
-      // cant find the date. put to the last group (as it was later)
-      if (groupDate === undefined) {
-        groupDate = dates[dates.length - 1];
-      }
-      return groupDate;
-    };
-
-    // There is no splits
-    if (matches.length == 0) {
+    // No date tags found - treat entire markdown as one section
+    if (sections.length === 1 && sections[0].date === null) {
+      const beforeFirstMedia = file.date === firstMedia;
       return [{
-        text: markdown,
+        text: sections[0].text,
         file: file,
-        textShort: markdown.substring(0, 200),
-        date: getDateGroup(new Date(file.date))
+        textShort: sections[0].text.substring(0, 200),
+        date: beforeFirstMedia ? null : this.findClosestDateGroup(file.date, dates)
       }];
     }
 
+    // Group sections by date and concatenate sections with the same date group
+    return this.groupSectionsByDate(sections, file, dates, firstMedia);
+  }
 
-    const baseText = markdown.substring(0, matches[0].index).trim();
+  /**
+   * Parses a markdown file into sections based on date tags.
+   * Returns an array where each section has optional date and text content.
+   *
+   * @param markdown The raw markdown content
+   * @private
+   */
+  private parseMarkdownSections(markdown: string): Array<{ date: Date | null; text: string }> {
+    const splitterRgx = /^\s*<!--\s*@pg-date:?\s*\d{4}-\d{1,2}-\d{1,2}\s*-->/gim;
+    const dateRgx = /\d{4}-\d{1,2}-\d{1,2}/;
 
-    // don't show empty
-    if (baseText) {
-      if (file.date === firstMedia) {
-        ret.push({
-          text: baseText,
-          file: file,
-          date: null
-        });
+    const matches = Array.from(markdown.matchAll(splitterRgx));
+
+    if (matches.length === 0) {
+      // No date tags - return entire markdown as one undated section
+      return [{date: null, text: markdown.trim()}];
+    }
+
+    const sections: Array<{ date: Date | null; text: string }> = [];
+
+    // Extract the section before the first date tag (if any)
+    const preFirstTagText = markdown.substring(0, matches[0].index).trim();
+    if (preFirstTagText) {
+      sections.push({date: null, text: preFirstTagText});
+    }
+
+    // Extract each dated section
+    for (let i = 0; i < matches.length; i++) {
+      const match = matches[i];
+      const dateStr = match[0].match(dateRgx)?.[0];
+      const sectionDate = dateStr ? new Date(dateStr) : null;
+
+      // Get text from after the date tag to next match (or end of markdown)
+      const startIdx = match.index! + match[0].length; // Start after the date tag
+      const endIdx = i + 1 < matches.length ? matches[i + 1].index! : markdown.length;
+      const sectionText = markdown.substring(startIdx, endIdx).trim();
+
+      // Only add section if it has actual content (not just whitespace)
+      if (sectionText) {
+        sections.push({date: sectionDate, text: sectionText});
+      }
+    }
+
+    return sections;
+  }
+
+  /**
+   * Finds the closest date group that is on or before the given timestamp.
+   * This is the "closest younger" date group as per the specification.
+   * Works with both ascending and descending date arrays.
+   *
+   * @param timestamp The timestamp to find a date group for (in milliseconds)
+   * @param dates Array of date group timestamps (in original order from mediaGroups)
+   * @private
+   */
+  private findClosestDateGroup(timestamp: number, dates: number[]): number {
+    const targetMidnight = Utils.makeUTCMidnight(new Date(timestamp), undefined).getTime();
+
+    // Detect if dates are in ascending or descending order
+    const isAscending = dates.length < 2 || dates[0] <= dates[dates.length - 1];
+
+    // Find the closest date group that is <= targetMidnight
+    let closestGroup = dates[dates.length - 1]; // Default to last
+
+    if (isAscending) {
+      for (let i = 1; i < dates.length; i++) {
+        if (dates[i] > targetMidnight) {
+          closestGroup = dates[i-1];
+          break;
+        }
+      }
+    } else {
+      for (let i = 1; i < dates.length; i++) {
+        if (dates[i] < targetMidnight) {
+          closestGroup = dates[i-1];
+          break;
+        }
+      }
+    }
+    return closestGroup;
+  }
+
+  /**
+   * Groups markdown sections by their appropriate date groups and concatenates
+   * sections that belong to the same date group.
+   *
+   * @param sections Parsed markdown sections with optional dates
+   * @param file The markdown file being processed
+   * @param sortedDates Array of date group timestamps, sorted ascending
+   * @param firstMedia The timestamp of the first media in the current gallery view
+   * @private
+   */
+  private groupSectionsByDate(
+    sections: Array<{ date: Date | null; text: string }>,
+    file: MDFileDTO,
+    sortedDates: number[],
+    firstMedia: number
+  ): GroupedMarkdown[] {
+    const grouped: GroupedMarkdown[] = [];
+    const beforeFirestMedia = file.date === firstMedia;
+
+    for (const section of sections) {
+      let targetDateGroup: number | null;
+
+      if (section.date === null) {
+        // Undated section: goes to top (null) unless it's a search result
+        targetDateGroup = beforeFirestMedia ? null : this.findClosestDateGroup(file.date, sortedDates);
       } else {
-        ret.push({
-          text: baseText,
-          file: file,
-          date: getDateGroup(new Date(file.date))
+        // Dated section: find closest date group on or before this date
+        targetDateGroup = this.findClosestDateGroup(section.date.getTime(), sortedDates);
+      }
+
+      // Try to find existing group with the same date and concatenate
+      const existingGroup = grouped.find(g => g.date === targetDateGroup);
+      if (existingGroup) {
+        existingGroup.text += '\n\n' + section.text;
+      } else {
+        grouped.push({
+          date: targetDateGroup,
+          text: section.text,
+          file: file
         });
       }
     }
 
-    for (let i = 0; i < matches.length; ++i) {
-      const matchedStr = matches[i][0];
-      const dateNum = new Date(matchedStr.match(dateRgx)[0]);
+    // Generate short text previews for all groups
+    grouped.forEach(md => md.textShort = md.text.substring(0, 200));
 
-      const groupDate = getDateGroup(dateNum);
-
-      const text = (i + 1 >= matches.length ? markdown.substring(matches[i].index) : markdown.substring(matches[i].index, matches[i + 1].index)).trim();
-
-      // don't show empty
-      if (!text) {
-        continue;
-      }
-      // if it would be in the same group. Concatenate it
-      const sameGroup = ret.find(g => g.date == groupDate);
-      if (sameGroup) {
-        sameGroup.text += text;
-        continue;
-      }
-      ret.push({
-        date: groupDate,
-        text: text,
-        file: file
-      });
-    }
-
-    ret.forEach(md => md.textShort = md.text.substring(0, 200));
-    return ret;
+    return grouped;
   }
 }
 
