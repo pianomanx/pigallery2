@@ -62,15 +62,23 @@ export class BlogService {
    * Splits a markdown file into date groups.
    *
    * Rules:
-   * - If a MD part does not have a date tag, it goes to the top (date=null)
-   *   UNLESS file.date !== firstMedia, then it goes
-   *   around the date group of the first media of the MD file's folder.
+   * - If a MD part does not have a date tag (date=null), it goes to the top
+   *   if file.date === firstMedia, then it goes if date groups are ascending.
+   *   if descending, goes to the last date group
    * - If a MD part has a date tag, it goes to the closest date group.
    * - Date groups span a full day (UTC midnight to midnight).
    *
-   * Example with date groups: [2025-02-01, 2025-02-03, 2025-02-04, 2025-02-10]
+   * Example with date groups for ascending: [2025-02-01, 2025-02-03, 2025-02-04, 2025-02-10]
+   * - MD part: no date → goes to null
    * - MD part: 2025-02-01 00:00 → goes to 2025-02-01
    * - MD part: 2025-02-02 00:00 → goes to 2025-02-01 (closest younger)
+   * - MD part: 2025-02-03 00:00 → goes to 2025-02-03
+   * - MD part: 2025-02-03 23:59 → goes to 2025-02-03
+   * - MD part: 2025-02-04 00:00 → goes to 2025-02-04
+   * Example with date groups for desc: [2025-02-10, 2025-02-04,2025-02-03, 2025-02-01]
+   * - MD part: no date, first file date of the MD's folder  2025-02-01 → goes to 2025-02-01
+   * - MD part: 2025-02-01 00:00 → goes to 2025-02-01
+   * - MD part: 2025-02-02 00:00 → goes to 2025-02-02 (closest oldest)
    * - MD part: 2025-02-03 00:00 → goes to 2025-02-03
    * - MD part: 2025-02-03 23:59 → goes to 2025-02-03
    * - MD part: 2025-02-04 00:00 → goes to 2025-02-04
@@ -164,8 +172,7 @@ export class BlogService {
   }
 
   /**
-   * Finds the closest date group that is on or before the given timestamp.
-   * This is the "closest younger" date group as per the specification.
+   * Finds the closest date group on or BEFORE the given timestamp if dates are ascending OR AFTER if descending.
    * Works with both ascending and descending date arrays.
    *
    * @param timestamp The timestamp to find a date group for (in milliseconds)
@@ -178,20 +185,19 @@ export class BlogService {
     // Detect if dates are in ascending or descending order
     const isAscending = dates.length < 2 || dates[0] <= dates[dates.length - 1];
 
-    // Find the closest date group that is <= targetMidnight
-    let closestGroup = dates[dates.length - 1]; // Default to last
+    let closestGroup = dates[dates.length - 1]; // if no date group found, return the last date group
 
     if (isAscending) {
       for (let i = 1; i < dates.length; i++) {
         if (dates[i] > targetMidnight) {
-          closestGroup = dates[i-1];
+          closestGroup = dates[i - 1];
           break;
         }
       }
     } else {
       for (let i = 1; i < dates.length; i++) {
         if (dates[i] < targetMidnight) {
-          closestGroup = dates[i-1];
+          closestGroup = dates[i - 1];
           break;
         }
       }
@@ -205,7 +211,7 @@ export class BlogService {
    *
    * @param sections Parsed markdown sections with optional dates
    * @param file The markdown file being processed
-   * @param sortedDates Array of date group timestamps, sorted ascending
+   * @param sortedDates Array of date group timestamps, sorted
    * @param firstMedia The timestamp of the first media in the current gallery view
    * @private
    */
@@ -216,14 +222,14 @@ export class BlogService {
     firstMedia: number
   ): GroupedMarkdown[] {
     const grouped: GroupedMarkdown[] = [];
-    const beforeFirestMedia = file.date === firstMedia;
+    const beforeFirstMedia = file.date === firstMedia;
 
     for (const section of sections) {
       let targetDateGroup: number | null;
 
       if (section.date === null) {
         // Undated section: goes to top (null) unless it's a search result
-        targetDateGroup = beforeFirestMedia ? null : this.findClosestDateGroup(file.date, sortedDates);
+        targetDateGroup = beforeFirstMedia ? null : this.findClosestDateGroup(file.date, sortedDates);
       } else {
         // Dated section: find closest date group on or before this date
         targetDateGroup = this.findClosestDateGroup(section.date.getTime(), sortedDates);

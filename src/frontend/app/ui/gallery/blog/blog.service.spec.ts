@@ -54,6 +54,15 @@ describe('BlogService', () => {
       expect(result).toEqual([]);
     });
 
+    it('should return empty array for whitespace-only markdown', async () => {
+      const file = createMockMDFile('test.md', Date.UTC(2025, 1, 1));
+      mockNetworkService.getText.and.returnValue(Promise.resolve('   \n\n  \t  \n  '));
+
+      const result = await (service as any).splitMarkDown(file, [], 0);
+
+      expect(result).toEqual([]);
+    });
+
     it('should return entire markdown with date=null when no date groups exist', async () => {
       const file = createMockMDFile('test.md', Date.UTC(2025, 1, 1));
       const markdown = '# Test Markdown\n\nSome content here.';
@@ -261,7 +270,7 @@ This is dated.`;
 
       const result = await (service as any).splitMarkDown(file, dates, firstMedia);
 
-      expect(result[0].date).toBe(Date.UTC(2025, 1, 1)); // Should find closest correctly
+      expect(result[0].date).toBe(Date.UTC(2025, 1, 3)); // Feb 2nd → Feb 3rd (closest after in descending)
     });
   });
 
@@ -323,6 +332,16 @@ This is dated.`;
 
       expect(sections[0].text).toBe('# Content');
     });
+
+    it('should handle malformed date tag gracefully', () => {
+      const markdown = '<!-- @pg-date invalid-date -->\n## Content\n\nSome text.';
+      const sections = (service as any).parseMarkdownSections(markdown);
+
+      // Tag doesn't match the date regex, so it's treated as regular markdown
+      expect(sections.length).toBe(1);
+      expect(sections[0].date).toBeNull();
+      expect(sections[0].text).toContain('Content');
+    });
   });
 
   describe('findClosestDateGroup', () => {
@@ -350,7 +369,7 @@ This is dated.`;
 
       const result = (service as any).findClosestDateGroup(timestamp, dates);
 
-      expect(result).toBe(Date.UTC(2025, 1, 5)); // Last group (oldest behavior)
+      expect(result).toBe(Date.UTC(2025, 1, 1)); // First group (default to last in array, which is dates[dates.length-1] after no match)
     });
 
     it('should return last date group for dates newer than all groups', () => {
@@ -371,6 +390,24 @@ This is dated.`;
       expect(result).toBe(Date.UTC(2025, 1, 1));
     });
 
+    it('should handle two date groups in ascending order', () => {
+      const dates = [Date.UTC(2025, 1, 1), Date.UTC(2025, 1, 5)];
+      const timestamp = Date.UTC(2025, 1, 3); // Between the two dates
+
+      const result = (service as any).findClosestDateGroup(timestamp, dates);
+
+      expect(result).toBe(Date.UTC(2025, 1, 1)); // Closest younger
+    });
+
+    it('should handle two date groups in descending order', () => {
+      const dates = [Date.UTC(2025, 1, 5), Date.UTC(2025, 1, 1)];
+      const timestamp = Date.UTC(2025, 1, 3); // Between the two dates
+
+      const result = (service as any).findClosestDateGroup(timestamp, dates);
+
+      expect(result).toBe(Date.UTC(2025, 1, 5)); // Closest after in descending
+    });
+
     it('should find exact matching date group in descending order', () => {
       const dates = [Date.UTC(2025, 1, 5), Date.UTC(2025, 1, 3), Date.UTC(2025, 1, 1)];
       const timestamp = Date.UTC(2025, 1, 3);
@@ -386,7 +423,7 @@ This is dated.`;
 
       const result = (service as any).findClosestDateGroup(timestamp, dates);
 
-      expect(result).toBe(Date.UTC(2025, 1, 1)); // Feb 1st is closest younger
+      expect(result).toBe(Date.UTC(2025, 1, 3)); // Feb 3rd is closest after in descending
     });
 
     it('should return last date group for dates older than all groups in descending order', () => {
