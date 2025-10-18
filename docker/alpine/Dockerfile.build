@@ -14,11 +14,9 @@ ARG VIPS_VERSION=8.17.1
 WORKDIR /tmp
 RUN wget --progress=dot:giga https://github.com/libvips/libvips/releases/download/v${VIPS_VERSION}/vips-${VIPS_VERSION}.tar.xz && \
     tar -xf vips-${VIPS_VERSION}.tar.xz && \
-    cd vips-${VIPS_VERSION} && \
-    meson setup build --libdir lib -Dintrospection=disabled -Dexamples=false --buildtype=release && \
-    meson compile -C build && \
-    meson install -C build && \
-    cd /tmp && \
+    meson setup vips-${VIPS_VERSION}/build vips-${VIPS_VERSION} --libdir lib -Dintrospection=disabled -Dexamples=false --buildtype=release && \
+    meson compile -C vips-${VIPS_VERSION}/build && \
+    meson install -C vips-${VIPS_VERSION}/build && \
     rm -rf vips-${VIPS_VERSION}*
 
 ENV LD_LIBRARY_PATH=/usr/local/lib \
