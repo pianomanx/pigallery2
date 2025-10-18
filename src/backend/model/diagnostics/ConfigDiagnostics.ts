@@ -327,7 +327,8 @@ export class ConfigDiagnostics {
     }
     if (removedSome) {
       const sharp = require('sharp');
-      Logger.silly(LOG_TAG, 'Sharp supports:' + JSON.stringify(sharp.versions));
+      Logger.silly(LOG_TAG, 'Sharp supports:' + JSON.stringify(sharp.format, null, 2));
+      Logger.silly(LOG_TAG, 'Sharp versions:' + JSON.stringify(sharp.versions));
       SupportedFormats.init();
     }
   }
