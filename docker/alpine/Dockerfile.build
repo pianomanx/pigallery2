@@ -12,14 +12,14 @@ RUN apk add --no-cache \
 # Build libvips (with HEIF support)
 ARG VIPS_VERSION=8.17.1
 WORKDIR /tmp
-RUN wget https://github.com/libvips/libvips/releases/download/v${VIPS_VERSION}/vips-${VIPS_VERSION}.tar.xz && \
+RUN wget --progress=dot:giga https://github.com/libvips/libvips/releases/download/v${VIPS_VERSION}/vips-${VIPS_VERSION}.tar.xz && \
     tar -xf vips-${VIPS_VERSION}.tar.xz && \
     cd vips-${VIPS_VERSION} && \
     meson setup build --libdir lib -Dintrospection=disabled -Dexamples=false --buildtype=release && \
-    cd build && \
-    meson compile && \
-    meson install && \
-    rm -rf /tmp/vips-${VIPS_VERSION}
+    meson compile -C build && \
+    meson install -C build && \
+    cd /tmp && \
+    rm -rf vips-${VIPS_VERSION}*
 
 ENV LD_LIBRARY_PATH=/usr/local/lib \
     SHARP_FORCE_GLOBAL_LIBVIPS=1
