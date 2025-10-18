@@ -27,8 +27,11 @@ ENV LD_LIBRARY_PATH=/usr/local/lib \
 # Copy app and install dependencies
 COPY pigallery2-release /app
 WORKDIR /app
-RUN npm install --unsafe-perm --fetch-timeout=90000 && \
-    mkdir -p /app/data/{config,db,images,tmp}
+RUN npm install --unsafe-perm  --fetch-timeout=90000 && \
+    mkdir -p /app/data/config && \
+    mkdir -p /app/data/db && \
+    mkdir -p /app/data/images && \
+    mkdir -p /app/data/tmp
 
 
 #-----------------MAIN--------------------
@@ -42,10 +45,12 @@ COPY --from=builder /usr/local /usr/local
 ENV NODE_ENV=production \
     LD_LIBRARY_PATH=/usr/local/lib \
     SHARP_FORCE_GLOBAL_LIBVIPS=1 \
+    # overrides only the default value of the settings (the actual value can be overwritten through config.json)
     default-Database-dbFolder=/app/data/db \
     default-Media-folder=/app/data/images \
     default-Media-tempFolder=/app/data/tmp \
     default-Extensions-folder=/app/data/config/extensions \
+    # flagging dockerized environment
     PI_DOCKER=true
 
 EXPOSE 80
@@ -54,7 +59,7 @@ ARG TARGETARCH
 RUN apk add --no-cache \
     libheif libpng libjpeg-turbo libwebp tiff lcms2 fftw libimagequant imagemagick ffmpeg \
     && if [ "$TARGETARCH" = "amd64" ]; then \
-        echo "Building for amd64, adding intel-media-driver"; \
+        echo "Building for amd64, adding intel-media-driver" && \
         apk add --no-cache intel-media-driver; \
     fi \
     && rm -rf /var/cache/apk/*
@@ -62,10 +67,12 @@ RUN apk add --no-cache \
 # Copy built app
 COPY --from=builder /app /app
 
-# Run build-time diagnostics to verify
+# Run build time diagnostics to make sure the app would work after build is finished
 RUN ["node", "./src/backend/index", "--expose-gc", "--run-diagnostics", "--config-path=/app/diagnostics-config.json", "--Server-Log-level=silly"]
 
 HEALTHCHECK --interval=40s --timeout=30s --retries=3 --start-period=60s \
   CMD wget --quiet --tries=1 --no-check-certificate --spider http://127.0.0.1:80/heartbeat || exit 1
 
+# after a extensive job (like video converting), pigallery calls gc, to clean up everything as fast as possible
+# Exec form entrypoint is need otherwise (using shell form) ENV variables are not properly passed down to the app
 ENTRYPOINT ["node", "./src/backend/index", "--expose-gc", "--config-path=/app/data/config/config.json"]

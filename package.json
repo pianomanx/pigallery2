@@ -18,6 +18,7 @@
     "test-backend": "tsc && mocha test --exclude test/cypress/**/*.js --exclude folder-reset.js",
     "coverage": "nyc report --reporter=lcov",
     "start": "node ./src/backend/index",
+    "run-diagnostics": "node ./src/backend/index --run-diagnostics --Server-Log-level=silly",
     "run-dev": "ng build  --configuration=dev",
     "build-stats": "ng build  --stats-json",
     "analyze": "webpack-bundle-analyzer dist/en/stats.json",
