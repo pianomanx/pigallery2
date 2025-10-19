@@ -53,7 +53,7 @@ RUN git clone --branch=v8.17.1 --depth=1 https://github.com/libvips/libvips.git 
 
 COPY pigallery2-release /app
 WORKDIR /app
-RUN npm install --no-package-lock --save-dev node-addon-api node-gyp  && \
+RUN npm install --no-package-lock --save-dev node-addon-api@8.5.0 node-gyp@11.5.0  && \
     npm prune --production && \
     npm cache clean --force
 
