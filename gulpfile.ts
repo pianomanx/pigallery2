@@ -163,12 +163,22 @@ gulp.task(
   })()
 );
 
-gulp.task('copy-static', (): any =>
+gulp.task('copy-static-images', (): any =>
   gulp
     .src(
       [
         'src/backend/model/diagnostics/image_formats/**',
         'src/backend/model/diagnostics/blank.jpg',
+      ],
+      {base: '.', encoding: false} // treat files as binary
+    )
+    .pipe(gulp.dest('./release'))
+);
+
+gulp.task('copy-static-text', (): any =>
+  gulp
+    .src(
+      [
         'README.md',
         //  'package-lock.json', should not add, it keeps optional packages optional even with --force-opt-packages.
         'LICENSE',
@@ -178,6 +188,9 @@ gulp.task('copy-static', (): any =>
     .pipe(gulp.dest('./release'))
 );
 
+gulp.task('copy-static',
+  gulp.series('copy-static-images', 'copy-static-text')
+);
 gulp.task('copy-package', (): any =>
   gulp
     .src(['package.json'], {base: '.'})
