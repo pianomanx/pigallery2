@@ -304,10 +304,9 @@ export class ConfigDiagnostics {
       // Check if a test available for this image format.
       // if not probably because it is trivial
       if (!fs.existsSync(testImage)) {
-        Logger.silly(LOG_TAG, `No test for ${ext} image format. skipping.`);
+        Logger.debug(LOG_TAG, `❕ ${ext} image format has no test. skipping.`);
         continue;
       }
-      Logger.silly(LOG_TAG, `Testing ${ext} image formats.`);
       try {
         await PhotoWorker.renderFromImage({
             type: ThumbnailSourceType.Photo,
@@ -318,16 +317,21 @@ export class ConfigDiagnostics {
             smartSubsample: Config.Media.Photo.smartSubsample,
           } as MediaRendererInput, true
         );
+        Logger.debug(LOG_TAG, `✔️ ${ext} image formats tested successfully.`);
       } catch (e) {
         Logger.verbose(e);
-        Logger.verbose(LOG_TAG, 'The current OS does not support the following photo format:' + ext + ', removing it form config.');
+        Logger.verbose(LOG_TAG, `❌ ${ext} image format tested failed, removing it form config.`);
         config.supportedFormats.splice(i, 1);
         removedSome = true;
       }
     }
     if (removedSome) {
       const sharp = require('sharp');
-      Logger.silly(LOG_TAG, 'Sharp supports:' + JSON.stringify(sharp.format, null, 2));
+      let text =""
+      for( const f in sharp.format) {
+        text +=`${f}: {\n\tid:${JSON.stringify(sharp.format[f].id)},\n\tinput:${JSON.stringify(sharp.format[f].input)},\n\toutput:${JSON.stringify(sharp.format[f].output)}}\n`;
+      }
+      Logger.silly(LOG_TAG, 'Sharp supports:\n' +text);
       Logger.silly(LOG_TAG, 'Sharp versions:' + JSON.stringify(sharp.versions));
       SupportedFormats.init();
     }
