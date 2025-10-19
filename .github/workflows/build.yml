@@ -101,13 +101,15 @@ jobs:
     needs: [ test, create-release ]
     strategy:
       matrix:
-        container: [alpine,  debian-bullseye, debian-bookworm ]
+        container: [alpine,  debian-bullseye, debian-bookworm, debian-trixie ]
         include:
           - container: alpine
             platforms: linux/amd64,linux/arm64
           - container: debian-bullseye
             platforms: linux/amd64,linux/arm64,linux/arm/v7
           - container: debian-bookworm
+            platforms: linux/amd64,linux/arm64,linux/arm/v7
+          - container: debian-trixie
             platforms: linux/amd64,linux/arm64,linux/arm/v7
 
     steps:
