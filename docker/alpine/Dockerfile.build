@@ -26,7 +26,7 @@ RUN apk add --no-cache --update \
 
 COPY pigallery2-release /app
 WORKDIR /app
-RUN npm install --no-package-lock --save-dev node-addon-api node-gyp && \
+RUN npm install --no-package-lock --save-dev node-addon-api@8.5.0 node-gyp@11.5.0  && \
     npm prune --production && \
     npm cache clean --force
 
