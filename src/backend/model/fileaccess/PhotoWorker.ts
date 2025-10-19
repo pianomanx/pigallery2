@@ -192,7 +192,7 @@ export class ImageRendererFactory {
     }
     // do not save to file
     if (dryRun) {
-      await processedImg.toBuffer();
+      await processedImg.toFormat('webp').toBuffer();
       return;
     }
     await processedImg.toFile(input.outPath);
