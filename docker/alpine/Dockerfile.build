@@ -26,7 +26,6 @@ RUN apk add --no-cache --update \
 
 COPY pigallery2-release /app
 WORKDIR /app
-# Install Sharp
 RUN npm install --no-package-lock --save-dev node-addon-api node-gyp && \
     npm install --no-package-lock --build-from-source sharp && \
     npm prune --production && \
@@ -62,7 +61,6 @@ RUN apk add --no-cache \
     fi \
     && rm -rf /var/cache/apk/*
 COPY --from=builder /app /app
-#COPY --from=builder /usr/lib /usr/lib
 
 # Run build time diagnostics to make sure the app would work after build is finished
 RUN ["node", "./src/backend/index", "--expose-gc",  "--run-diagnostics", "--config-path=/app/diagnostics-config.json", "--Server-Log-level=silly"]
