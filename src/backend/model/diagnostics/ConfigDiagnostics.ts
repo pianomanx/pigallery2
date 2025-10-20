@@ -296,6 +296,15 @@ export class ConfigDiagnostics {
    */
   static async removeUnsupportedPhotoExtensions(config: ClientPhotoConfig): Promise<void> {
     Logger.verbose(LOG_TAG, 'Checking for supported image formats');
+
+    const sharp = require('sharp');
+    let text =""
+    for( const f in sharp.format) {
+      text +=`${f}: {\n\tid:${JSON.stringify(sharp.format[f].id)},\n\tinput:${JSON.stringify(sharp.format[f].input)},\n\toutput:${JSON.stringify(sharp.format[f].output)}}\n`;
+    }
+    Logger.silly(LOG_TAG, 'Sharp supports:\n' +text);
+    Logger.silly(LOG_TAG, 'Sharp versions:' + JSON.stringify(sharp.versions));
+
     let removedSome = false;
     let i = config.supportedFormats.length;
     while (i--) {
@@ -326,13 +335,6 @@ export class ConfigDiagnostics {
       }
     }
     if (removedSome) {
-      const sharp = require('sharp');
-      let text =""
-      for( const f in sharp.format) {
-        text +=`${f}: {\n\tid:${JSON.stringify(sharp.format[f].id)},\n\tinput:${JSON.stringify(sharp.format[f].input)},\n\toutput:${JSON.stringify(sharp.format[f].output)}}\n`;
-      }
-      Logger.silly(LOG_TAG, 'Sharp supports:\n' +text);
-      Logger.silly(LOG_TAG, 'Sharp versions:' + JSON.stringify(sharp.versions));
       SupportedFormats.init();
     }
   }
