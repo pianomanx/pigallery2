@@ -17,6 +17,7 @@ RUN apk add --no-cache --update \
     libjpeg-turbo \
     libde265 \
     libwebp \
+    libraw-dev \
     g++ \
     make \
     gcc \

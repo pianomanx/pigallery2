@@ -101,14 +101,10 @@ jobs:
     needs: [ test, create-release ]
     strategy:
       matrix:
-        container: [alpine,  debian-bullseye, debian-bookworm, debian-trixie ]
+        container: [alpine,  debian-trixie ]
         include:
           - container: alpine
             platforms: linux/amd64,linux/arm64
-          - container: debian-bullseye
-            platforms: linux/amd64,linux/arm64,linux/arm/v7
-          - container: debian-bookworm
-            platforms: linux/amd64,linux/arm64,linux/arm/v7
           - container: debian-trixie
             platforms: linux/amd64,linux/arm64
 
@@ -154,7 +150,7 @@ jobs:
           push: true
           tags: ${{ secrets.REGISTRY_NAMESPACE }}/pigallery2:edge-${{ matrix.container }}
       - name: Push release on new Tag
-        if: ${{ startsWith(github.ref_type , 'tag') &&  !github.event.issue.pull_request &&  matrix.container != 'debian-bookworm'}}
+        if: ${{ startsWith(github.ref_type , 'tag') &&  !github.event.issue.pull_request &&  matrix.container != 'debian-trixie'}}
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -166,7 +162,7 @@ jobs:
             ${{ secrets.REGISTRY_NAMESPACE }}/pigallery2:${{ github.ref_name }}-${{ matrix.container }}
             ${{ secrets.REGISTRY_NAMESPACE }}/pigallery2:latest-${{ matrix.container }}
       - name: Push latest on new Tag
-        if: ${{ startsWith(github.ref_type, 'tag') &&  !github.event.issue.pull_request &&  matrix.container == 'debian-bookworm'}}
+        if: ${{ startsWith(github.ref_type, 'tag') &&  !github.event.issue.pull_request &&  matrix.container == 'debian-trixie'}}
         uses: docker/build-push-action@v5
         with:
           context: .
