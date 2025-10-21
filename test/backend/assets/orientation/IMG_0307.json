@@ -7,7 +7,8 @@
     "make": "Apple",
     "model": "iPhone 16 Pro Max"
   },
-  "creationDate": 1757327744000,
+  "creationDate": 1735831555000,
+  "creationDateOffset": "-05:00",
   "fileSize": 3946347,
   "positionData": {
     "GPSData": {
