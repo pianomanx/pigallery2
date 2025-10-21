@@ -8,6 +8,8 @@ import {Logger} from '../../Logger';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import * as exifr from 'exifr';
+import * as exifReader from 'exif-reader';
+import * as sharp from 'sharp';
 import {FfprobeData} from 'fluent-ffmpeg';
 import * as util from 'node:util';
 import * as path from 'path';
@@ -217,7 +219,12 @@ export class MetadataLoader {
           const exif = await exifr.parse(fullPath, exifrOptions);
           MetadataLoader.mapMetadata(metadata, exif, true);
         } catch (err) {
-          // ignoring errors
+          try {
+            const m = await sharp(fullPath, {failOnError: false}).metadata();
+            MetadataLoader.mapMetadata(metadata, this.mapExifReader(exifReader(m.exif)), true);
+          } catch (e) {
+            // ignoring errors
+          }
         }
 
         try {
@@ -620,5 +627,82 @@ export class MetadataLoader {
         }
       }
     }
+  }
+
+  private static mapExifReader(exif: exifReader.Exif): any {
+    if (!exif) {
+      return {};
+    }
+
+    const result: any = {};
+
+    // Map Image tags to ifd0 (this is where exifr puts TIFF/IFD0 data)
+    if (exif.Image) {
+      result.ifd0 = {...exif.Image};
+      // Convert Date objects to ISO strings for consistency with exifr
+      if (result.ifd0.DateTime instanceof Date) {
+        result.ifd0.DateTime = result.ifd0.DateTime.toISOString();
+      }
+    }
+
+    // Map Photo tags to exif (this is where exifr puts EXIF data)
+    if (exif.Photo) {
+      result.exif = {...exif.Photo};
+      // Convert Date objects to ISO strings
+      if (result.exif.DateTimeOriginal instanceof Date) {
+        result.exif.DateTimeOriginal = result.exif.DateTimeOriginal.toISOString();
+      }
+      if (result.exif.DateTimeDigitized instanceof Date) {
+        result.exif.DateTimeDigitized = result.exif.DateTimeDigitized.toISOString();
+      }
+    }
+
+    // Map GPSInfo to both gps (with calculated decimal degrees) and exif (with raw data)
+    if (exif.GPSInfo) {
+      // Add raw GPS data to exif section (for fallback parsing in mapGPS)
+      if (!result.exif) {
+        result.exif = {};
+      }
+
+      // Copy GPS arrays to exif section for xmpExifGpsCoordinateToDecimalDegrees parsing
+      if (exif.GPSInfo.GPSLatitude) {
+        result.exif.GPSLatitude = exif.GPSInfo.GPSLatitude;
+      }
+      if (exif.GPSInfo.GPSLongitude) {
+        result.exif.GPSLongitude = exif.GPSInfo.GPSLongitude;
+      }
+
+      // Create gps section with decimal degrees (preferred by mapGPS)
+      result.gps = {};
+
+      // Convert GPS coordinates from [degrees, minutes, seconds] to decimal degrees
+      if (exif.GPSInfo.GPSLatitude && exif.GPSInfo.GPSLatitudeRef) {
+        const lat = exif.GPSInfo.GPSLatitude;
+        let latitude = lat[0] + lat[1] / 60 + lat[2] / 3600;
+        if (exif.GPSInfo.GPSLatitudeRef === 'S') {
+          latitude = -latitude;
+        }
+        result.gps.latitude = latitude;
+      }
+
+      if (exif.GPSInfo.GPSLongitude && exif.GPSInfo.GPSLongitudeRef) {
+        const lon = exif.GPSInfo.GPSLongitude;
+        let longitude = lon[0] + lon[1] / 60 + lon[2] / 3600;
+        if (exif.GPSInfo.GPSLongitudeRef === 'W') {
+          longitude = -longitude;
+        }
+        result.gps.longitude = longitude;
+      }
+
+      // Map altitude if present
+      if (exif.GPSInfo.GPSAltitude !== undefined) {
+        result.gps.altitude = exif.GPSInfo.GPSAltitude;
+        if (exif.GPSInfo.GPSAltitudeRef === 1) {
+          result.gps.altitude = -result.gps.altitude;
+        }
+      }
+    }
+
+    return result;
   }
 }

@@ -252,6 +252,11 @@ describe('MetadataLoader', () => {
       expect(Utils.clone(data)).to.be.deep.equal(expected);
     });
   });
+  it('should respect heic orientation', async () => {
+    const data = await MetadataLoader.loadPhotoMetadata(path.join(__dirname, '/../../../assets/orientation/IMG_0307.HEIC'));
+    const expected = require(path.join(__dirname, '/../../../assets/orientation/IMG_0307.json'));
+    expect(Utils.clone(data)).to.be.deep.equal(expected);
+  });
   it('should load wild-1-small image with CreateDate from 2015, but no DateTimeOriginal', async () => {
     const data = await MetadataLoader.loadPhotoMetadata(path.join(__dirname, '/../../../assets/wild-1-small.jpg'));
     const expected = require(path.join(__dirname, '/../../../assets/wild-1-small.json'));
