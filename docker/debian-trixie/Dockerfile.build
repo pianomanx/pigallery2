@@ -9,7 +9,7 @@ ENV SHARP_FORCE_GLOBAL_LIBVIPS=1
 # also see: https://github.com/bpatrik/pigallery2/issues/965
 
 # Install build and vips dependencies
-RUN apt-get update && apt-get install -y curl python3 git build-essential pkg-config \
+RUN apt-get update && apt-get install -y --no-install-recommends curl python3 git build-essential pkg-config \
   libvips-dev && \
   rm -rf /var/lib/apt/lists/*
 
