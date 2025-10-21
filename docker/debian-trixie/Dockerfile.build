@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y curl python3 git build-essential pkg-co
 
 COPY pigallery2-release /app
 WORKDIR /app
+# building sharp based on debian's vips
 RUN npm install --no-package-lock node-addon-api@8.5.0 node-gyp@11.5.0  && \
    mkdir -p /app/data/config && \
    mkdir -p /app/data/db && \

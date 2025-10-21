@@ -11,9 +11,9 @@ name: Lint Dockerfiles
 
 on:
   push:
-    branches: 
+    branches:
       - '**'
-      
+
 jobs:
   dockerfile_linting:
     name: Dockerfile linting
@@ -25,18 +25,13 @@ jobs:
         with:
           dockerfile: ./docker/alpine/Dockerfile.build
           config: ./docker/.config/hadolint.yml
-      - name: Lint Debian Bookworm Dockerfile
+      - name: Lint Debian Trixie Dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
-          dockerfile: ./docker/debian-bookworm/Dockerfile.build
+          dockerfile: ./docker/debian-trixie/Dockerfile.build
           config: ./docker/.config/hadolint.yml
-      - name: Lint Debian Bullseye Dockerfile
+      - name: Lint Debian Trixie Self-contained Dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
-          dockerfile: ./docker/debian-bullseye/Dockerfile.build
-          config: ./docker/.config/hadolint.yml
-      - name: Lint Debian Bullseye Self-contained Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
-        with:
-          dockerfile: ./docker/debian-bullseye/selfcontained/Dockerfile
+          dockerfile: ./docker/debian-trixie/selfcontained/Dockerfile
           config: ./docker/.config/hadolint.yml

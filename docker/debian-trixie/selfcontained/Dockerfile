@@ -10,47 +10,8 @@ ENV SHARP_FORCE_GLOBAL_LIBVIPS=1
 
 # Install build and vips dependencies
 RUN apt-get update && apt-get install -y curl python3 git build-essential pkg-config \
-  libexif-dev \
-  libexpat-dev \
-  libheif-dev \
-  libimage-exiftool-perl \
-  libjpeg62-turbo-dev \
-  liblcms2-dev \
-  liborc-dev \
-  libpng-dev \
-  librsvg2-dev \
-  libtiff-dev  \
-  libvips-dev \
-  libvips42 && \
+  libvips-dev && \
   rm -rf /var/lib/apt/lists/*
-
-# Install ninja
-RUN git clone --branch=v1.12.1 --depth=1 https://github.com/ninja-build/ninja.git && \
-    cd ninja && \
-    ./configure.py --bootstrap && \
-    chmod +x ninja && \
-    mv ninja /usr/local/bin/ninja
-
-# Install meson
-RUN git clone --branch=1.6.1 --depth=1 https://github.com/mesonbuild/meson.git && \
-    cd meson && \
-    ./packaging/create_zipapp.py --outfile meson.pyz --interpreter '/usr/bin/env python3' && \
-    chmod +x meson.pyz && \
-    mv meson.pyz /usr/local/bin/meson
-
-
-# Build libvips
-RUN git clone --branch=v8.17.1 --depth=1 https://github.com/libvips/libvips.git && \
-    cd libvips && \
-    meson setup build --prefix /usr/local && \
-    cd build && \
-    meson compile && \
-    meson test && \
-    meson install && \
-    ldconfig && \
-    cd .. && \
-    rm -rf libvips
-
 
 # copying only package{-lock}.json to make node_modules cachable
 RUN git clone https://github.com/bpatrik/pigallery2.git /build
@@ -62,7 +23,7 @@ RUN npm install --unsafe-perm \
     && mkdir -p /build/release/data/tmp \
     && npm run create-release
 WORKDIR /build/release
-RUN npm install --unsafe-perm
+RUN npm install --unsafe-perm --no-package-lock node-addon-api@8.5.0 node-gyp@11.5.0
 
 #-----------------MAIN--------------------
 #-----------------------------------------
@@ -78,14 +39,19 @@ ENV NODE_ENV=production \
     PI_DOCKER=true
 
 EXPOSE 80
+ARG TARGETARCH
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates wget ffmpeg \
+    && apt-get install -y --no-install-recommends ca-certificates wget ffmpeg libvips42 \
+    && if [ "$TARGETARCH" = "amd64" ]; then \
+        echo "Building for amd64, adding intel-media-va-driver" && \
+        apt-get install -y --no-install-recommends intel-media-va-driver; \
+    fi \
     && apt-get clean -q -y \
     && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /build/release /app
+COPY --from=builder /app /app
 
 # Run build time diagnostics to make sure the app would work after build is finished
-RUN ["node", "./src/backend/index", "--expose-gc",  "--run-diagnostics", "--config-path=/app/diagnostics-config.json"]
+RUN ["node", "./src/backend/index", "--expose-gc",  "--run-diagnostics", "--config-path=/app/diagnostics-config.json", "--Server-Log-level=silly"]
 HEALTHCHECK --interval=40s --timeout=30s --retries=3 --start-period=60s \
   CMD wget --quiet --tries=1 --no-check-certificate --spider \
   http://127.0.0.1:80/heartbeat || exit 1
