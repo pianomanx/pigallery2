@@ -18,7 +18,7 @@ export interface IClientSVGIconConfig {
 
 export interface IClientMediaButtonPopupFields {
   /**
-   * Id of the field. This how it will listed in the body.
+   * Id of the field. This how it will be listed in the body.
    */
   id: string;
   /**
@@ -70,20 +70,35 @@ export interface IClientMediaButtonConfig {
   name: string;
   /**
    * Icon of the button. This will be shown in the gallery and also in the lightbox.
+   * You can look for icons here: https://fontawesome.com
    */
   svgIcon: IClientSVGIconConfig;
   /**
-   * If true, the button will be hidden if on photos
+   * If true, the button will be hidden on photos
    */
   skipPhotos?: boolean;
   /**
-   * If true, the button will be hidden if on videos
+   * If true, the button will be hidden on videos
    */
   skipVideos?: boolean;
   /**
-   * Path to the server side function that will be called when the button is clicked.
+   * If set, the button will only be shown if the metadata matches this filter.
+   * example values:
+   * [
+   *   {field: 'rating', comparator: '==', value: 4}, // matches if rating is 4
+   *   {field: 'size.width', comparator: '>=', value: 400} // matches if width is >= 400px
+   * ]
    */
-  apiPath: string;
+  metadataFilter?: { field: string, comparator: '>=' | '<=' | '==', value: string | number }[];
+  /**
+   * If true, the button will always be visible, not only on hover.
+   */
+  alwaysVisible?: boolean;
+  /**
+   * Path to the server side function that will be called when the button is clicked.
+   * If it is not set, it will be a fake button. (i.e.: only shows up but does not do anything)
+   */
+  apiPath?: string;
   /**
    * Popup config. IF you want conformation before calling the apiPath or want to change media metedata, set this.
    */

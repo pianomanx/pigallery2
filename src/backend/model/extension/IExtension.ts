@@ -237,10 +237,10 @@ export interface IUIExtension<C> {
    * Adds a new button on to UI to all media (photo, video).
    * Implement the server-side click action in the serverSB function.
    * @param buttonConfig
-   * @param serverSB
+   * @param serverSB If not set the button will be a fake button (i.e.: only show up not clickable)
    */
 
-  addMediaButton(buttonConfig: IClientMediaButtonConfig, serverSB: (params: ParamsDictionary, body: any, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => Promise<void>): void;
+  addMediaButton(buttonConfig: IClientMediaButtonConfig, serverSB?: (params: ParamsDictionary, body: any, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => Promise<void>): void;
 }
 
 export interface IExtensionConfigInit<C> {

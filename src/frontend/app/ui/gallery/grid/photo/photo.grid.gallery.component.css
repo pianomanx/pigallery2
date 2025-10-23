@@ -194,11 +194,15 @@ a {
   fill: white;
 }
 
-.photo-container:hover .media-buttons {
+.photo-container:hover .media-button {
   opacity: 1;
 }
 
-.media-buttons {
+.media-button {
   opacity: 0;
   transition: opacity .3s ease-out;
+}
+
+.media-button.always-visible {
+  opacity: 1;
 }

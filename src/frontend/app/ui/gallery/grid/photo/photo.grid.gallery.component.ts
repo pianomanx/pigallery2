@@ -109,7 +109,50 @@ export class GalleryPhotoComponent implements IRenderable, OnInit, OnDestroy {
       if (this.gridMedia.isPhoto() && button.skipPhotos) {
         return false;
       }
+
+      // Check metadataFilter
+      if (button.metadataFilter && button.metadataFilter.length > 0) {
+        return this.matchesMetadataFilter(button.metadataFilter);
+      }
+
       return true;
+    });
+
+    // move always visible buttons to the front
+    this.mediaButtons = [...this.mediaButtons.filter(b => b.alwaysVisible), ...this.mediaButtons.filter(b => !b.alwaysVisible)];
+  }
+
+  matchesMetadataFilter(filters: { field: string, comparator: '>=' | '<=' | '==', value: string | number }[]): boolean {
+    const metadata = this.gridMedia.media.metadata;
+
+    // All filters must match (AND logic)
+    return filters.every(filter => {
+      // Get the value from metadata using the field path (e.g., 'rating' or 'size.width')
+      const fieldParts = filter.field.split('.');
+      let fieldValue: any = metadata;
+
+      for (const part of fieldParts) {
+        if (fieldValue === undefined || fieldValue === null) {
+          return false;
+        }
+        fieldValue = fieldValue[part];
+      }
+
+      if (fieldValue === undefined || fieldValue === null) {
+        return false;
+      }
+
+      // Compare based on comparator
+      switch (filter.comparator) {
+        case '>=':
+          return fieldValue >= filter.value;
+        case '<=':
+          return fieldValue <= filter.value;
+        case '==':
+          return fieldValue == filter.value; // Use == for loose equality
+        default:
+          return false;
+      }
     });
   }
 
@@ -222,6 +265,10 @@ export class GalleryPhotoComponent implements IRenderable, OnInit, OnDestroy {
   onMediaButtonClick(button: IClientMediaButtonConfigWithBaseApiPath, event: Event): void {
     event.stopPropagation();
     event.preventDefault();
+
+    if(!button.apiPath){
+      return; // this is a fake button, nothing to call
+    }
 
     if (button.popup) {
       this.modalService.showModal(button, this.gridMedia);

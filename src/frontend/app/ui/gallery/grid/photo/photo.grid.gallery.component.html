@@ -22,6 +22,7 @@
   <div class="media-buttons" *ngIf="mediaButtons.length > 0">
     <button *ngFor="let button of mediaButtons"
             class="media-button"
+            [class.always-visible]="button.alwaysVisible"
             [title]="button.name"
             (click)="onMediaButtonClick(button, $event)">
       <svg xmlns="http://www.w3.org/2000/svg"
