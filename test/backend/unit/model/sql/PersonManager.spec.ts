@@ -138,7 +138,7 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
 
       const count = await pm.countFaces();
       expect(count).to.be.a('number');
-      expect(count).to.be.equal(9);
+      expect(count).to.be.equal(10);
     });
 
     it('should update person', async () => {

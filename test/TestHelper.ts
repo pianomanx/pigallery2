@@ -197,6 +197,9 @@ export class TestHelper {
       box: {height: 10, width: 10, left: 103, top: 103},
       name: 'Han Solo'
     } as FaceRegion, {
+      box: {height: 10, width: 10, left: 101, top: 101},
+      name: 'Anakin Skywalker'
+    } as FaceRegion, {
       box: {height: 10, width: 10, left: 104, top: 104},
       name: 'Unkle Ben'
     } as FaceRegion, {
@@ -439,12 +442,12 @@ export class TestHelper {
       dir.media.length > 0
         ? (dir.media as CoverPhotoDTO[]).slice()
         : dir.directories
-            .filter((d): boolean => !!d.cache?.cover)
-            .map((d): CoverPhotoDTO => {
-              // Make sure cover has correct directory reference
-              d.cache.cover.directory = d;
-              return d.cache.cover;
-            });
+          .filter((d): boolean => !!d.cache?.cover)
+          .map((d): CoverPhotoDTO => {
+            // Make sure cover has correct directory reference
+            d.cache.cover.directory = d;
+            return d.cache.cover;
+          });
 
     // Sort cover candidates by configured method
     const sortBy = Config.AlbumCover.Sorting[0].method;

@@ -430,6 +430,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         const withProj = await sm.autocomplete(session, 'a', SearchQueryTypes.person);
         expect(withProj).to.deep.equalInAnyOrder([
           new AutoCompleteItem('Boba Fett', SearchQueryTypes.person),
+          new AutoCompleteItem('Anakin Skywalker', SearchQueryTypes.person),
           new AutoCompleteItem('Luke Skywalker', SearchQueryTypes.person),
           new AutoCompleteItem('Han Solo', SearchQueryTypes.person)
         ]);
@@ -671,7 +672,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.SOME_OF,
         list: [{text: 'R2', type: SearchQueryTypes.person} as TextSearch,
           {text: 'Anakin', type: SearchQueryTypes.person} as TextSearch,
-          {text: 'Luke', type: SearchQueryTypes.person} as TextSearch]
+          {text: 'Luke', type: SearchQueryTypes.person} as TextSearch,
+          {text: 'Non-Existing', type: SearchQueryTypes.person} as TextSearch]
       } as SomeOfSearchQuery);
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
@@ -694,6 +696,16 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query.min = 3;
+
+      expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+        searchQuery: query,
+        directories: [],
+        media: [p],
+        metaFile: [],
+        resultOverflow: false
+      } as SearchResultDTO));
+
+      query.min = 4;
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
