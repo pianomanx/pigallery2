@@ -182,7 +182,7 @@
         "extract-i18n": {
           "builder": "@angular-builders/custom-webpack:extract-i18n",
           "options": {
-            "browserTarget": "pigallery2:build"
+            "buildTarget": "pigallery2:build"
           }
         },
         "test": {
