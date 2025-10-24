@@ -10,6 +10,8 @@ export class ExtensionRouter {
   public static route(app: Express): void {
     this.addExtensionList(app);
     this.addExtensionInstall(app);
+    this.addExtensionReload(app);
+    this.addExtensionDelete(app);
   }
 
   private static addExtensionList(app: Express): void {
@@ -30,6 +32,28 @@ export class ExtensionRouter {
       AuthenticationMWs.authorise(UserRoles.Admin),
       ServerTimingMWs.addServerTiming,
       ExtensionMWs.installExtension,
+      RenderingMWs.renderResult
+    );
+  }
+
+  private static addExtensionReload(app: Express): void {
+    app.post(
+      [ExtensionManager.EXTENSION_API_PATH+'/reload'],
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.authorise(UserRoles.Admin),
+      ServerTimingMWs.addServerTiming,
+      ExtensionMWs.reloadExtension,
+      RenderingMWs.renderResult
+    );
+  }
+
+  private static addExtensionDelete(app: Express): void {
+    app.post(
+      [ExtensionManager.EXTENSION_API_PATH+'/delete'],
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.authorise(UserRoles.Admin),
+      ServerTimingMWs.addServerTiming,
+      ExtensionMWs.deleteExtension,
       RenderingMWs.renderResult
     );
   }

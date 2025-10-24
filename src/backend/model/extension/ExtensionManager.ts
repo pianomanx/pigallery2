@@ -21,6 +21,7 @@ import {ExtensionListItem} from '../../../common/entities/extension/ExtensionLis
 import {ExtensionConfigTemplateLoader} from './ExtensionConfigTemplateLoader';
 import {Utils} from '../../../common/Utils';
 import {UIExtensionDTO} from '../../../common/entities/extension/IClientUIConfig';
+import {ExtensionConfigWrapper} from './ExtensionConfigWrapper';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const exec = util.promisify(require('child_process').exec);
 const LOG_TAG = '[ExtensionManager]';
@@ -77,6 +78,10 @@ export class ExtensionManager implements IObjectManager {
     this.extObjects = {};
   }
 
+  /**
+   * Install an extension from the repository
+   * @param extensionId - The repository extension ID (not to be confused with the unique internal extensionId used in extObjects)
+   */
   public async installExtension(extensionId: string): Promise<void> {
     if (!Config.Extensions.enabled) {
       throw new Error('Extensions are disabled');
@@ -131,6 +136,83 @@ export class ExtensionManager implements IObjectManager {
     Logger.debug(LOG_TAG, `Extension ${extensionId} installed successfully`);
   }
 
+  /**
+   * Reload an extension by cleaning up and re-initializing it
+   * @param configKey - The key used in Config.Extensions.extensions map (typically the folder name)
+   */
+  public async reloadExtension(configKey: string): Promise<void> {
+    if (!Config.Extensions.enabled) {
+      throw new Error('Extensions are disabled');
+    }
+
+    Logger.debug(LOG_TAG, `Reloading extension with config key: ${configKey}`);
+
+    // Find the unique extension ID by matching the folder name
+    let uniqueExtensionId: string = null;
+    for (const id of Object.keys(this.extObjects)) {
+      if (this.extObjects[id].folder === configKey) {
+        uniqueExtensionId = id;
+        break;
+      }
+    }
+
+    if (!uniqueExtensionId) {
+      throw new Error(`Extension with config key ${configKey} not found in configuration`);
+    }
+
+    // Clean up the extension
+    await this.cleanUpSingleExtension(uniqueExtensionId);
+
+    // Re-initialize the extension
+    await this.initSingleExtension(configKey);
+
+    Logger.debug(LOG_TAG, `Extension ${uniqueExtensionId} reloaded successfully`);
+  }
+
+  /**
+   * Delete an extension by cleaning up, removing its folder, and removing it from configuration
+   * @param configKey - The key used in Config.Extensions.extensions map (typically the folder name)
+   */
+  public async deleteExtension(configKey: string): Promise<void> {
+    if (!Config.Extensions.enabled) {
+      throw new Error('Extensions are disabled');
+    }
+
+    Logger.debug(LOG_TAG, `Deleting extension with config key: ${configKey}`);
+
+    // Find the unique extension ID by matching the folder name
+    let uniqueExtensionId: string = null;
+    for (const id of Object.keys(this.extObjects)) {
+      if (this.extObjects[id].folder === configKey) {
+        uniqueExtensionId = id;
+        break;
+      }
+    }
+
+    if (!uniqueExtensionId) {
+      // The extension does not have an extension object, probably it had no init function
+      Logger.silly(LOG_TAG, `Extension with config key ${configKey} not found in configuration`);
+    }else{
+      // Clean up the extension
+      await this.cleanUpSingleExtension(uniqueExtensionId);
+    }
+
+    // Remove the extension folder
+    const extPath = path.join(ProjectPath.ExtensionFolder, configKey);
+    if (fs.existsSync(extPath)) {
+      Logger.silly(LOG_TAG, `Removing extension folder: ${extPath}`);
+      fs.rmSync(extPath, { recursive: true, force: true });
+    }
+
+    // Remove from configuration
+    const original = await ExtensionConfigWrapper.original();
+    original.Extensions.extensions.removeProperty(configKey);
+    await original.save();
+    Config.Extensions.extensions.removeProperty(configKey);
+
+    Logger.debug(LOG_TAG, `Extension ${configKey} deleted successfully`);
+  }
+
   getUIExtensionConfigs(): UIExtensionDTO[] {
     return Object.values(this.extObjects)
       .filter(obj => !!obj.ui?.buttonConfigs?.length)
@@ -166,45 +248,45 @@ export class ExtensionManager implements IObjectManager {
     ExtensionDecoratorObject.init(this.events);
   }
 
-  private createUniqueExtensionObject(name: string, folder: string): IExtensionObject<unknown> {
-    let id = name;
-    if (this.extObjects[id]) {
+  private createUniqueExtensionObject(extensionName: string, folderName: string): IExtensionObject<unknown> {
+    let uniqueExtensionId = extensionName;
+    if (this.extObjects[uniqueExtensionId]) {
       let i = 0;
-      while (this.extObjects[`${name}_${++i}`]) { /* empty */
+      while (this.extObjects[`${extensionName}_${++i}`]) { /* empty */
       }
-      id = `${name}_${++i}`;
+      uniqueExtensionId = `${extensionName}_${++i}`;
     }
-    if (!this.extObjects[id]) {
-      this.extObjects[id] = new ExtensionObject(id, name, folder, this.router, this.events);
+    if (!this.extObjects[uniqueExtensionId]) {
+      this.extObjects[uniqueExtensionId] = new ExtensionObject(uniqueExtensionId, extensionName, folderName, this.router, this.events);
     }
-    return this.extObjects[id];
+    return this.extObjects[uniqueExtensionId];
   }
 
   /**
    * Initialize a single extension
-   * @param extId The id of the extension
+   * @param configKey The key used in Config.Extensions.extensions map (typically the folder name)
    * @returns Promise that resolves when the extension is initialized
    */
-  private async initSingleExtension(extId: string): Promise<void> {
-    const extConf: ServerExtensionsEntryConfig = Config.Extensions.extensions[extId] as ServerExtensionsEntryConfig;
+  private async initSingleExtension(configKey: string): Promise<void> {
+    const extConf: ServerExtensionsEntryConfig = Config.Extensions.extensions[configKey] as ServerExtensionsEntryConfig;
     if (!extConf) {
-      Logger.silly(LOG_TAG, `Skipping ${extId} initiation. Extension config is missing.`);
+      Logger.silly(LOG_TAG, `Skipping ${configKey} initiation. Extension config is missing.`);
       return;
     }
-    const extFolder = extConf.path;
-    let extName = extFolder;
+    const folderName = extConf.path;
+    let extName = folderName;
 
     if (extConf.enabled === false) {
-      Logger.silly(LOG_TAG, `Skipping ${extFolder} initiation. Extension is disabled.`);
+      Logger.silly(LOG_TAG, `Skipping ${folderName} initiation. Extension is disabled.`);
       return;
     }
 
-    const extPath = path.join(ProjectPath.ExtensionFolder, extFolder);
+    const extPath = path.join(ProjectPath.ExtensionFolder, folderName);
     const serverExtPath = path.join(extPath, 'server.js');
     const packageJsonPath = path.join(extPath, 'package.json');
 
     if (!fs.existsSync(serverExtPath)) {
-      Logger.silly(LOG_TAG, `Skipping ${extFolder} server initiation. server.js does not exists`);
+      Logger.silly(LOG_TAG, `Skipping ${folderName} server initiation. server.js does not exists`);
       return;
     }
 
@@ -227,8 +309,8 @@ export class ExtensionManager implements IObjectManager {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const ext = require(serverExtPath);
     if (typeof ext?.init === 'function') {
-      Logger.debug(LOG_TAG, 'Running init on extension: ' + extFolder);
-      await ext?.init(this.createUniqueExtensionObject(extName, extFolder));
+      Logger.debug(LOG_TAG, 'Running init on extension: ' + folderName);
+      await ext?.init(this.createUniqueExtensionObject(extName, folderName));
     }
   }
 
@@ -246,16 +328,31 @@ export class ExtensionManager implements IObjectManager {
     }
   }
 
-  private async cleanUpExtensions() {
-    for (const extObj of Object.values(this.extObjects)) {
-      const serverExt = path.join(extObj.folder, 'server.js');
+  private async cleanUpSingleExtension(uniqueExtensionId: string): Promise<void> {
+    const extObj = this.extObjects[uniqueExtensionId];
+    if (!extObj) {
+      Logger.silly(LOG_TAG, `Extension ${uniqueExtensionId} not found in extObjects, skipping cleanup`);
+      return;
+    }
+
+    const serverExt = path.join(extObj.folder, 'server.js');
+    if (fs.existsSync(serverExt)) {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const ext = require(serverExt);
       if (typeof ext?.cleanUp === 'function') {
-        Logger.debug(LOG_TAG, 'Running Init on extension:' + extObj.extensionName);
+        Logger.debug(LOG_TAG, 'Running cleanUp on extension: ' + extObj.extensionName);
         await ext?.cleanUp(extObj);
       }
-      extObj.messengers.cleanUp();
+    }
+    extObj.messengers.cleanUp();
+
+    // Remove from extObjects
+    delete this.extObjects[uniqueExtensionId];
+  }
+
+  private async cleanUpExtensions() {
+    for (const uniqueExtensionId of Object.keys(this.extObjects)) {
+      await this.cleanUpSingleExtension(uniqueExtensionId);
     }
   }
 

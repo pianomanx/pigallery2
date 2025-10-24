@@ -17,4 +17,12 @@ export class ExtensionInstallerService {
   public installExtension(extensionId: string): Promise<void> {
     return this.networkService.postJson('/extension/install', {id: extensionId});
   }
+
+  public reloadExtension(extensionPath: string): Promise<void> {
+    return this.networkService.postJson('/extension/reload', {path: extensionPath});
+  }
+
+  public deleteExtension(extensionPath: string): Promise<void> {
+    return this.networkService.postJson('/extension/delete', {path: extensionPath});
+  }
 }

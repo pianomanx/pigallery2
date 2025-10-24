@@ -7,7 +7,7 @@ import {WebConfig} from '../../../../../common/config/private/WebConfig';
 import {JobProgressDTO} from '../../../../../common/entities/job/JobProgressDTO';
 import {JobDTOUtils} from '../../../../../common/entities/job/JobDTO';
 import {ScheduledJobsService} from '../scheduled-jobs.service';
-import { UntypedFormControl, FormsModule } from '@angular/forms';
+import {FormsModule, UntypedFormControl} from '@angular/forms';
 import {Subscription} from 'rxjs';
 import {IWebConfigClassPrivate} from 'typeconfig/src/decorators/class/IWebConfigClass';
 import {ConfigPriority, TAGS} from '../../../../../common/config/public/ClientConfig';
@@ -17,11 +17,12 @@ import {WebConfigClassBuilder} from 'typeconfig/web';
 import {ErrorDTO} from '../../../../../common/entities/Error';
 import {ISettingsComponent} from './ISettingsComponent';
 import {CustomSettingsEntries} from './CustomSettingsEntries';
-import { NgIconComponent } from '@ng-icons/core';
-import { NgIf, NgTemplateOutlet, NgFor, AsyncPipe } from '@angular/common';
-import { SettingsEntryComponent } from './settings-entry/settings-entry.component';
-import { JobButtonComponent } from '../workflow/button/job-button.settings.component';
-import { JobProgressComponent } from '../workflow/progress/job-progress.settings.component';
+import {NgIconComponent} from '@ng-icons/core';
+import {AsyncPipe, NgFor, NgIf, NgTemplateOutlet} from '@angular/common';
+import {SettingsEntryComponent} from './settings-entry/settings-entry.component';
+import {JobButtonComponent} from '../workflow/button/job-button.settings.component';
+import {JobProgressComponent} from '../workflow/progress/job-progress.settings.component';
+import {ExtensionInstallerService} from '../extension-installer/extension-installer.service';
 
 
 interface ConfigState {
@@ -57,10 +58,10 @@ export interface RecursiveState extends ConfigState {
 }
 
 @Component({
-    selector: 'app-settings-template',
-    templateUrl: './template.component.html',
-    styleUrls: ['./template.component.css'],
-    imports: [FormsModule, NgIconComponent, NgIf, NgTemplateOutlet, NgFor, SettingsEntryComponent, JobButtonComponent, JobProgressComponent, AsyncPipe]
+  selector: 'app-settings-template',
+  templateUrl: './template.component.html',
+  styleUrls: ['./template.component.css'],
+  imports: [FormsModule, NgIconComponent, NgIf, NgTemplateOutlet, NgFor, SettingsEntryComponent, JobButtonComponent, JobProgressComponent, AsyncPipe]
 })
 export class TemplateComponent implements OnInit, OnChanges, OnDestroy, ISettingsComponent {
 
@@ -76,13 +77,11 @@ export class TemplateComponent implements OnInit, OnChanges, OnDestroy, ISetting
   public error: string = null;
   public changed = false;
   public states: RecursiveState = {} as RecursiveState;
+  public readonly ConfigStyle = ConfigStyle;
   protected name: string;
-
+  protected sliceFN?: (s: IWebConfigClassPrivate<TAGS> & WebConfig) => ConfigState;
   private subscription: Subscription = null;
   private settingsSubscription: Subscription = null;
-  protected sliceFN?: (s: IWebConfigClassPrivate<TAGS> & WebConfig) => ConfigState;
-
-  public readonly ConfigStyle = ConfigStyle;
 
   constructor(
     protected authService: AuthenticationService,
@@ -90,7 +89,20 @@ export class TemplateComponent implements OnInit, OnChanges, OnDestroy, ISetting
     protected notification: NotificationService,
     public settingsService: SettingsService,
     public jobsService: ScheduledJobsService,
+    private extensionService: ExtensionInstallerService,
   ) {
+  }
+
+  get Name(): string {
+    return this.changed ? this.name + '*' : this.name;
+  }
+
+  get Changed(): boolean {
+    return this.changed;
+  }
+
+  get HasAvailableSettings(): boolean {
+    return !this.states?.shouldHide || !this.states?.shouldHide();
   }
 
   ngOnChanges(): void {
@@ -134,7 +146,6 @@ export class TemplateComponent implements OnInit, OnChanges, OnDestroy, ISetting
 
   }
 
-
   ngOnDestroy(): void {
     if (this.subscription != null) {
       this.subscription.unsubscribe();
@@ -144,7 +155,6 @@ export class TemplateComponent implements OnInit, OnChanges, OnDestroy, ISetting
     }
   }
 
-
   setSliceFN(sliceFN?: (s: IWebConfigClassPrivate<TAGS> & WebConfig) => ConfigState) {
     if (sliceFN) {
       this.sliceFN = sliceFN;
@@ -152,18 +162,6 @@ export class TemplateComponent implements OnInit, OnChanges, OnDestroy, ISetting
         this.onNewSettings
       );
     }
-  }
-
-  get Name(): string {
-    return this.changed ? this.name + '*' : this.name;
-  }
-
-  get Changed(): boolean {
-    return this.changed;
-  }
-
-  get HasAvailableSettings(): boolean {
-    return !this.states?.shouldHide || !this.states?.shouldHide();
   }
 
   onNewSettings = (s: IWebConfigClassPrivate<TAGS> & WebConfig) => {
@@ -289,7 +287,6 @@ export class TemplateComponent implements OnInit, OnChanges, OnDestroy, ISetting
     return c.isConfigArrayType && !CustomSettingsEntries.iS(c);
   }
 
-
   public async save(): Promise<boolean> {
     this.inProgress = true;
     this.error = '';
@@ -312,11 +309,6 @@ export class TemplateComponent implements OnInit, OnChanges, OnDestroy, ISetting
 
     this.inProgress = false;
     return false;
-  }
-
-  private async getSettings(): Promise<void> {
-    await this.settingsService.getSettings();
-    this.changed = false;
   }
 
   getKeys(states: any): string[] {
@@ -355,5 +347,51 @@ export class TemplateComponent implements OnInit, OnChanges, OnDestroy, ISetting
       uiJob.config = this.jobsService.getDefaultConfig(uiJob.job);
     }
     return this.jobsService.progress.value[JobDTOUtils.getHashName(uiJob.job, uiJob.config || {})];
+  }
+
+  protected isExtension(c: ConfigState): boolean {
+    return (c?.value?.__propPath as any).substring(0, (c?.value?.__propPath as any).lastIndexOf('.')) == 'Extensions.extensions';
+  }
+
+  protected async removeExtension(c: ConfigState): Promise<void> {
+    const extensionPath = c.value.__state['path'].value;
+    try {
+      this.inProgress = true;
+      await this.extensionService.deleteExtension(extensionPath);
+      await this.settingsService.getSettings();
+      this.notification.success(
+        $localize`Extension deleted successfully`,
+        $localize`Success`
+      );
+    } catch (err) {
+      console.error(err);
+      this.notification.error($localize`Failed to delete extension`, err);
+    } finally {
+      this.inProgress = false;
+    }
+  }
+
+
+  protected async reloadExtension(c: ConfigState): Promise<void> {
+    const extensionPath = c.value.__state['path'].value;
+    try {
+      this.inProgress = true;
+      await this.extensionService.reloadExtension(extensionPath);
+      await this.settingsService.getSettings();
+      this.notification.success(
+        $localize`Extension reloaded successfully`,
+        $localize`Success`
+      );
+    } catch (err) {
+      console.error(err);
+      this.notification.error($localize`Failed to reload extension`, err);
+    } finally {
+      this.inProgress = false;
+    }
+  }
+
+  private async getSettings(): Promise<void> {
+    await this.settingsService.getSettings();
+    this.changed = false;
   }
 }

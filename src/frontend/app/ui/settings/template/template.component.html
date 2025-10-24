@@ -82,7 +82,8 @@
     <ng-container *ngFor="let ck of getKeys(rStates)">
       <ng-container *ngIf="!(rStates.value.__state[ck].shouldHide && rStates.value.__state[ck].shouldHide())">
         <!-- is array -->
-        <ng-container *ngIf="rStates.value.__state[ck].isConfigArrayType && isExpandableArrayConfig(rStates.value.__state[ck])">
+        <ng-container
+          *ngIf="rStates.value.__state[ck].isConfigArrayType && isExpandableArrayConfig(rStates.value.__state[ck])">
           <div class="row">
             <div class="col-auto">
               <h5>{{ rStates?.value.__state[ck].tags?.name || ck }}</h5>
@@ -98,7 +99,8 @@
           </div>
         </ng-container>
 
-        <ng-container *ngIf="!rStates.value.__state[ck].isConfigArrayType || !isExpandableArrayConfig(rStates.value.__state[ck])">
+        <ng-container
+          *ngIf="!rStates.value.__state[ck].isConfigArrayType || !isExpandableArrayConfig(rStates.value.__state[ck])">
 
           <!-- simple entries or complex once's but with custom UI--->
           <app-settings-entry
@@ -127,11 +129,19 @@
                 <div class="headerless-sub-category-start">
                   <hr/>
                 </div>
-                <div class="col-auto  headerless-sub-category-title d-flex align-items-center ">
+                <div class="col-auto  headerless-sub-category-title d-flex align-items-center">
                   <h5>{{ rStates?.value.__state[ck].tags?.name || ck }}</h5>
                 </div>
                 <div class="col">
                   <hr/>
+                </div>
+                <div class="col-auto" *ngIf="isExtension(rStates?.value.__state[ck])">
+                  <button (click)="removeExtension(rStates?.value.__state[ck])" class="btn float-end btn-danger ">
+                    <ng-icon name="ionTrashOutline" title="Delete" i18n-title></ng-icon>
+                  </button>
+                  <button (click)="reloadExtension(rStates?.value.__state[ck])" class="btn float-end btn-primary ">
+                    <ng-icon name="ionReload" title="Restart" i18n-title></ng-icon>
+                  </button>
                 </div>
               </div>
               <div class="mt-2  headerless-sub-category-content">

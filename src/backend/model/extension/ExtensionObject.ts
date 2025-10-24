@@ -21,6 +21,13 @@ export class ExtensionObject<C> implements IExtensionObject<C> {
   public readonly messengers;
   public readonly ui;
 
+  /**
+   * @param extensionId - Unique ID used internally to track this extension instance (may have _1, _2 suffix if name collision occurs)
+   * @param extensionName - Display name of the extension (typically from package.json)
+   * @param folder - Folder name where the extension is stored (also used as config key in Config.Extensions.extensions)
+   * @param extensionRouter - Express router for extension REST API endpoints
+   * @param events - Extension events for hooking into gallery functionality
+   */
   constructor(public readonly extensionId: string,
               public readonly extensionName: string,
               public readonly folder: string,

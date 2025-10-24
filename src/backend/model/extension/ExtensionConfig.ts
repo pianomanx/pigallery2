@@ -4,12 +4,15 @@ import {ServerExtensionsEntryConfig} from '../../../common/config/private/subcon
 
 export class ExtensionConfig<C> implements IExtensionConfig<C> {
 
-  constructor(private readonly extensionFolder: string) {
+  /**
+   * @param configKey - The key used in Config.Extensions.extensions map (matches the extension's folder name)
+   */
+  constructor(private readonly configKey: string) {
   }
 
 
   public getConfig(): C {
-    const c = Config.Extensions.extensions[this.extensionFolder] as ServerExtensionsEntryConfig;
+    const c = Config.Extensions.extensions[this.configKey] as ServerExtensionsEntryConfig;
 
     return c?.configs as C;
   }
