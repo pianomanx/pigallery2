@@ -64,7 +64,7 @@ export class MediaButtonModalService {
 
     } catch (error) {
       // Show error notification
-      this.notificationService.error($localize`Action failed:`+(error.message || error));
+      this.notificationService.error($localize`Action failed:` + (error.message || error));
       console.error('Media button action failed:', error);
     }
 
