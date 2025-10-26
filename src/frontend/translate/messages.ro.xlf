@@ -158,7 +158,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">104</context>
+          <context context-type="linenumber">102</context>
         </context-group>
         <target>Rol</target>
       </trans-unit>
@@ -800,7 +800,7 @@
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
           <context context-type="linenumber">878</context>
         </context-group>
-        <target>To ensure smooth video playback, video transcoding is recommended to a lower bit rate than the server's upload rate.   The transcoded videos will be saved to the thumbnail folder.  You can trigger the transcoding manually, but you can also create an automatic encoding job in advanced settings mode.</target>
+        <target>To ensure smooth video playback, video transcoding is recommended to a lower bit rate than the server's upload rate. The transcoded videos will be saved to the thumbnail folder. You can trigger the transcoding manually, but you can also create an automatic encoding job in advanced settings mode.</target>
       </trans-unit>
       <trans-unit id="3200155866272065974" datatype="html">
         <source>Cover Filter query</source>
@@ -4396,7 +4396,7 @@
           <context context-type="linenumber">67</context>
         </context-group>
         <target>
-          Action failed: 
+          Action failed:
           <x id="PH" equiv-text="error.message || error"/>
         </target>
       </trans-unit>
@@ -4731,14 +4731,6 @@
           <context context-type="linenumber">106</context>
         </context-group>
         <target>Camera information</target>
-      </trans-unit>
-      <trans-unit id="1412825391744081389" datatype="html">
-        <source>Click to search for photos taken with this camera</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
-          <context context-type="linenumber">109</context>
-        </context-group>
-        <target>Click to search for photos taken with this camera</target>
       </trans-unit>
       <trans-unit id="5658155907785769571" datatype="html">
         <source>ISO sensitivity - higher values for darker conditions</source>
@@ -5082,10 +5074,6 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/random-query-builder/random-query-builder.gallery.component.html</context>
           <context context-type="linenumber">28,29</context>
         </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/frontend/app/ui/gallery/share/share.gallery.component.html</context>
-          <context context-type="linenumber">49,50</context>
-        </context-group>
         <target>Copiere</target>
       </trans-unit>
       <trans-unit id="8681331350836567926" datatype="html">
@@ -5374,15 +5362,19 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/share/share.gallery.component.html</context>
           <context context-type="linenumber">17</context>
         </context-group>
-        <target>Partajare</target>
-      </trans-unit>
-      <trans-unit id="4197988031879614135" datatype="html">
-        <source>Share </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/gallery/share/share.gallery.component.html</context>
-          <context context-type="linenumber">40,41</context>
+          <context context-type="linenumber">41</context>
         </context-group>
         <target>Partajare</target>
+      </trans-unit>
+      <trans-unit id="4323470180912194028" datatype="html">
+        <source>Copy</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/frontend/app/ui/gallery/share/share.gallery.component.html</context>
+          <context context-type="linenumber">50</context>
+        </context-group>
+        <target>Copiere</target>
       </trans-unit>
       <trans-unit id="7682626963030103121" datatype="html">
         <source>Sharing:</source>
@@ -5606,15 +5598,11 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
-        <target>Install extensions</target>
-      </trans-unit>
-      <trans-unit id="4825394601092684183" datatype="html">
-        <source>Install Extensions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
           <context context-type="linenumber">12</context>
         </context-group>
-        <target>Install Extensions</target>
+        <target>Install extensions</target>
       </trans-unit>
       <trans-unit id="3894950702316166331" datatype="html">
         <source>Loading...</source>
@@ -5638,7 +5626,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
           <context context-type="linenumber">29,31</context>
         </context-group>
-        <target> No extensions available. </target>
+        <target>No extensions available.</target>
       </trans-unit>
       <trans-unit id="4902817035128594900" datatype="html">
         <source>Description</source>
@@ -5662,7 +5650,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
           <context context-type="linenumber">56,58</context>
         </context-group>
-        <target> Install </target>
+        <target>Install</target>
       </trans-unit>
       <trans-unit id="4894835484717268716" datatype="html">
         <source>Installed</source>
@@ -5672,26 +5660,34 @@
         </context-group>
         <target>Installed</target>
       </trans-unit>
-      <trans-unit id="5547981558491672240" datatype="html">
-        <source> Close </source>
+      <trans-unit id="7819314041543176992" datatype="html">
+        <source>Close</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
-          <context context-type="linenumber">68,70</context>
+          <context context-type="linenumber">68</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
+          <context context-type="linenumber">75</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
+          <context context-type="linenumber">155</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/frontend/app/ui/settings/workflow/workflow.component.html</context>
+          <context context-type="linenumber">431</context>
         </context-group>
         <target>Închide</target>
       </trans-unit>
-      <trans-unit id="4264673685984937925" datatype="html">
-        <source>
-           Refresh 
-          <x id="START_TAG_NG_ICON" ctype="x-ng_icon" equiv-text="-icon name=&quot;ionRefresh&quot; class=&quot;me-1&quot;>"/>
-          <x id="CLOSE_TAG_NG_ICON" ctype="x-ng_icon" equiv-text="Refresh"/>
-        </source>
+      <trans-unit id="1102717806459547726" datatype="html">
+        <source>Refresh</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
-          <context context-type="linenumber">72,73</context>
+          <context context-type="linenumber">70</context>
         </context-group>
         <target>
-           Refresh 
+          Refresh
           <x id="START_TAG_NG_ICON" ctype="x-ng_icon" equiv-text="-icon name=&quot;ionRefresh&quot; class=&quot;me-1&quot;>"/>
           <x id="CLOSE_TAG_NG_ICON" ctype="x-ng_icon" equiv-text="Refresh"/>
         </target>
@@ -5799,6 +5795,10 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/settings-entry/settings-entry.component.html</context>
           <context context-type="linenumber">98</context>
         </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/frontend/app/ui/settings/template/settings-entry/settings-entry.component.html</context>
+          <context context-type="linenumber">125</context>
+        </context-group>
         <target>Add new theme</target>
       </trans-unit>
       <trans-unit id="4131271480390950600" datatype="html">
@@ -5808,14 +5808,6 @@
           <context context-type="linenumber">105</context>
         </context-group>
         <target>Theme name</target>
-      </trans-unit>
-      <trans-unit id="8589439542246737000" datatype="html">
-        <source>Add new Theme</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/frontend/app/ui/settings/template/settings-entry/settings-entry.component.html</context>
-          <context context-type="linenumber">125</context>
-        </context-group>
-        <target>Add new Theme</target>
       </trans-unit>
       <trans-unit id="3074987902485823708" datatype="html">
         <source>Icon</source>
@@ -6085,39 +6077,23 @@
         </context-group>
         <target>Confirm Password</target>
       </trans-unit>
-      <trans-unit id="2319657844488624318" datatype="html">
-        <source> Passwords do not match. </source>
+      <trans-unit id="1543538730036692975" datatype="html">
+        <source>Passwords do not match.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">68,70</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">120,122</context>
-        </context-group>
-        <target> Passwords do not match. </target>
-      </trans-unit>
-      <trans-unit id="7819314041543176992" datatype="html">
-        <source>Close</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">77</context>
+          <context context-type="linenumber">68</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">159</context>
+          <context context-type="linenumber">118</context>
         </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/frontend/app/ui/settings/workflow/workflow.component.html</context>
-          <context context-type="linenumber">431</context>
-        </context-group>
-        <target>Închide</target>
+        <target>Passwords do not match.</target>
       </trans-unit>
       <trans-unit id="4032325907350308427" datatype="html">
         <source>Add User </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">80,81</context>
+          <context context-type="linenumber">78,79</context>
         </context-group>
         <target>Adăugați utilizator</target>
       </trans-unit>
@@ -6125,7 +6101,7 @@
         <source>Edit user</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">95</context>
+          <context context-type="linenumber">93</context>
         </context-group>
         <target>Edit user</target>
       </trans-unit>
@@ -6133,7 +6109,7 @@
         <source>Controls the permissions of the user.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">109</context>
+          <context context-type="linenumber">107</context>
         </context-group>
         <target>Controls the permissions of the user.</target>
       </trans-unit>
@@ -6141,7 +6117,7 @@
         <source>New password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">113</context>
+          <context context-type="linenumber">111</context>
         </context-group>
         <target>New password</target>
       </trans-unit>
@@ -6149,7 +6125,7 @@
         <source>Leave blank to keep password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">115</context>
+          <context context-type="linenumber">113</context>
         </context-group>
         <target>Leave blank to keep password</target>
       </trans-unit>
@@ -6157,7 +6133,7 @@
         <source>Confirm new password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">118</context>
+          <context context-type="linenumber">116</context>
         </context-group>
         <target>Confirm new password</target>
       </trans-unit>
@@ -6165,7 +6141,7 @@
         <source>Leave empty to keep the current password.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">123</context>
+          <context context-type="linenumber">119</context>
         </context-group>
         <target>Leave empty to keep the current password.</target>
       </trans-unit>
@@ -6173,7 +6149,7 @@
         <source>Override allow/block list</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">129</context>
+          <context context-type="linenumber">125</context>
         </context-group>
         <target>Override allow/block list</target>
       </trans-unit>
@@ -6181,7 +6157,7 @@
         <source>Enable to apply the queries below to limit what this user can see.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">130,131</context>
+          <context context-type="linenumber">126,127</context>
         </context-group>
         <target>Enable to apply the queries below to limit what this user can see.</target>
       </trans-unit>
@@ -6189,11 +6165,11 @@
         <source>Allowed query</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">136</context>
+          <context context-type="linenumber">132</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">141</context>
+          <context context-type="linenumber">137</context>
         </context-group>
         <target>Allowed query</target>
       </trans-unit>
@@ -6201,7 +6177,7 @@
         <source>Only items matching this query will be visible.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">143</context>
+          <context context-type="linenumber">139</context>
         </context-group>
         <target>Only items matching this query will be visible.</target>
       </trans-unit>
@@ -6209,11 +6185,11 @@
         <source>Blocked query</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">147</context>
+          <context context-type="linenumber">143</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">151</context>
+          <context context-type="linenumber">147</context>
         </context-group>
         <target>Blocked query</target>
       </trans-unit>
@@ -6221,7 +6197,7 @@
         <source>Items matching this query will be hidden.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">154</context>
+          <context context-type="linenumber">150</context>
         </context-group>
         <target>Items matching this query will be hidden.</target>
       </trans-unit>
@@ -6229,7 +6205,7 @@
         <source>Save changes</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
-          <context context-type="linenumber">162</context>
+          <context context-type="linenumber">158</context>
         </context-group>
         <target>Save changes</target>
       </trans-unit>
@@ -6317,19 +6293,13 @@
         </context-group>
         <target>Cancel</target>
       </trans-unit>
-      <trans-unit id="7406935760222849202" datatype="html">
-        <source>
-          Do you want to run ?
-          <x id="INTERPOLATION" equiv-text="{{ backendTextService.getJobName(jobName) }}"/>
-        </source>
+      <trans-unit id="4792107121922708013" datatype="html">
+        <source>Do you want to run</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/settings/workflow/button/job-button.settings.component.html</context>
           <context context-type="linenumber">25</context>
         </context-group>
-        <target>
-          Do you want to run ?
-          <x id="INTERPOLATION" equiv-text="{{ backendTextService.getJobName(jobName) }}"/>
-        </target>
+        <target>Do you want to run</target>
       </trans-unit>
       <trans-unit id="8767702319647682943" datatype="html">
         <source>Are you sure you want to run this job? This will have the following effect:</source>
