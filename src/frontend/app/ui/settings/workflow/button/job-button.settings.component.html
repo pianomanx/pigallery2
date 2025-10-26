@@ -22,7 +22,7 @@
 <ng-template #jobRunModal>
   <!-- job running Modal-->
   <div class="modal-header">
-    <h5 class="modal-title" i18n>Do you want to run {{ backendTextService.getJobName(jobName) }}?</h5>
+    <h5 class="modal-title"><ng-container i18n>Do you want to run</ng-container> {{ backendTextService.getJobName(jobName) }}?</h5>
     <button type="button" class="btn-close" (click)="hideModal()" data-dismiss="modal" aria-label="Close">
     </button>
   </div>

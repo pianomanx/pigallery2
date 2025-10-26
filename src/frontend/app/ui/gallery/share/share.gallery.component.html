@@ -37,8 +37,8 @@
             id="getShareButton" name="getShareButton"
             (click)="share()"
             [disabled]="!shareForm.form.valid"
-            class="btn btn-primary btn-block float-end" i18n>Share
-          </button>
+            class="btn btn-primary btn-block float-end"
+            i18n>Share</button>
           <button
             *ngIf="sharing"
             id="copyButton" name="copyButton"
@@ -46,8 +46,8 @@
             [cbContent]="url"
             (cbOnSuccess)="onCopy()"
             [disabled]="!shareForm.form.valid"
-            class="btn btn-primary btn-block float-end" i18n>Copy
-          </button>
+            class="btn btn-primary btn-block float-end"
+            i18n>Copy</button>
         </div>
       </div>
       <hr/>

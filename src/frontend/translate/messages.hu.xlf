@@ -3847,7 +3847,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/admin/admin.component.html</context>
           <context context-type="linenumber">39</context>
         </context-group>
-        <target>Mode:</target>
+        <target>Mód:</target>
       </trans-unit>
       <trans-unit id="271318073764837543" datatype="html">
         <source> Menu</source>
@@ -4052,7 +4052,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/faces/faces.component.html</context>
           <context context-type="linenumber">16</context>
         </context-group>
-        <target>No faces to show.</target>
+        <target>Nincsenek arcok, amiket meg lehetne mutatni.</target>
       </trans-unit>
       <trans-unit id="413116577994876478" datatype="html">
         <source>Light</source>
@@ -4256,7 +4256,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/filter/filter.service.ts</context>
           <context context-type="linenumber">101</context>
         </context-group>
-        <target>Aperture</target>
+        <target>Rekesz</target>
       </trans-unit>
       <trans-unit id="2897568737433404674" datatype="html">
         <source>Shutter speed</source>
@@ -4264,7 +4264,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/filter/filter.service.ts</context>
           <context context-type="linenumber">106</context>
         </context-group>
-        <target>Shutter speed</target>
+        <target>Zársebesség</target>
       </trans-unit>
       <trans-unit id="6542951666153347128" datatype="html">
         <source>Focal length</source>
@@ -4272,7 +4272,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/filter/filter.service.ts</context>
           <context context-type="linenumber">120</context>
         </context-group>
-        <target>Focal length</target>
+        <target>Gyújtótávolság</target>
       </trans-unit>
       <trans-unit id="2817799343282769458" datatype="html">
         <source>Link availability</source>
@@ -4308,7 +4308,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/grid/photo/media-button-modal/media-button-modal.component.ts</context>
           <context context-type="linenumber">40</context>
         </context-group>
-        <target>Title</target>
+        <target>Cím</target>
       </trans-unit>
       <trans-unit id="8282018551586977212" datatype="html">
         <source>Camera Data</source>
@@ -4316,7 +4316,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/grid/photo/media-button-modal/media-button-modal.component.ts</context>
           <context context-type="linenumber">42</context>
         </context-group>
-        <target>Camera Data</target>
+        <target>Kameraadatok</target>
       </trans-unit>
       <trans-unit id="3159246240145181884" datatype="html">
         <source>Position Data</source>
@@ -4324,7 +4324,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/grid/photo/media-button-modal/media-button-modal.component.ts</context>
           <context context-type="linenumber">43</context>
         </context-group>
-        <target>Position Data</target>
+        <target>Pozícióadatok</target>
       </trans-unit>
       <trans-unit id="45739481977493163" datatype="html">
         <source>Size</source>
@@ -4344,7 +4344,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/grid/photo/media-button-modal/media-button-modal.component.ts</context>
           <context context-type="linenumber">46</context>
         </context-group>
-        <target>Creation Date</target>
+        <target>Létrehozás dátuma</target>
       </trans-unit>
       <trans-unit id="3942479424208948984" datatype="html">
         <source>Creation Date Offset</source>
@@ -4352,7 +4352,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/grid/photo/media-button-modal/media-button-modal.component.ts</context>
           <context context-type="linenumber">47</context>
         </context-group>
-        <target>Creation Date Offset</target>
+        <target>Létrehozási dátum offset</target>
       </trans-unit>
       <trans-unit id="1757533608372394778" datatype="html">
         <source>Bit Rate</source>
@@ -4360,7 +4360,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/grid/photo/media-button-modal/media-button-modal.component.ts</context>
           <context context-type="linenumber">48</context>
         </context-group>
-        <target>Bit Rate</target>
+        <target>Bitráta</target>
       </trans-unit>
       <trans-unit id="7410432243549869948" datatype="html">
         <source>Duration</source>
@@ -4368,7 +4368,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/grid/photo/media-button-modal/media-button-modal.component.ts</context>
           <context context-type="linenumber">49</context>
         </context-group>
-        <target>Duration</target>
+        <target>Időtartam</target>
       </trans-unit>
       <trans-unit id="2492098975665776610" datatype="html">
         <source>File Size</source>
@@ -4376,7 +4376,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/grid/photo/media-button-modal/media-button-modal.component.ts</context>
           <context context-type="linenumber">50</context>
         </context-group>
-        <target>File Size</target>
+        <target>Fájlméret</target>
       </trans-unit>
       <trans-unit id="2069125519776358850" datatype="html">
         <source>Action completed successfully</source>
@@ -4384,11 +4384,11 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/grid/photo/media-button-modal/media-button-modal.service.ts</context>
           <context context-type="linenumber">63</context>
         </context-group>
-        <target>Action completed successfully</target>
+        <target>A művelet sikeresen befejeződött</target>
       </trans-unit>
       <trans-unit id="4041738703176302777" datatype="html">
         <source>
-          Action failed: 
+          Action failed:
           <x id="PH" equiv-text="error.message || error"/>
         </source>
         <context-group purpose="location">
@@ -4396,7 +4396,7 @@
           <context context-type="linenumber">67</context>
         </context-group>
         <target>
-          Action failed: 
+          Action failed:
           <x id="PH" equiv-text="error.message || error"/>
         </target>
       </trans-unit>
@@ -4566,7 +4566,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">8</context>
         </context-group>
-        <target>Title and description of the media</target>
+        <target>A média címe és leírása</target>
       </trans-unit>
       <trans-unit id="3640011644300041248" datatype="html">
         <source>Title and caption</source>
@@ -4574,7 +4574,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">11</context>
         </context-group>
-        <target>Title and caption</target>
+        <target>Cím és felirat</target>
       </trans-unit>
       <trans-unit id="2016079677918283121" datatype="html">
         <source>File information and properties</source>
@@ -4582,7 +4582,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target>File information and properties</target>
+        <target>Fájlinformációk és tulajdonságok</target>
       </trans-unit>
       <trans-unit id="4773531632587937560" datatype="html">
         <source>File information</source>
@@ -4590,7 +4590,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">38</context>
         </context-group>
-        <target>File information</target>
+        <target>Fájlinformációk</target>
       </trans-unit>
       <trans-unit id="7003790776240394114" datatype="html">
         <source>Filename</source>
@@ -4598,7 +4598,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">41</context>
         </context-group>
-        <target>Filename</target>
+        <target>Fájlnév</target>
       </trans-unit>
       <trans-unit id="1155281725253456037" datatype="html">
         <source>Image dimensions in pixels</source>
@@ -4606,7 +4606,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">45</context>
         </context-group>
-        <target>Image dimensions in pixels</target>
+        <target>Kép méretei pixelben</target>
       </trans-unit>
       <trans-unit id="8286353735372978645" datatype="html">
         <source>Megapixels</source>
@@ -4614,7 +4614,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">48</context>
         </context-group>
-        <target>Megapixels</target>
+        <target>Megapixelek</target>
       </trans-unit>
       <trans-unit id="3046229164148573722" datatype="html">
         <source>File size on disk</source>
@@ -4622,7 +4622,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">49</context>
         </context-group>
-        <target>File size on disk</target>
+        <target>Fájlméret a lemezen</target>
       </trans-unit>
       <trans-unit id="6951325160266155400" datatype="html">
         <source>When this photo or video was taken</source>
@@ -4630,7 +4630,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">56</context>
         </context-group>
-        <target>When this photo or video was taken</target>
+        <target>Mikor készült ez a fotó vagy videó</target>
       </trans-unit>
       <trans-unit id="1905960341659988030" datatype="html">
         <source>Creation date and time</source>
@@ -4638,7 +4638,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">58</context>
         </context-group>
-        <target>Creation date and time</target>
+        <target>étrehozás dátuma és időpontja</target>
       </trans-unit>
       <trans-unit id="7529285370807790311" datatype="html">
         <source>Click to search for media from the same date</source>
@@ -4646,7 +4646,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">61</context>
         </context-group>
-        <target>Click to search for media from the same date</target>
+        <target>Kattintson ide az azonos dátumú médiatartalmak kereséséhez</target>
       </trans-unit>
       <trans-unit id="5671737581644785349" datatype="html">
         <source>Detailed time information</source>
@@ -4654,7 +4654,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">70</context>
         </context-group>
-        <target>Detailed time information</target>
+        <target>Részletes időinformációk</target>
       </trans-unit>
       <trans-unit id="655705146872372927" datatype="html">
         <source>Video technical information</source>
@@ -4662,7 +4662,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">78</context>
         </context-group>
-        <target>Video technical information</target>
+        <target>Videó technikai információi</target>
       </trans-unit>
       <trans-unit id="9030236302996110008" datatype="html">
         <source>Video properties</source>
@@ -4670,7 +4670,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">81</context>
         </context-group>
-        <target>Video properties</target>
+        <target>Videó tulajdonságai</target>
       </trans-unit>
       <trans-unit id="4656742369752525718" datatype="html">
         <source>How long the video is</source>
@@ -4678,7 +4678,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">88</context>
         </context-group>
-        <target>How long the video is</target>
+        <target>Milyen hosszú a videó</target>
       </trans-unit>
       <trans-unit id="5602245631444655788" datatype="html">
         <source>duration</source>
@@ -4698,7 +4698,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">92</context>
         </context-group>
-        <target>Frames per second - video smoothness</target>
+        <target>Képkocka/másodperc - videó simasága</target>
       </trans-unit>
       <trans-unit id="7186132833378378379" datatype="html">
         <source>Data rate - video quality indicator</source>
@@ -4706,7 +4706,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">95</context>
         </context-group>
-        <target>Data rate - video quality indicator</target>
+        <target>Adatsebesség - videóminőség-jelző</target>
       </trans-unit>
       <trans-unit id="593870536587305607" datatype="html">
         <source>bit rate</source>
@@ -4722,7 +4722,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">104</context>
         </context-group>
-        <target>Camera and lens information used to take this photo</target>
+        <target>A fénykép készítéséhez használt kamera és objektív adatai</target>
       </trans-unit>
       <trans-unit id="6162126656841206230" datatype="html">
         <source>Camera information</source>
@@ -4730,7 +4730,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">106</context>
         </context-group>
-        <target>Camera information</target>
+        <target>Kamerainformációk</target>
       </trans-unit>
       <trans-unit id="1412825391744081389" datatype="html">
         <source>Click to search for photos taken with this camera</source>
@@ -4746,7 +4746,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">113</context>
         </context-group>
-        <target>ISO sensitivity - higher values for darker conditions</target>
+        <target>ISO érzékenység - magasabb értékek sötétebb körülményekben használt</target>
       </trans-unit>
       <trans-unit id="2245970337741475942" datatype="html">
         <source>Aperture - lower numbers mean more background blur</source>
@@ -4754,7 +4754,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">116</context>
         </context-group>
-        <target>Aperture - lower numbers mean more background blur</target>
+        <target>Rekesznyílás – az alacsonyabb szám elmosódottabb hátteret jelent</target>
       </trans-unit>
       <trans-unit id="8821940706324167024" datatype="html">
         <source>Shutter speed - how long the sensor was exposed to light</source>
@@ -4762,7 +4762,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">119</context>
         </context-group>
-        <target>Shutter speed - how long the sensor was exposed to light</target>
+        <target>Zársebesség – mennyi ideig volt kitéve fénynek az érzékelő</target>
       </trans-unit>
       <trans-unit id="7702947123339506801" datatype="html">
         <source>Focal length - zoom level of the lens</source>
@@ -4770,7 +4770,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">123</context>
         </context-group>
-        <target>Focal length - zoom level of the lens</target>
+        <target>Fókusztávolság - az objektív zoomszintje</target>
       </trans-unit>
       <trans-unit id="9032833148061793372" datatype="html">
         <source>Specific lens model used</source>
@@ -4778,7 +4778,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">126</context>
         </context-group>
-        <target>Specific lens model used</target>
+        <target>Objektív típus</target>
       </trans-unit>
       <trans-unit id="1210791539986223611" datatype="html">
         <source>Keywords and people tags associated with this media</source>
@@ -4786,7 +4786,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">145</context>
         </context-group>
-        <target>Keywords and people tags associated with this media</target>
+        <target>Kulcsszavak és emberek amelyek ezen a képen vagz videón vannak</target>
       </trans-unit>
       <trans-unit id="4610729320125397936" datatype="html">
         <source>Keywords and people</source>
@@ -4794,7 +4794,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">147</context>
         </context-group>
-        <target>Keywords and people</target>
+        <target>Kulcsszavak és emberek</target>
       </trans-unit>
       <trans-unit id="7195371920105502592" datatype="html">
         <source>Location information where this media was captured</source>
@@ -4802,7 +4802,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">170</context>
         </context-group>
-        <target>Location information where this media was captured</target>
+        <target>Pozíció incormació, ahol a kép vagy videó készült</target>
       </trans-unit>
       <trans-unit id="6645821668279955876" datatype="html">
         <source>Location information</source>
@@ -4810,7 +4810,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">173</context>
         </context-group>
-        <target>Location information</target>
+        <target>Pozíció infromáció</target>
       </trans-unit>
       <trans-unit id="7823382006949517425" datatype="html">
         <source>Click location parts to search for media from the same area</source>
@@ -4818,7 +4818,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">176</context>
         </context-group>
-        <target>Click location parts to search for media from the same area</target>
+        <target>Kattincs a pozíció részletre, hogy keress képre vagy videóra a közelben</target>
       </trans-unit>
       <trans-unit id="1209108263738040397" datatype="html">
         <source>Click GPS coordinates to search for nearby media</source>
@@ -4826,7 +4826,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/lightbox/infopanel/info-panel.lightbox.gallery.component.html</context>
           <context context-type="linenumber">190</context>
         </context-group>
-        <target>Click GPS coordinates to search for nearby media</target>
+        <target>Kattincs a GPS koordináta, hogy keress képre vagy videóra a közelben</target>
       </trans-unit>
       <trans-unit id="2821179408673282599" datatype="html">
         <source>Home</source>
@@ -5162,7 +5162,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/search/query-enrty/query-entry.search.gallery.component.html</context>
           <context context-type="linenumber">117</context>
         </context-group>
-        <target>Location or coordinates (lat, lng)</target>
+        <target>Pozíció vagy koordináta (lat, lng)</target>
       </trans-unit>
       <trans-unit id="5027564160787173789" datatype="html">
         <source>From date</source>
@@ -5398,7 +5398,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/share/share.gallery.component.html</context>
           <context context-type="linenumber">71</context>
         </context-group>
-        <target>at least</target>
+        <target>legalább</target>
       </trans-unit>
       <trans-unit id="3719149245527424371" datatype="html">
         <source>photos and videos.</source>
@@ -5406,7 +5406,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/share/share.gallery.component.html</context>
           <context context-type="linenumber">73</context>
         </context-group>
-        <target>photos and videos.</target>
+        <target>képek és videók.</target>
       </trans-unit>
       <trans-unit id="1306454075192568602" datatype="html">
         <source>Folders are not shared.</source>
@@ -5414,7 +5414,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/share/share.gallery.component.html</context>
           <context context-type="linenumber">73</context>
         </context-group>
-        <target>Folders are not shared.</target>
+        <target>Mappák nincsnek megosztva.</target>
       </trans-unit>
       <trans-unit id="3621339913652620986" datatype="html">
         <source>Valid:</source>
@@ -5530,7 +5530,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/share/share.gallery.component.ts</context>
           <context context-type="linenumber">99</context>
         </context-group>
-        <target>Search query</target>
+        <target>Megosztási lekérdezés</target>
       </trans-unit>
       <trans-unit id="765974048716015903" datatype="html">
         <source>loading..</source>
@@ -5550,7 +5550,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/gallery/share/share.gallery.component.ts</context>
           <context context-type="linenumber">186</context>
         </context-group>
-        <target>Set password.</target>
+        <target>Jelszó beállítása.</target>
       </trans-unit>
       <trans-unit id="4229383470843970064" datatype="html">
         <source>Click share to get a link.</source>
@@ -5606,7 +5606,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
-        <target>Install extensions</target>
+        <target>Kigészítő telepítése</target>
       </trans-unit>
       <trans-unit id="4825394601092684183" datatype="html">
         <source>Install Extensions</source>
@@ -5614,7 +5614,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
           <context context-type="linenumber">12</context>
         </context-group>
-        <target>Install Extensions</target>
+        <target>Kigészítő telepítése</target>
       </trans-unit>
       <trans-unit id="3894950702316166331" datatype="html">
         <source>Loading...</source>
@@ -5622,7 +5622,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
           <context context-type="linenumber">19</context>
         </context-group>
-        <target>Loading...</target>
+        <target>Töltés...</target>
       </trans-unit>
       <trans-unit id="7934833136974560675" datatype="html">
         <source>Retry</source>
@@ -5630,7 +5630,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
           <context context-type="linenumber">25</context>
         </context-group>
-        <target>Retry</target>
+        <target>Újra próbálás</target>
       </trans-unit>
       <trans-unit id="1451533126518313032" datatype="html">
         <source> No extensions available. </source>
@@ -5638,7 +5638,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
           <context context-type="linenumber">29,31</context>
         </context-group>
-        <target> No extensions available. </target>
+        <target>Nincs elérhető kitegészítő.</target>
       </trans-unit>
       <trans-unit id="4902817035128594900" datatype="html">
         <source>Description</source>
@@ -5646,7 +5646,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
           <context context-type="linenumber">37</context>
         </context-group>
-        <target>Description</target>
+        <target>Leírás</target>
       </trans-unit>
       <trans-unit id="3193976279273491157" datatype="html">
         <source>Actions</source>
@@ -5654,7 +5654,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
           <context context-type="linenumber">38</context>
         </context-group>
-        <target>Actions</target>
+        <target>Akciók</target>
       </trans-unit>
       <trans-unit id="6993437395710220266" datatype="html">
         <source> Install </source>
@@ -5662,7 +5662,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
           <context context-type="linenumber">56,58</context>
         </context-group>
-        <target> Install </target>
+        <target>Telepítés</target>
       </trans-unit>
       <trans-unit id="4894835484717268716" datatype="html">
         <source>Installed</source>
@@ -5670,7 +5670,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/extension-installer/extension-installer.component.html</context>
           <context context-type="linenumber">59</context>
         </context-group>
-        <target>Installed</target>
+        <target>Telepítve</target>
       </trans-unit>
       <trans-unit id="5547981558491672240" datatype="html">
         <source> Close </source>
@@ -5682,7 +5682,7 @@
       </trans-unit>
       <trans-unit id="4264673685984937925" datatype="html">
         <source>
-           Refresh 
+           Refresh
           <x id="START_TAG_NG_ICON" ctype="x-ng_icon" equiv-text="-icon name=&quot;ionRefresh&quot; class=&quot;me-1&quot;>"/>
           <x id="CLOSE_TAG_NG_ICON" ctype="x-ng_icon" equiv-text="Refresh"/>
         </source>
@@ -5691,7 +5691,7 @@
           <context context-type="linenumber">72,73</context>
         </context-group>
         <target>
-           Refresh 
+           Refresh
           <x id="START_TAG_NG_ICON" ctype="x-ng_icon" equiv-text="-icon name=&quot;ionRefresh&quot; class=&quot;me-1&quot;>"/>
           <x id="CLOSE_TAG_NG_ICON" ctype="x-ng_icon" equiv-text="Refresh"/>
         </target>
@@ -5742,7 +5742,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/scheduled-jobs.service.ts</context>
           <context context-type="linenumber">141</context>
         </context-group>
-        <target>Job failed</target>
+        <target>Feladat hiba</target>
       </trans-unit>
       <trans-unit id="7393380261620707212" datatype="html">
         <source>Job finished</source>
@@ -5791,7 +5791,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/settings-entry/settings-entry.component.html</context>
           <context context-type="linenumber">88</context>
         </context-group>
-        <target>Add new</target>
+        <target>Új hozzáadása</target>
       </trans-unit>
       <trans-unit id="5014150909482122080" datatype="html">
         <source>Add new theme</source>
@@ -5799,7 +5799,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/settings-entry/settings-entry.component.html</context>
           <context context-type="linenumber">98</context>
         </context-group>
-        <target>Add new theme</target>
+        <target>Új téma hozzáadása</target>
       </trans-unit>
       <trans-unit id="4131271480390950600" datatype="html">
         <source>Theme name</source>
@@ -5807,7 +5807,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/settings-entry/settings-entry.component.html</context>
           <context context-type="linenumber">105</context>
         </context-group>
-        <target>Theme name</target>
+        <target>Téma neve</target>
       </trans-unit>
       <trans-unit id="8589439542246737000" datatype="html">
         <source>Add new Theme</source>
@@ -5815,7 +5815,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/settings-entry/settings-entry.component.html</context>
           <context context-type="linenumber">125</context>
         </context-group>
-        <target>Add new Theme</target>
+        <target>Új téma hozzáadása</target>
       </trans-unit>
       <trans-unit id="3074987902485823708" datatype="html">
         <source>Icon</source>
@@ -5823,7 +5823,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/settings-entry/settings-entry.component.html</context>
           <context context-type="linenumber">193</context>
         </context-group>
-        <target>Icon</target>
+        <target>Ikon</target>
       </trans-unit>
       <trans-unit id="7382005450112017816" datatype="html">
         <source>Load from SVG file</source>
@@ -5831,7 +5831,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/settings-entry/settings-entry.component.html</context>
           <context context-type="linenumber">213</context>
         </context-group>
-        <target>Load from SVG file</target>
+        <target>Betöltés .svg fájlból</target>
       </trans-unit>
       <trans-unit id="2995318609110293026" datatype="html">
         <source>To auto load these values from file: pick an SVG file with a single 'path'. You can use e.g: http://fontawesome.com/icons. </source>
@@ -5839,7 +5839,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/settings-entry/settings-entry.component.html</context>
           <context context-type="linenumber">219,221</context>
         </context-group>
-        <target>To auto load these values from file: pick an SVG file with a single 'path'. You can use e.g: http://fontawesome.com/icons.</target>
+        <target>Ahhoz, hogy ezeket az értékek automatikusan betöltődjenek egy .svg fájlból, egy olyan svg-t használj, aminek csak egy 'path' tag-je van. Használd ezeket pl.: e.g: http://fontawesome.com/icons.</target>
       </trans-unit>
       <trans-unit id="2448998566468414760" datatype="html">
         <source>Save &amp; Close</source>
@@ -5847,7 +5847,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/settings-entry/settings-entry.component.html</context>
           <context context-type="linenumber">248</context>
         </context-group>
-        <target>Save &amp; Close</target>
+        <target>Mentés &amp; bezárás</target>
       </trans-unit>
       <trans-unit id="3853557835274460749" datatype="html">
         <source>Tile Url*</source>
@@ -5939,7 +5939,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/settings-entry/settings-entry.component.ts</context>
           <context context-type="linenumber">219</context>
         </context-group>
-        <target>default</target>
+        <target>alapértelemzett</target>
       </trans-unit>
       <trans-unit id="3279583516959443817" datatype="html">
         <source>readonly</source>
@@ -5987,7 +5987,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/template.component.html</context>
           <context context-type="linenumber">143</context>
         </context-group>
-        <target>Restart</target>
+        <target>Újraindítás</target>
       </trans-unit>
       <trans-unit id="1353646366342026793" datatype="html">
         <source>settings saved</source>
@@ -6019,7 +6019,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/template.component.ts</context>
           <context context-type="linenumber">363</context>
         </context-group>
-        <target>Extension deleted successfully</target>
+        <target>A kiegészítő sikeresen törölve</target>
       </trans-unit>
       <trans-unit id="3279142274755197532" datatype="html">
         <source>Failed to delete extension</source>
@@ -6027,7 +6027,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/template.component.ts</context>
           <context context-type="linenumber">368</context>
         </context-group>
-        <target>Failed to delete extension</target>
+        <target>Hiba a kiegészítő törlése közben</target>
       </trans-unit>
       <trans-unit id="6772528423869242668" datatype="html">
         <source>Extension reloaded successfully</source>
@@ -6035,7 +6035,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/template.component.ts</context>
           <context context-type="linenumber">382</context>
         </context-group>
-        <target>Extension reloaded successfully</target>
+        <target>A kiegészítő sikeresen újratöltve</target>
       </trans-unit>
       <trans-unit id="2581872154471695773" datatype="html">
         <source>Failed to reload extension</source>
@@ -6043,7 +6043,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/template/template.component.ts</context>
           <context context-type="linenumber">387</context>
         </context-group>
-        <target>Failed to reload extension</target>
+        <target>Hiba a kiegészítő újratöltése közben</target>
       </trans-unit>
       <trans-unit id="199756697926372667" datatype="html">
         <source>User list</source>
@@ -6051,7 +6051,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">4</context>
         </context-group>
-        <target>User list</target>
+        <target>Felhasználó lista</target>
       </trans-unit>
       <trans-unit id="7585826646011739428" datatype="html">
         <source>Edit</source>
@@ -6059,7 +6059,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target>Edit</target>
+        <target>Szerkesztés</target>
       </trans-unit>
       <trans-unit id="5918723526444903137" datatype="html">
         <source>Add user</source>
@@ -6067,7 +6067,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">46</context>
         </context-group>
-        <target>Add user</target>
+        <target>Felhasználó hozzáadása</target>
       </trans-unit>
       <trans-unit id="1996265061837601864" datatype="html">
         <source>Add new User</source>
@@ -6083,7 +6083,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">66</context>
         </context-group>
-        <target>Confirm Password</target>
+        <target>Jelszó megerősítése</target>
       </trans-unit>
       <trans-unit id="2319657844488624318" datatype="html">
         <source> Passwords do not match. </source>
@@ -6095,7 +6095,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">120,122</context>
         </context-group>
-        <target> Passwords do not match. </target>
+        <target>A két jelszó nem egyezik meg.</target>
       </trans-unit>
       <trans-unit id="7819314041543176992" datatype="html">
         <source>Close</source>
@@ -6127,7 +6127,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">95</context>
         </context-group>
-        <target>Edit user</target>
+        <target>Felhasználó szerkesztése</target>
       </trans-unit>
       <trans-unit id="7980738033733285256" datatype="html">
         <source>Controls the permissions of the user.</source>
@@ -6135,7 +6135,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">109</context>
         </context-group>
-        <target>Controls the permissions of the user.</target>
+        <target>A felhasználók jogait szabályozza.</target>
       </trans-unit>
       <trans-unit id="3588415639242079458" datatype="html">
         <source>New password</source>
@@ -6143,7 +6143,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">113</context>
         </context-group>
-        <target>New password</target>
+        <target>Új jelszó</target>
       </trans-unit>
       <trans-unit id="3012300493580437387" datatype="html">
         <source>Leave blank to keep password</source>
@@ -6151,7 +6151,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">115</context>
         </context-group>
-        <target>Leave blank to keep password</target>
+        <target>Hagyd üresen, hogy ne változzon a jelszó</target>
       </trans-unit>
       <trans-unit id="8656126574213649581" datatype="html">
         <source>Confirm new password</source>
@@ -6159,7 +6159,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">118</context>
         </context-group>
-        <target>Confirm new password</target>
+        <target>Új jelszó megerősítése</target>
       </trans-unit>
       <trans-unit id="8961337827227034430" datatype="html">
         <source>Leave empty to keep the current password.</source>
@@ -6167,7 +6167,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">123</context>
         </context-group>
-        <target>Leave empty to keep the current password.</target>
+        <target>Hagyd üresen, hogy ne módosuljon a jelnelegi jelszó</target>
       </trans-unit>
       <trans-unit id="749379966622739019" datatype="html">
         <source>Override allow/block list</source>
@@ -6175,7 +6175,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">129</context>
         </context-group>
-        <target>Override allow/block list</target>
+        <target>Tiltó/engedélyező lekérdezés felülírása</target>
       </trans-unit>
       <trans-unit id="1133608990360480669" datatype="html">
         <source>Enable to apply the queries below to limit what this user can see.</source>
@@ -6183,7 +6183,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">130,131</context>
         </context-group>
-        <target>Enable to apply the queries below to limit what this user can see.</target>
+        <target>Engedélyezd hogy a lejebb lévő lekérdezések meghatározzák hogy mit lát a felhasználó.</target>
       </trans-unit>
       <trans-unit id="7501196614063104981" datatype="html">
         <source>Allowed query</source>
@@ -6195,7 +6195,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">141</context>
         </context-group>
-        <target>Allowed query</target>
+        <target>Engedélyező lekérdezés</target>
       </trans-unit>
       <trans-unit id="4472281759584443519" datatype="html">
         <source>Only items matching this query will be visible.</source>
@@ -6203,7 +6203,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">143</context>
         </context-group>
-        <target>Only items matching this query will be visible.</target>
+        <target>Csak azok a képek és videók jelennek meg amikre igaz.</target>
       </trans-unit>
       <trans-unit id="1181053164213404881" datatype="html">
         <source>Blocked query</source>
@@ -6215,7 +6215,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">151</context>
         </context-group>
-        <target>Blocked query</target>
+        <target>Tiltó lekérdezés</target>
       </trans-unit>
       <trans-unit id="7103175231914556252" datatype="html">
         <source>Items matching this query will be hidden.</source>
@@ -6223,7 +6223,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">154</context>
         </context-group>
-        <target>Items matching this query will be hidden.</target>
+        <target>Azok képek és videók amikre igaz, rejtve lesznek.</target>
       </trans-unit>
       <trans-unit id="7000649363168371045" datatype="html">
         <source>Save changes</source>
@@ -6231,7 +6231,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.html</context>
           <context context-type="linenumber">162</context>
         </context-group>
-        <target>Save changes</target>
+        <target>Módisítások mentése</target>
       </trans-unit>
       <trans-unit id="6451269955734195952" datatype="html">
         <source>Passwords do not match</source>
@@ -6243,7 +6243,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.ts</context>
           <context context-type="linenumber">181</context>
         </context-group>
-        <target>Passwords do not match</target>
+        <target>A két jelszó nem egyezik meg</target>
       </trans-unit>
       <trans-unit id="1821735653273245237" datatype="html">
         <source>User creation error!</source>
@@ -6263,7 +6263,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.ts</context>
           <context context-type="linenumber">173</context>
         </context-group>
-        <target>Can't modify user role</target>
+        <target>Nem lehet modosítani a felhasználói szerepet</target>
       </trans-unit>
       <trans-unit id="8157249496279037173" datatype="html">
         <source>Could not save user settings</source>
@@ -6275,7 +6275,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.ts</context>
           <context context-type="linenumber">201</context>
         </context-group>
-        <target>Could not save user settings</target>
+        <target>Nem sikerült menteni a felhasználói beállításokat</target>
       </trans-unit>
       <trans-unit id="8617892905633961461" datatype="html">
         <source>User settings saved successfully</source>
@@ -6283,7 +6283,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/users/users.component.ts</context>
           <context context-type="linenumber">194</context>
         </context-group>
-        <target>User settings saved successfully</target>
+        <target>Felhasználói beállítások sikeresen mentve</target>
       </trans-unit>
       <trans-unit id="9128681615749206002" datatype="html">
         <source>Trigger job run manually</source>
@@ -6337,7 +6337,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/workflow/button/job-button.settings.component.html</context>
           <context context-type="linenumber">30</context>
         </context-group>
-        <target>Are you sure you want to run this job? This will have the following effect:</target>
+        <target>Biztos vagy benne hogy futtatni szeretnéd? Ez fog történni:</target>
       </trans-unit>
       <trans-unit id="3030272344799552884" datatype="html">
         <source>Job started</source>
@@ -6605,7 +6605,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/workflow/workflow.component.html</context>
           <context context-type="linenumber">275,277</context>
         </context-group>
-        <target>Search query to list photos and videos.</target>
+        <target>Keresési lekérdezés a képek és videók listázásához.</target>
       </trans-unit>
       <trans-unit id="7699622144571229146" datatype="html">
         <source>Sort by</source>
@@ -6613,7 +6613,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/workflow/workflow.component.html</context>
           <context context-type="linenumber">283</context>
         </context-group>
-        <target>Sort by</target>
+        <target>Rendezés</target>
       </trans-unit>
       <trans-unit id="642273971136998226" datatype="html">
         <source> Sorts the photos and videos by this. </source>
@@ -6621,7 +6621,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/workflow/workflow.component.html</context>
           <context context-type="linenumber">324,326</context>
         </context-group>
-        <target>Sorts the photos and videos by this.</target>
+        <target>Ez alapján rendezze a képeket és a videókat.</target>
       </trans-unit>
       <trans-unit id="8698515801873408462" datatype="html">
         <source>Pick</source>
@@ -6629,7 +6629,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/workflow/workflow.component.html</context>
           <context context-type="linenumber">332</context>
         </context-group>
-        <target>Pick</target>
+        <target>Választ</target>
       </trans-unit>
       <trans-unit id="8552498455622807836" datatype="html">
         <source> Number of photos and videos to pick. </source>
@@ -6637,7 +6637,7 @@
           <context context-type="sourcefile">src/frontend/app/ui/settings/workflow/workflow.component.html</context>
           <context context-type="linenumber">341,343</context>
         </context-group>
-        <target>Number of photos and videos to pick.</target>
+        <target>Ennyi képet válasszon.</target>
       </trans-unit>
       <trans-unit id="5242498003738057671" datatype="html">
         <source>';' separated integers. </source>

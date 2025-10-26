@@ -65,9 +65,7 @@
                  [(ngModel)]="newUser.password" name="password" autocomplete="off" required>
           <input type="password" class="form-control mt-2" i18n-placeholder placeholder="Confirm Password"
                  [(ngModel)]="newUserPasswordConfirm" name="passwordConfirm" autocomplete="off" required>
-          <div class="text-danger small mt-1" *ngIf="NewUserForm.form.dirty && newUserPasswordsMismatch" i18n>
-            Passwords do not match.
-          </div>
+          <div class="text-danger small mt-1" *ngIf="NewUserForm.form.dirty && newUserPasswordsMismatch" i18n>Passwords do not match.</div>
           <select class="form-select mt-2" [(ngModel)]="newUser.role" name="role" required>
             <option *ngFor="let repository of userRoles" [value]="repository.key">{{ repository.value }}
             </option>
@@ -117,9 +115,7 @@
             <input id="confirmNewPassword" type="password" class="form-control mt-2" i18n-placeholder
                    placeholder="Confirm new password"
                    [(ngModel)]="confirmNewPassword" name="confirmNewPassword" autocomplete="off">
-            <div class="text-danger small mt-1" *ngIf="editPasswordsMismatch" i18n>
-              Passwords do not match.
-            </div>
+            <div class="text-danger small mt-1" *ngIf="editPasswordsMismatch" i18n>Passwords do not match.</div>
             <small class="text-muted" i18n>Leave empty to keep the current password.</small>
           </div>
 
