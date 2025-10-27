@@ -25,7 +25,7 @@
     "merge-new-translation": "gulp merge-new-translation",
     "generate-man": "gulp generate-man",
     "lint": "ng lint",
-    "start-e2e-server": "node ./test/folder-reset test/e2e && node ./src/backend/index --config-path=test/e2e/config.json --Database-dbFolder=test/e2e --Server-port=8080",
+    "start-e2e-server": "node ./test/folder-reset test/e2e && node ./src/backend/index --config-path=test/e2e/config.json --Database-dbFolder=test/e2e --Server-port=8080 --Users.suppressDefUserWarn=true",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "build-extension-interface": "tsc -p extension/ext-interface.tsconfig.json && tsc -p extension/ext-enums.tsconfig.json"

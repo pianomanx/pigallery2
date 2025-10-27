@@ -8,9 +8,9 @@ describe('Docs generation', () => {
     cy.get('.card-body');
     cy.get('.col-sm-12').contains('Login');
     /* ==== Generated with Cypress Studio ==== */
-    cy.get('#username').type('patrik');
+    cy.get('#username').type('admin');
     cy.get('#password').clear();
-    cy.get('#password').type('vuc9ep');
+    cy.get('#password').type('admin');
     cy.intercept({
       method: 'Get',
       url: '/pgapi/gallery/content/',

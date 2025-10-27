@@ -156,3 +156,42 @@ hr {
     order: 2;
   }
 }
+
+/* Lightweight, non-transparent theme (2025-10-27)
+   Goals: remove transparency/blur/animations; keep solid colors and simple styles for better performance. */
+
+/* 5) Images: small radius, no shadow/animation */
+.banner-photo { margin-bottom: 30px; border-radius: 10px; }
+.feature-image img, .feature img { border-radius: 10px; }
+
+/* 6) Section headers and dividers */
+.section-header { margin-top: 30px; text-align: left; letter-spacing: 0.2px; }
+
+/* 7) Code blocks inside docs */
+code.code-block {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  background: #444; /* solid */
+  border: 1px solid #555; /* solid */
+  border-radius: 6px !important;
+}
+
+/* 8) Buttons (keep neutral, solid) */
+.btn-secondary,
+.btn-secondary:hover,
+.btn-secondary:focus {
+  color: #111;
+  text-shadow: none;
+  background: #f2f2f2; /* solid */
+  border: 1px solid #e0e0e0; /* solid */
+}
+
+/* 9) Small polish */
+ul { text-align: left; }
+.small { color: #b8b8b8; }
+
+/* 10) Mobile tweaks */
+@media (max-width: 768px) {
+  .github-button-wrapper { float: none; text-align: center; }
+  .masthead .inner { text-align: center; }
+  .nav-masthead { float: none; }
+}

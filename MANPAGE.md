@@ -46,6 +46,7 @@ App CLI options:
   --Users-enforcedUsers                                                     Creates these users in the DB during startup if they do not exist. If a user with this name exist, it won't be overwritten, even if the role is different. (default: [])
   --Users-allowQuery                                                        Setting a non empty search query here will make the app to only SHOW photos and videos that match the query. You can override this at every user separately. (default: {"type":100,"text":""})
   --Users-blockQuery                                                        Setting a non empty search query here will make the app to HIDE photos and videos that match the query. You can override this at every user separately. (default: {"type":100,"text":""})
+  --Users-suppressDefUserWarn                                               if true, the app won't show a warning for using the default user. (default: false)
   --Gallery-enableCache                                                     Caches directory contents and search results for better performance. (default: true)
   --Gallery-enableOnScrollRendering                                         Those thumbnails get higher priority that are visible on the screen. (default: true)
   --Gallery-enableDirectorySortingByDate                                    If enabled, directories will be sorted by date, like photos, otherwise by name. Directory date is the last modification time of that directory not the creation date of the oldest photo. (default: false)
@@ -204,6 +205,7 @@ Environmental variables:
   Users-enforcedUsers                                                   Creates these users in the DB during startup if they do not exist. If a user with this name exist, it won't be overwritten, even if the role is different. (default: [])
   Users-allowQuery                                                      Setting a non empty search query here will make the app to only SHOW photos and videos that match the query. You can override this at every user separately. (default: {"type":100,"text":""})
   Users-blockQuery                                                      Setting a non empty search query here will make the app to HIDE photos and videos that match the query. You can override this at every user separately. (default: {"type":100,"text":""})
+  Users-suppressDefUserWarn                                             if true, the app won't show a warning for using the default user. (default: false)
   Gallery-enableCache                                                   Caches directory contents and search results for better performance. (default: true)
   Gallery-enableOnScrollRendering                                       Those thumbnails get higher priority that are visible on the screen. (default: true)
   Gallery-enableDirectorySortingByDate                                  If enabled, directories will be sorted by date, like photos, otherwise by name. Directory date is the last modification time of that directory not the creation date of the oldest photo. (default: false)
@@ -400,7 +402,9 @@ Environmental variables:
         "blockQuery": {
             "type": 100,
             "text": ""
-        }
+        },
+        "//[suppressDefUserWarn]": "if true, the app won't show a warning for using the default user.",
+        "suppressDefUserWarn": false
     },
     "Gallery": {
         "//[enableCache]": "Caches directory contents and search results for better performance.",

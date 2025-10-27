@@ -324,6 +324,16 @@ export class ServerUserConfig extends ClientUserConfig {
     type: SearchQueryTypes.any_text,
     text: '',
   } as TextSearch;
+
+  @ConfigProperty({
+    tags:
+      {
+        name: $localize`Suppress default user warning`,
+        priority: ConfigPriority.underTheHood
+      },
+    description: $localize`if true, the app won't show a warning for using the default user.`
+  })
+  suppressDefUserWarn: boolean = false;
 }
 
 
