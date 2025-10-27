@@ -45,6 +45,8 @@ export class NavigationService {
             return this.router.navigate(['faces', '']);
           case NavigationLinkTypes.search:
             return this.router.navigate(['search', JSON.stringify(Config.Gallery.NavBar.links[0].SearchQuery)]);
+          default:
+            console.error('nowhere to navigate.');
         }
       }
 
