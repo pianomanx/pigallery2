@@ -143,6 +143,12 @@
     "ffprobe-static": "3.1.0",
     "mysql": "2.18.1"
   },
+  "overrides": {
+    "beasties": "^0.3.3"
+  },
+  "notes":{
+    "remove besties": "after angular v20: https://stackoverflow.com/questions/76798190/i-get-error-form-floatinglabel-in-ng-build"
+  },
   "engines": {
     "node": ">=22 <24.0"
   }
