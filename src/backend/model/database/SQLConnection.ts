@@ -193,7 +193,7 @@ export class SQLConnection {
   }
 
   public static getSQLiteDB(config: ServerDataBaseConfig): string {
-    return path.join(ProjectPath.getAbsolutePath(config.dbFolder), 'sqlite.db');
+    return path.join(ProjectPath.getAbsolutePath(config.dbFolder), Config.Database.sqlite.DBFileName);
   }
 
   private static async createConnection(
