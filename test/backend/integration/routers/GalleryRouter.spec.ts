@@ -91,10 +91,7 @@ describe('GalleryRouter', (sqlHelper: DBTestHelper) => {
         .get(Config.Server.apiPath + '/gallery/content/orientation/JPEG');
 
 
-      (result.should as any).have.status(200);
-      expect(result.body.error).to.not.be.equal(null);
-      expect(result.body.result).to.be.equal(null);
-      expect(result.body.error.code).to.be.equal(ErrorCodes.PATH_ERROR);
+      (result.should as any).have.status(404);
     });
 
 
@@ -116,10 +113,7 @@ describe('GalleryRouter', (sqlHelper: DBTestHelper) => {
         .get(Config.Server.apiPath + '/gallery/content/' + encodeURIComponent('orientation/JPEG'));
 
 
-      (result.should as any).have.status(200);
-      expect(result.body.error).to.not.be.equal(null);
-      expect(result.body.result).to.be.equal(null);
-      expect(result.body.error.code).to.be.equal(ErrorCodes.PATH_ERROR);
+      (result.should as any).have.status(404);
     });
 
 

@@ -32,11 +32,7 @@ export class GalleryRouter {
 
   protected static addDirectoryList(app: Express): void {
     app.get(
-      [Config.Server.apiPath + '/gallery/content/(*)', Config.Server.apiPath + '/gallery/', Config.Server.apiPath + '/gallery//'],
-      (req, res, next) => {
-        req.params.directory = req.params[0];
-        next();
-      },
+      [Config.Server.apiPath + '/gallery/content/:directory(*)', Config.Server.apiPath + '/gallery/', Config.Server.apiPath + '/gallery//'],
       // common part
       AuthenticationMWs.authenticate,
       AuthenticationMWs.authorise(UserRoles.Guest), //sharing user can only go through search. They can't just wander through the whole gallery
