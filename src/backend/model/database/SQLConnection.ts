@@ -152,7 +152,7 @@ export class SQLConnection {
       if (!Config.Users.suppressDefUserWarn) {
         NotificationManager.error(
           'Using default admin user!',
-          'You are using the default admin/admin user/password, please change or remove it.'
+          'You are using the default user: "admin", password: "admin". The is a security issue. Please change the password or remove the user.'
         );
       }
     }
