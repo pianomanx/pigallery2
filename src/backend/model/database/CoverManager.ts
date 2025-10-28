@@ -13,6 +13,7 @@ import {Logger} from '../../Logger';
 import {SearchManager} from './SearchManager';
 import {ExtensionDecorator} from '../extension/ExtensionDecorator';
 import {SessionContext} from '../SessionContext';
+import {ProjectedDirectoryCacheEntity} from './enitites/ProjectedDirectoryCacheEntity';
 
 const LOG_TAG = '[CoverManager]';
 
@@ -29,7 +30,7 @@ export class CoverManager {
     const connection = await SQLConnection.getConnection();
     await connection
       .createQueryBuilder()
-      .update(DirectoryEntity)
+      .update(ProjectedDirectoryCacheEntity)
       .set({valid: false})
       .execute();
   }
