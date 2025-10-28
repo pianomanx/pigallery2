@@ -36,6 +36,8 @@ import {MediaRendererInput, PhotoWorker, ThumbnailSourceType} from '../fileacces
 const LOG_TAG = '[ConfigDiagnostics]';
 
 export class ConfigDiagnostics {
+  private static adjustConfigWarn = 'Please adjust the config properly: manually edit the confing in the UI OR edit directly the config.json or even fully delete the config.json and let the app create a new one.';
+
   static testAlbumsConfig(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     albumConfig: ClientAlbumConfig,
@@ -84,7 +86,7 @@ export class ConfigDiagnostics {
     for (let i = 0; i < jobsConfig.scheduled.length; ++i) {
       const j = jobsConfig.scheduled[i];
       if (!JobRepository.Instance.exists(j.name)) {
-        throw new Error('Unknown Job :' + j.name);
+        throw new Error(`Unknown Job: "${j.name}". The app does not support this job. Please remove it from the config.`);
       }
     }
   }
@@ -298,11 +300,11 @@ export class ConfigDiagnostics {
     Logger.verbose(LOG_TAG, 'Checking for supported image formats');
 
     const sharp = require('sharp');
-    let text =""
-    for( const f in sharp.format) {
-      text +=`${f}: {\n\tid:${JSON.stringify(sharp.format[f].id)},\n\tinput:${JSON.stringify(sharp.format[f].input)},\n\toutput:${JSON.stringify(sharp.format[f].output)}}\n`;
+    let text = '';
+    for (const f in sharp.format) {
+      text += `${f}: {\n\tid:${JSON.stringify(sharp.format[f].id)},\n\tinput:${JSON.stringify(sharp.format[f].input)},\n\toutput:${JSON.stringify(sharp.format[f].output)}}\n`;
     }
-    Logger.silly(LOG_TAG, 'Sharp supports:\n' +text);
+    Logger.silly(LOG_TAG, 'Sharp supports:\n' + text);
     Logger.silly(LOG_TAG, 'Sharp versions:' + JSON.stringify(sharp.versions));
 
     let removedSome = false;
@@ -410,13 +412,12 @@ export class ConfigDiagnostics {
       await ConfigDiagnostics.testVideoConfig(Config.Media.Video, Config);
     } catch (ex) {
       const err: Error = ex;
-      NotificationManager.warning(
-        'Video support error, switching off..',
+      const errorText = 'Video support error, switching off..' + ConfigDiagnostics.adjustConfigWarn;
+      NotificationManager.warning(errorText,
         err.toString()
       );
       Logger.warn(
-        LOG_TAG,
-        'Video support error, switching off..',
+        LOG_TAG,errorText,
         err.toString()
       );
       Config.Media.Video.enabled = false;
@@ -429,13 +430,12 @@ export class ConfigDiagnostics {
       );
     } catch (ex) {
       const err: Error = ex;
-      NotificationManager.warning(
-        'Meta file support error, switching off gpx..',
+      const errorText = 'Meta file support error, switching off gpx..' + ConfigDiagnostics.adjustConfigWarn;
+      NotificationManager.warning(errorText,
         err.toString()
       );
       Logger.warn(
-        LOG_TAG,
-        'Meta file support error, switching off..',
+        LOG_TAG, errorText,
         err.toString()
       );
       Config.MetaFile.gpx = false;
@@ -445,13 +445,12 @@ export class ConfigDiagnostics {
       await ConfigDiagnostics.testAlbumsConfig(Config.Album, Config);
     } catch (ex) {
       const err: Error = ex;
-      NotificationManager.warning(
-        'Albums support error, switching off..',
+      const errorText = 'Albums support error, switching off..' + ConfigDiagnostics.adjustConfigWarn;
+      NotificationManager.warning(errorText,
         err.toString()
       );
       Logger.warn(
-        LOG_TAG,
-        'Meta file support error, switching off..',
+        LOG_TAG, errorText,
         err.toString()
       );
       Config.Album.enabled = false;
@@ -478,14 +477,12 @@ export class ConfigDiagnostics {
       await ConfigDiagnostics.testSearchConfig(Config.Search, Config);
     } catch (ex) {
       const err: Error = ex;
-      NotificationManager.warning(
-        'Search is not supported with these settings. Disabling temporally. ' +
-        'Please adjust the config properly.',
+      const errorText = 'Search is not supported with these settings. Disabling temporally. ' + ConfigDiagnostics.adjustConfigWarn;
+      NotificationManager.warning(errorText,
         err.toString()
       );
       Logger.warn(
-        LOG_TAG,
-        'Search is not supported with these settings, switching off..',
+        LOG_TAG, errorText,
         err.toString()
       );
       Config.Search.enabled = false;
@@ -495,13 +492,12 @@ export class ConfigDiagnostics {
       await ConfigDiagnostics.testAlbumCoverConfig(Config.AlbumCover);
     } catch (ex) {
       const err: Error = ex;
-      NotificationManager.warning(
-        'Cover settings are not valid, resetting search query',
+      const errorText = 'Cover settings are not valid, resetting search query' + ConfigDiagnostics.adjustConfigWarn;
+      NotificationManager.warning(errorText,
         err.toString()
       );
       Logger.warn(
-        LOG_TAG,
-        'Cover settings are not valid, resetting search query',
+        LOG_TAG, errorText,
         err.toString()
       );
       Config.AlbumCover.SearchQuery = {
@@ -514,14 +510,12 @@ export class ConfigDiagnostics {
       await ConfigDiagnostics.testFacesConfig(Config.Faces, Config);
     } catch (ex) {
       const err: Error = ex;
-      NotificationManager.warning(
-        'Faces are not supported with these settings. Disabling temporally. ' +
-        'Please adjust the config properly.',
+      const errorText = 'Faces are not supported with these settings. Disabling temporally. ' + ConfigDiagnostics.adjustConfigWarn;
+      NotificationManager.warning(errorText,
         err.toString()
       );
       Logger.warn(
-        LOG_TAG,
-        'Faces are not supported with these settings, switching off..',
+        LOG_TAG, errorText,
         err.toString()
       );
       Config.Faces.enabled = false;
@@ -531,14 +525,12 @@ export class ConfigDiagnostics {
       await ConfigDiagnostics.testTasksConfig(Config.Jobs, Config);
     } catch (ex) {
       const err: Error = ex;
-      NotificationManager.warning(
-        'Some Tasks are not supported with these settings. Disabling temporally. ' +
-        'Please adjust the config properly.',
+      const errorText = 'Some Tasks are not supported with these settings. Disabling temporally. ' + ConfigDiagnostics.adjustConfigWarn;
+      NotificationManager.warning(errorText,
         err.toString()
       );
       Logger.warn(
-        LOG_TAG,
-        'Some Tasks not supported with these settings, switching off..',
+        LOG_TAG, errorText,
         err.toString()
       );
       Config.Faces.enabled = false;
@@ -548,14 +540,12 @@ export class ConfigDiagnostics {
       await ConfigDiagnostics.testSharingConfig(Config.Sharing, Config);
     } catch (ex) {
       const err: Error = ex;
-      NotificationManager.warning(
-        'Sharing is not supported with these settings. Disabling temporally. ' +
-        'Please adjust the config properly.',
+      const errorText = 'Sharing is not supported with these settings. Disabling temporally. ' + ConfigDiagnostics.adjustConfigWarn;
+      NotificationManager.warning(errorText,
         err.toString()
       );
       Logger.warn(
-        LOG_TAG,
-        'Sharing is not supported with these settings, switching off..',
+        LOG_TAG, errorText,
         err.toString()
       );
       Config.Sharing.enabled = false;
@@ -568,14 +558,14 @@ export class ConfigDiagnostics {
       );
     } catch (ex) {
       const err: Error = ex;
+      const errorText = 'Random Media is not supported with these settings. Disabling temporally.. ' + ConfigDiagnostics.adjustConfigWarn;
       NotificationManager.warning(
-        'Random Media is not supported with these settings. Disabling temporally. ' +
-        'Please adjust the config properly.',
+        errorText,
         err.toString()
       );
       Logger.warn(
         LOG_TAG,
-        'Random Media is not supported with these settings, switching off..',
+        errorText,
         err.toString()
       );
       Config.Sharing.enabled = false;
@@ -585,15 +575,14 @@ export class ConfigDiagnostics {
       await ConfigDiagnostics.testMapConfig(Config.Map);
     } catch (ex) {
       const err: Error = ex;
+      const errorText = 'Maps is not supported with these settings. Using open street maps temporally. ' + ConfigDiagnostics.adjustConfigWarn;
       NotificationManager.warning(
-        'Maps is not supported with these settings. Using open street maps temporally. ' +
-        'Please adjust the config properly.',
+        errorText,
         err.toString()
       );
       Logger.warn(
         LOG_TAG,
-        'Maps is not supported with these settings. Using open street maps temporally ' +
-        'Please adjust the config properly.',
+        errorText,
         err.toString()
       );
       Config.Map.mapProvider = MapProviders.OpenStreetMap;
@@ -606,15 +595,12 @@ export class ConfigDiagnostics {
       );
     } catch (ex) {
       const err: Error = ex;
-      NotificationManager.warning(
-        'Jobs error.  Resetting to default for now to let the app start up. ' +
-        'Please adjust the config properly.',
+      const errorText = 'Jobs error. Resetting config to default for now to let the app start up. ' + ConfigDiagnostics.adjustConfigWarn;
+      NotificationManager.warning(errorText,
         err.toString()
       );
       Logger.warn(
-        LOG_TAG,
-        'Jobs error. Resetting to default for now to let the app start up. ' +
-        'Please adjust the config properly.',
+        LOG_TAG, errorText,
         err.toString()
       );
       const pc = ConfigClassBuilder.attachPrivateInterface(new PrivateConfigClass());
