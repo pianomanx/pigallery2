@@ -1,58 +1,53 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {
-  ControlValueAccessor,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
-  ValidationErrors,
-  Validator
-} from '@angular/forms';
+import {Component, forwardRef, Input, OnInit} from '@angular/core';
+import {ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator} from '@angular/forms';
 import {SortByDirectionalTypes, SortingMethod} from '../../../../../../../common/entities/SortingMethods';
 import {enumToTranslatedArray} from '../../../../EnumTranslations';
 import {AutoCompleteService} from '../../../../gallery/search/autocomplete.service';
-import {RouterLink} from '@angular/router';
-import {forwardRef} from '@angular/core';
 import {Utils} from '../../../../../../../common/Utils';
-import { BsDropdownDirective, BsDropdownToggleDirective, BsDropdownMenuDirective } from 'ngx-bootstrap/dropdown';
-import { NgIf, NgFor } from '@angular/common';
-import { NgIconComponent } from '@ng-icons/core';
-import { SortingMethodIconComponent } from '../../../../utils/sorting-method-icon/sorting-method-icon.component';
-import { StringifySortingMethod } from '../../../../../pipes/StringifySortingMethod';
+import {BsDropdownDirective, BsDropdownMenuDirective, BsDropdownToggleDirective} from 'ngx-bootstrap/dropdown';
+import {NgFor, NgIf} from '@angular/common';
+import {NgIconComponent} from '@ng-icons/core';
+import {SortingMethodIconComponent} from '../../../../utils/sorting-method-icon/sorting-method-icon.component';
+import {StringifySortingMethod} from '../../../../../pipes/StringifySortingMethod';
+import {NotificationService} from '../../../../../model/notification.service';
 
 @Component({
-    selector: 'app-settings-entry-sorting-method',
-    templateUrl: './sorting-method.settings-entry.component.html',
-    styleUrls: ['./sorting-method.settings-entry.component.css'],
-    providers: [
-        AutoCompleteService,
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => SortingMethodSettingsEntryComponent),
-            multi: true,
-        },
-        {
-            provide: NG_VALIDATORS,
-            useExisting: forwardRef(() => SortingMethodSettingsEntryComponent),
-            multi: true,
-        },
-    ],
-    imports: [
-        BsDropdownDirective,
-        BsDropdownToggleDirective,
-        NgIf,
-        NgIconComponent,
-        SortingMethodIconComponent,
-        BsDropdownMenuDirective,
-        NgFor,
-        StringifySortingMethod,
-    ]
+  selector: 'app-settings-entry-sorting-method',
+  templateUrl: './sorting-method.settings-entry.component.html',
+  styleUrls: ['./sorting-method.settings-entry.component.css'],
+  providers: [
+    AutoCompleteService,
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => SortingMethodSettingsEntryComponent),
+      multi: true,
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => SortingMethodSettingsEntryComponent),
+      multi: true,
+    },
+  ],
+  imports: [
+    BsDropdownDirective,
+    BsDropdownToggleDirective,
+    NgIf,
+    NgIconComponent,
+    SortingMethodIconComponent,
+    BsDropdownMenuDirective,
+    NgFor,
+    StringifySortingMethod,
+  ]
 })
 export class SortingMethodSettingsEntryComponent
-    implements ControlValueAccessor, Validator, OnInit {
+  implements ControlValueAccessor, Validator, OnInit {
   @Input() sortingByEnum: Record<string, number | string> & { [k: number]: string };
 
   public sortingMethod: SortingMethod;
   public sortingByTypes: { key: number; value: string }[] = [];
 
+  constructor(private notificationService: NotificationService) {
+  }
 
   ngOnInit(): void {
     this.sortingByTypes = enumToTranslatedArray(this.sortingByEnum);
@@ -82,6 +77,28 @@ export class SortingMethodSettingsEntryComponent
     return {required: true};
   }
 
+  public isBidirectional(value: number) {
+    return Utils.isValidEnumInt(SortByDirectionalTypes, value);
+  }
+
+  setSortingBy(key: number): void {
+    try {
+      this.sortingMethod.method = key;
+      if (!this.isBidirectional(key)) { // included in enum
+        this.sortingMethod.ascending = null;
+      } else if (this.sortingMethod.ascending == null) {
+        this.sortingMethod.ascending = true;
+      }
+      this.onChange();
+    } catch (e) {
+      this.notificationService.error('Can\t set soritng:' + e.message);
+    }
+  }
+
+  setSortingAscending(ascending: boolean): void {
+    this.sortingMethod.ascending = ascending;
+    this.onChange();
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private propagateChange = (_: SortingMethod): void => {
@@ -91,23 +108,4 @@ export class SortingMethodSettingsEntryComponent
   private propagateTouch = (): void => {
     //ignoring
   };
-
-  public isBidirectional(value: number) {
-    return Utils.isValidEnumInt(SortByDirectionalTypes, value);
-  }
-
-  setSortingBy(key: number): void {
-    this.sortingMethod.method = key;
-    if (!this.isBidirectional(key)) { // included in enum
-      this.sortingMethod.ascending = null;
-    } else if (this.sortingMethod.ascending == null) {
-      this.sortingMethod.ascending = true;
-    }
-    this.onChange();
-  }
-
-  setSortingAscending(ascending: boolean): void {
-    this.sortingMethod.ascending = ascending;
-    this.onChange();
-  }
 }

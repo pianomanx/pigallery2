@@ -590,7 +590,7 @@ export class ServerLogConfig {
  * WARN: Do not use this class directly, use the separate Trigger classes below
  */
 @SubConfigClass({softReadonly: true})
-export class JobTriggerConfigBase{
+export class JobTriggerConfigBase {
 
   @ConfigProperty({type: JobTriggerType})
   readonly type: JobTriggerType = JobTriggerType.never;
@@ -915,7 +915,14 @@ export class ServerAlbumCoverConfig {
       uiResetNeeded: {db: true},
       priority: ConfigPriority.advanced
     },
-    description: $localize`If multiple cover is available sorts them by these methods and selects the first one.`,
+    constraint: {
+      assert: (v: ClientSortingConfig[], c: ServerConfig) => {
+        // random should stand on its own
+        return !Array.isArray(v) || v.filter((s) => s.method == SortByTypes.Random).length == 0 || v.length == 1;
+      },
+      assertReason: 'Albums.Cover.Sorting config error: Random should stand on its own. You can\'t combine random with other sorting methods.',
+    },
+    description: $localize`If multiple cover is available sorts them by these methods and selects the first one. Using random sorting does not allow to use any other sorting method.`,
   })
   Sorting: ClientSortingConfig[] = [
     new ClientSortingConfig(SortByTypes.Rating, false),
