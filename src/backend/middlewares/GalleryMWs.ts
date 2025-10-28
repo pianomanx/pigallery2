@@ -246,7 +246,7 @@ export class GalleryMWs {
     } catch (e) {
       return next(
         new ErrorDTO(
-          ErrorCodes.GENERAL_ERROR,
+          ErrorCodes.PATH_ERROR,
           'no such file:' + req.params['mediaPath'],
           'can\'t find file: ' + fullMediaPath
         )

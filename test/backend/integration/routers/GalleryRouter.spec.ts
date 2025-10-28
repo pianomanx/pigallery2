@@ -1,14 +1,15 @@
 import {Config} from '../../../../src/common/config/private/Config';
 import {Server} from '../../../../src/backend/server';
 import * as path from 'path';
+import * as chai from 'chai';
 import {expect} from 'chai';
 import {SuperAgentStatic} from 'superagent';
 import {ProjectPath} from '../../../../src/backend/ProjectPath';
 import {DBTestHelper} from '../../DBTestHelper';
 import {ReIndexingSensitivity} from '../../../../src/common/config/private/PrivateConfig';
 import {TestHelper} from '../../../TestHelper';
-import * as chai from "chai";
-import {default as chaiHttp, request} from "chai-http";
+import {default as chaiHttp, request} from 'chai-http';
+import {ErrorCodes} from '../../../../src/common/entities/Error';
 
 process.env.NODE_ENV = 'test';
 chai.should();
@@ -73,6 +74,52 @@ describe('GalleryRouter', (sqlHelper: DBTestHelper) => {
       expect(result.body.error).to.be.equal(null);
       expect(result.body.result).to.not.be.equal(null);
       expect(result.body.result.directory).to.not.be.equal(null);
+    });
+
+
+  });
+
+  describe('express uri parsing', async () => {
+
+
+    beforeEach(setUp);
+    afterEach(tearDown);
+
+    it('express should parse path orientation/JPEG', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.low;
+      const result = await (request.execute(server.Server) as SuperAgentStatic)
+        .get(Config.Server.apiPath + '/gallery/content/orientation/JPEG');
+
+
+      (result.should as any).have.status(200);
+      expect(result.body.error).to.not.be.equal(null);
+      expect(result.body.result).to.be.equal(null);
+      expect(result.body.error.code).to.be.equal(ErrorCodes.PATH_ERROR);
+    });
+
+
+    it('express should parse path orientation encoded', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.low;
+      const result = await (request.execute(server.Server) as SuperAgentStatic)
+        .get(Config.Server.apiPath + '/gallery/content/' + encodeURIComponent('orientation'));
+
+
+      (result.should as any).have.status(200);
+      expect(result.body.error).to.be.equal(null);
+      expect(result.body.result).to.not.be.equal(null);
+      expect(result.body.result.directory).to.not.be.equal(null);
+    });
+
+    it('express should parse path orientation/JPEG encoded', async () => {
+      Config.Indexing.reIndexingSensitivity = ReIndexingSensitivity.low;
+      const result = await (request.execute(server.Server) as SuperAgentStatic)
+        .get(Config.Server.apiPath + '/gallery/content/' + encodeURIComponent('orientation/JPEG'));
+
+
+      (result.should as any).have.status(200);
+      expect(result.body.error).to.not.be.equal(null);
+      expect(result.body.result).to.be.equal(null);
+      expect(result.body.error.code).to.be.equal(ErrorCodes.PATH_ERROR);
     });
 
 
