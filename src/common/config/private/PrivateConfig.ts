@@ -907,6 +907,7 @@ export class ServerAlbumCoverConfig {
     type: SearchQueryTypes.any_text,
     text: '',
   } as TextSearch;
+
   @ConfigProperty({
     arrayType: ClientSortingConfig,
     tags: {

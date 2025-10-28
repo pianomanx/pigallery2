@@ -87,25 +87,26 @@ export class BackendtextService {
     if (typeof job === 'string') {
       job = DefaultsJobs[job as any];
     }
+    const notNeeded = ' --' + $localize`It is not necessary to run this job explicitly as the app can do this on-the-file while navigation the gallery. This only speeds up the navigation speed in the app.`;
     switch (job as DefaultsJobs) {
       case DefaultsJobs.Indexing:
-        return $localize`Scans the whole gallery from disk and indexes it to the DB.`;
+        return $localize`Scans the whole gallery from disk and indexes it to the DB.` + notNeeded;
       case DefaultsJobs['Gallery Reset']:
         return $localize`Deletes all directories, photos and videos from the DB.`;
       case DefaultsJobs['Album Reset']:
         return $localize`Removes all albums from the DB`;
-       case DefaultsJobs['Photo Converting']:
-        return $localize`Generates thumbnails and high-res photos from all media files and stores them in the tmp folder. Smaller sizes will be used for thumbnail (in the grid view), bigger sizes for previews (in the lightbox). Videos does not use photo previews (the app loads the video file instead).`;
+      case DefaultsJobs['Photo Converting']:
+        return $localize`Generates thumbnails and high-res photos from all media files and stores them in the tmp folder. Smaller sizes will be used for thumbnail (in the grid view), bigger sizes for previews (in the lightbox). Videos does not use photo previews (the app loads the video file instead).` + notNeeded;
       case DefaultsJobs['Video Converting']:
         return $localize`Transcodes all videos and stores them in the tmp folder.`;
       case DefaultsJobs['Temp Folder Cleaning']:
         return $localize`Removes unnecessary files from the tmp folder.`;
       case DefaultsJobs['Album Cover Filling']:
-        return $localize`Updates the cover photo of all albums (both directories and saved searches) and faces.`;
+        return $localize`Updates the cover photo of all albums (both directories and saved searches) and faces.` + notNeeded;
       case DefaultsJobs['Album Cover Reset']:
         return $localize`Deletes the cover photo of all albums and faces`;
       case DefaultsJobs['GPX Compression']:
-        return $localize`Compresses all gpx files`;
+        return $localize`Compresses all gpx files` + notNeeded;
       case DefaultsJobs['Delete Compressed GPX']:
         return $localize`Deletes all compressed GPX files`;
       case DefaultsJobs['Top Pick Sending']:
