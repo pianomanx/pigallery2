@@ -32,147 +32,151 @@ export class GalleryRouter {
 
   protected static addDirectoryList(app: Express): void {
     app.get(
-        [Config.Server.apiPath + '/gallery/content/:directory(*)', Config.Server.apiPath + '/gallery/', Config.Server.apiPath + '/gallery//'],
-        // common part
-        AuthenticationMWs.authenticate,
-         AuthenticationMWs.authorise(UserRoles.Guest), //sharing user can only go through search. They can't just wander through the whole gallery
-        AuthenticationMWs.normalizePathParam('directory'),
-        VersionMWs.injectGalleryVersion,
+      [Config.Server.apiPath + '/gallery/content/(*)', Config.Server.apiPath + '/gallery/', Config.Server.apiPath + '/gallery//'],
+      (req, res, next) => {
+        req.params.directory = req.params[0];
+        next();
+      },
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.authorise(UserRoles.Guest), //sharing user can only go through search. They can't just wander through the whole gallery
+      AuthenticationMWs.normalizePathParam('directory'),
+      VersionMWs.injectGalleryVersion,
 
-        // specific part
-        GalleryMWs.listDirectory,
-        ThumbnailGeneratorMWs.addThumbnailInformation,
-        GalleryMWs.cleanUpGalleryResults,
-        ServerTimingMWs.addServerTiming,
-        RenderingMWs.renderResult
+      // specific part
+      GalleryMWs.listDirectory,
+      ThumbnailGeneratorMWs.addThumbnailInformation,
+      GalleryMWs.cleanUpGalleryResults,
+      ServerTimingMWs.addServerTiming,
+      RenderingMWs.renderResult
     );
   }
 
   protected static addDirectoryZip(app: Express): void {
     app.get(
-        [Config.Server.apiPath + '/gallery/zip/:searchQueryDTO(*)'],
-        // common part
-        AuthenticationMWs.authenticate,
-        AuthenticationMWs.authorise(UserRoles.LimitedGuest),
+      [Config.Server.apiPath + '/gallery/zip/:searchQueryDTO(*)'],
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.authorise(UserRoles.LimitedGuest),
 
-        // specific part
-        GalleryMWs.parseSearchQuery,
-        ServerTimingMWs.addServerTiming,
-        GalleryMWs.zipDirectory
+      // specific part
+      GalleryMWs.parseSearchQuery,
+      ServerTimingMWs.addServerTiming,
+      GalleryMWs.zipDirectory
     );
   }
 
   protected static addGetImage(app: Express): void {
     app.get(
-        [
-          Config.Server.apiPath + '/gallery/content/:mediaPath(*.(' +
-          SupportedFormats.Photos.join('|') +
-          '))',
-        ],
-        // common part
-        AuthenticationMWs.authenticate,
-        AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authoriseMedia('mediaPath'),
+      [
+        Config.Server.apiPath + '/gallery/content/:mediaPath(*\\.(' +
+        SupportedFormats.Photos.join('|') +
+        '))',
+      ],
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.normalizePathParam('mediaPath'),
+      AuthenticationMWs.authoriseMedia('mediaPath'),
 
-        // specific part
-        GalleryMWs.loadFile,
-        ServerTimingMWs.addServerTiming,
-        RenderingMWs.renderFile
+      // specific part
+      GalleryMWs.loadFile,
+      ServerTimingMWs.addServerTiming,
+      RenderingMWs.renderFile
     );
   }
 
   protected static addGetVideo(app: Express): void {
     app.get(
-        [
-          Config.Server.apiPath + '/gallery/content/:mediaPath(*.(' +
-          SupportedFormats.Videos.join('|') +
-          '))',
-        ],
-        // common part
-        AuthenticationMWs.authenticate,
-        AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authoriseMedia('mediaPath'),
+      [
+        Config.Server.apiPath + '/gallery/content/:mediaPath(*\\.(' +
+        SupportedFormats.Videos.join('|') +
+        '))',
+      ],
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.normalizePathParam('mediaPath'),
+      AuthenticationMWs.authoriseMedia('mediaPath'),
 
-        // specific part
-        GalleryMWs.loadFile,
-        ServerTimingMWs.addServerTiming,
-        RenderingMWs.renderFile
+      // specific part
+      GalleryMWs.loadFile,
+      ServerTimingMWs.addServerTiming,
+      RenderingMWs.renderFile
     );
   }
 
   protected static addGetBestFitVideo(app: Express): void {
     app.get(
-        [
-          Config.Server.apiPath + '/gallery/content/:mediaPath(*.(' +
-          SupportedFormats.Videos.join('|') +
-          '))/bestFit',
-        ],
-        // common part
-        AuthenticationMWs.authenticate,
-        AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authoriseMedia('mediaPath'),
+      [
+        Config.Server.apiPath + '/gallery/content/:mediaPath(*\\.(' +
+        SupportedFormats.Videos.join('|') +
+        '))/bestFit',
+      ],
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.normalizePathParam('mediaPath'),
+      AuthenticationMWs.authoriseMedia('mediaPath'),
 
-        // specific part
-        GalleryMWs.loadFile,
-        GalleryMWs.loadBestFitVideo,
-        ServerTimingMWs.addServerTiming,
-        RenderingMWs.renderFile
+      // specific part
+      GalleryMWs.loadFile,
+      GalleryMWs.loadBestFitVideo,
+      ServerTimingMWs.addServerTiming,
+      RenderingMWs.renderFile
     );
   }
 
   protected static addGetMetaFile(app: Express): void {
     app.get(
-        [
-          Config.Server.apiPath + '/gallery/content/:mediaPath(*.(' +
-          SupportedFormats.MetaFiles.join('|') +
-          '))',
-        ],
-        // common part
-        AuthenticationMWs.authenticate,
-        AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authoriseMetaFiles('mediaPath'),
+      [
+        Config.Server.apiPath + '/gallery/content/:mediaPath(*\\.(' +
+        SupportedFormats.MetaFiles.join('|') +
+        '))',
+      ],
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.normalizePathParam('mediaPath'),
+      AuthenticationMWs.authoriseMetaFiles('mediaPath'),
 
-        // specific part
-        GalleryMWs.loadFile,
-        ServerTimingMWs.addServerTiming,
-        RenderingMWs.renderFile
+      // specific part
+      GalleryMWs.loadFile,
+      ServerTimingMWs.addServerTiming,
+      RenderingMWs.renderFile
     );
   }
 
   protected static addGetBestFitMetaFile(app: Express): void {
     app.get(
-        [
-          Config.Server.apiPath + '/gallery/content/:mediaPath(*.(' +
-          SupportedFormats.MetaFiles.join('|') +
-          '))/bestFit',
-        ],
-        // common part
-        AuthenticationMWs.authenticate,
-        AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authoriseMetaFiles('mediaPath'),
+      [
+        Config.Server.apiPath + '/gallery/content/:mediaPath(*\\.(' +
+        SupportedFormats.MetaFiles.join('|') +
+        '))/bestFit',
+      ],
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.normalizePathParam('mediaPath'),
+      AuthenticationMWs.authoriseMetaFiles('mediaPath'),
 
-        // specific part
-        GalleryMWs.loadFile,
-        MetaFileMWs.compressGPX,
-        ServerTimingMWs.addServerTiming,
-        RenderingMWs.renderFile
+      // specific part
+      GalleryMWs.loadFile,
+      MetaFileMWs.compressGPX,
+      ServerTimingMWs.addServerTiming,
+      RenderingMWs.renderFile
     );
   }
 
   protected static addRandom(app: Express): void {
     app.get(
-        [Config.Server.apiPath + '/gallery/random/:searchQueryDTO'],
-        // common part
-        AuthenticationMWs.authenticate,
-        AuthenticationMWs.authorise(UserRoles.LimitedGuest),
-        VersionMWs.injectGalleryVersion,
+      [Config.Server.apiPath + '/gallery/random/:searchQueryDTO'],
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.authorise(UserRoles.LimitedGuest),
+      VersionMWs.injectGalleryVersion,
 
-        // specific part
-        GalleryMWs.parseSearchQuery,
-        GalleryMWs.getRandomImage,
-        GalleryMWs.loadFile,
-        ServerTimingMWs.addServerTiming,
-        RenderingMWs.renderFile
+      // specific part
+      GalleryMWs.parseSearchQuery,
+      GalleryMWs.getRandomImage,
+      GalleryMWs.loadFile,
+      ServerTimingMWs.addServerTiming,
+      RenderingMWs.renderFile
     );
   }
 
@@ -183,106 +187,106 @@ export class GalleryRouter {
    */
   protected static addGetResizedPhoto(app: Express): void {
     app.get(
-        Config.Server.apiPath + '/gallery/content/:mediaPath(*.(' +
-        SupportedFormats.Photos.join('|') +
-        '))/:size',
-        // common part
-        AuthenticationMWs.authenticate,
-        AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authoriseMedia('mediaPath'),
+      Config.Server.apiPath + '/gallery/content/:mediaPath(*\\.(' +
+      SupportedFormats.Photos.join('|') +
+      '))/:size',
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.normalizePathParam('mediaPath'),
+      AuthenticationMWs.authoriseMedia('mediaPath'),
 
-        // specific part
-        GalleryMWs.loadFile,
-        ThumbnailGeneratorMWs.generateThumbnailFactory(ThumbnailSourceType.Photo),
-        ServerTimingMWs.addServerTiming,
-        RenderingMWs.renderFile
+      // specific part
+      GalleryMWs.loadFile,
+      ThumbnailGeneratorMWs.generateThumbnailFactory(ThumbnailSourceType.Photo),
+      ServerTimingMWs.addServerTiming,
+      RenderingMWs.renderFile
     );
   }
 
   protected static addGetVideoThumbnail(app: Express): void {
     app.get(
-        Config.Server.apiPath + '/gallery/content/:mediaPath(*.(' +
-        SupportedFormats.Videos.join('|') +
-        '))/:size',
-        // common part
-        AuthenticationMWs.authenticate,
-        AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authoriseMedia('mediaPath'),
+      Config.Server.apiPath + '/gallery/content/:mediaPath(*\\.(' +
+      SupportedFormats.Videos.join('|') +
+      '))/:size',
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.normalizePathParam('mediaPath'),
+      AuthenticationMWs.authoriseMedia('mediaPath'),
 
-        // specific part
-        GalleryMWs.loadFile,
-        ThumbnailGeneratorMWs.generateThumbnailFactory(ThumbnailSourceType.Video),
-        ServerTimingMWs.addServerTiming,
-        RenderingMWs.renderFile
+      // specific part
+      GalleryMWs.loadFile,
+      ThumbnailGeneratorMWs.generateThumbnailFactory(ThumbnailSourceType.Video),
+      ServerTimingMWs.addServerTiming,
+      RenderingMWs.renderFile
     );
   }
 
   protected static addGetVideoIcon(app: Express): void {
     app.get(
-        Config.Server.apiPath + '/gallery/content/:mediaPath(*.(' +
-        SupportedFormats.Videos.join('|') +
-        '))/icon',
-        // common part
-        AuthenticationMWs.authenticate,
-        AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authoriseMedia('mediaPath'),
+      Config.Server.apiPath + '/gallery/content/:mediaPath(*\\.(' +
+      SupportedFormats.Videos.join('|') +
+      '))/icon',
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.normalizePathParam('mediaPath'),
+      AuthenticationMWs.authoriseMedia('mediaPath'),
 
-        // specific part
-        GalleryMWs.loadFile,
-        ThumbnailGeneratorMWs.generateIconFactory(ThumbnailSourceType.Video),
-        ServerTimingMWs.addServerTiming,
-        RenderingMWs.renderFile
+      // specific part
+      GalleryMWs.loadFile,
+      ThumbnailGeneratorMWs.generateIconFactory(ThumbnailSourceType.Video),
+      ServerTimingMWs.addServerTiming,
+      RenderingMWs.renderFile
     );
   }
 
   protected static addGetImageIcon(app: Express): void {
     app.get(
-        Config.Server.apiPath + '/gallery/content/:mediaPath(*.(' +
-        SupportedFormats.Photos.join('|') +
-        '))/icon',
-        // common part
-        AuthenticationMWs.authenticate,
-        AuthenticationMWs.normalizePathParam('mediaPath'),
-        AuthenticationMWs.authoriseMedia('mediaPath'),
+      Config.Server.apiPath + '/gallery/content/:mediaPath(*\\.(' +
+      SupportedFormats.Photos.join('|') +
+      '))/icon',
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.normalizePathParam('mediaPath'),
+      AuthenticationMWs.authoriseMedia('mediaPath'),
 
-        // specific part
-        GalleryMWs.loadFile,
-        ThumbnailGeneratorMWs.generateIconFactory(ThumbnailSourceType.Photo),
-        ServerTimingMWs.addServerTiming,
-        RenderingMWs.renderFile
+      // specific part
+      GalleryMWs.loadFile,
+      ThumbnailGeneratorMWs.generateIconFactory(ThumbnailSourceType.Photo),
+      ServerTimingMWs.addServerTiming,
+      RenderingMWs.renderFile
     );
   }
 
   protected static addSearch(app: Express): void {
     app.get(
-        Config.Server.apiPath + '/search/:searchQueryDTO(*)',
-        // common part
-        AuthenticationMWs.authenticate,
-        AuthenticationMWs.authorise(UserRoles.LimitedGuest),
-        VersionMWs.injectGalleryVersion,
+      Config.Server.apiPath + '/search/:searchQueryDTO(*)',
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.authorise(UserRoles.LimitedGuest),
+      VersionMWs.injectGalleryVersion,
 
-        // specific part
-        GalleryMWs.parseSearchQuery,
-        GalleryMWs.search,
-        ThumbnailGeneratorMWs.addThumbnailInformation,
-        GalleryMWs.cleanUpGalleryResults,
-        ServerTimingMWs.addServerTiming,
-        RenderingMWs.renderResult
+      // specific part
+      GalleryMWs.parseSearchQuery,
+      GalleryMWs.search,
+      ThumbnailGeneratorMWs.addThumbnailInformation,
+      GalleryMWs.cleanUpGalleryResults,
+      ServerTimingMWs.addServerTiming,
+      RenderingMWs.renderResult
     );
   }
 
   protected static addAutoComplete(app: Express): void {
     app.get(
-        Config.Server.apiPath + '/autocomplete/:text(*)',
-        // common part
-        AuthenticationMWs.authenticate,
-        AuthenticationMWs.authorise(UserRoles.LimitedGuest),
-        VersionMWs.injectGalleryVersion,
+      Config.Server.apiPath + '/autocomplete/:text(*)',
+      // common part
+      AuthenticationMWs.authenticate,
+      AuthenticationMWs.authorise(UserRoles.LimitedGuest),
+      VersionMWs.injectGalleryVersion,
 
-        // specific part
-        GalleryMWs.autocomplete,
-        ServerTimingMWs.addServerTiming,
-        RenderingMWs.renderResult
+      // specific part
+      GalleryMWs.autocomplete,
+      ServerTimingMWs.addServerTiming,
+      RenderingMWs.renderResult
     );
   }
 }

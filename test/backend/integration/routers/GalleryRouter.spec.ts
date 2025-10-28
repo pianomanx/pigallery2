@@ -141,5 +141,97 @@ describe('GalleryRouter', (sqlHelper: DBTestHelper) => {
 
   });
 
+  describe('/GET /api/gallery//', async () => {
+
+    beforeEach(setUp);
+    afterEach(tearDown);
+
+    it('should list root directory even with double slash', async () => {
+      const result = await (request.execute(server.Server) as SuperAgentStatic)
+        .get(Config.Server.apiPath + '/gallery//');
+
+      (result.should as any).have.status(200);
+      expect(result.body.error).to.be.equal(null);
+      expect(result.body.result).to.not.be.equal(null);
+      expect(result.body.result.directory).to.not.be.equal(null);
+    });
+  });
+
+  describe('/GET raw video, icon and thumbnail', async () => {
+
+    beforeEach(setUp);
+    afterEach(tearDown);
+
+    it('should get raw video', async () => {
+      const result = await (request.execute(server.Server) as SuperAgentStatic)
+        .get(Config.Server.apiPath + '/gallery/content/video.mp4');
+
+      (result.should as any).have.status(200);
+      expect(result.body).to.be.instanceof(Buffer);
+    });
+
+    it('should get video icon', async () => {
+      const result = await (request.execute(server.Server) as SuperAgentStatic)
+        .get(Config.Server.apiPath + '/gallery/content/video.mp4/icon');
+
+      (result.should as any).have.status(200);
+      expect(result.body).to.be.instanceof(Buffer);
+    });
+
+    it('should get video thumbnail (size 240)', async () => {
+      const result = await (request.execute(server.Server) as SuperAgentStatic)
+        .get(Config.Server.apiPath + '/gallery/content/video.mp4/240');
+
+      (result.should as any).have.status(200);
+      expect(result.body).to.be.instanceof(Buffer);
+    });
+  });
+
+  describe('negative paths for non-existent media/meta', async () => {
+
+    beforeEach(setUp);
+    afterEach(tearDown);
+
+    it('should return PATH_ERROR for non-existent video (raw)', async () => {
+      const result = await (request.execute(server.Server) as SuperAgentStatic)
+        .get(Config.Server.apiPath + '/gallery/content/nonexistent.mp4');
+
+      (result.should as any).have.status(200);
+      expect(result.body.error).to.not.be.equal(null);
+      expect(result.body.result).to.be.equal(null);
+      expect(result.body.error.code).to.be.equal(ErrorCodes.PATH_ERROR);
+    });
+
+    it('should return PATH_ERROR for non-existent video icon', async () => {
+      const result = await (request.execute(server.Server) as SuperAgentStatic)
+        .get(Config.Server.apiPath + '/gallery/content/nonexistent.mp4/icon');
+
+      (result.should as any).have.status(200);
+      expect(result.body.error).to.not.be.equal(null);
+      expect(result.body.result).to.be.equal(null);
+      expect(result.body.error.code).to.be.equal(ErrorCodes.PATH_ERROR);
+    });
+
+    it('should return PATH_ERROR for non-existent meta file (gpx)', async () => {
+      const result = await (request.execute(server.Server) as SuperAgentStatic)
+        .get(Config.Server.apiPath + '/gallery/content/nonexistent.gpx');
+
+      (result.should as any).have.status(200);
+      expect(result.body.error).to.not.be.equal(null);
+      expect(result.body.result).to.be.equal(null);
+      expect(result.body.error.code).to.be.equal(ErrorCodes.PATH_ERROR);
+    });
+
+    it('should return PATH_ERROR for non-existent meta file bestFit (gpx)', async () => {
+      const result = await (request.execute(server.Server) as SuperAgentStatic)
+        .get(Config.Server.apiPath + '/gallery/content/nonexistent.gpx/bestFit');
+
+      (result.should as any).have.status(200);
+      expect(result.body.error).to.not.be.equal(null);
+      expect(result.body.result).to.be.equal(null);
+      expect(result.body.error.code).to.be.equal(ErrorCodes.PATH_ERROR);
+    });
+  });
+
 
 });
