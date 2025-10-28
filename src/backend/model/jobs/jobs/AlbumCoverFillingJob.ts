@@ -69,6 +69,7 @@ export class AlbumCoverFillingJob extends Job {
         await ObjectManagers.getInstance().CoverManager.getPartialDirsWithoutCovers();
       // double check if there is really no more
       if (this.directoryToSetCover.length > 0) {
+        this.Progress.log(`Loaded ${this.directoryToSetCover.length} more directories to create cover for`);
         return true; // continue
       }
       this.Progress.Left = 0;
