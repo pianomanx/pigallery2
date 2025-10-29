@@ -25,6 +25,7 @@ export class AlbumCoverFillingJob extends Job {
       this.Progress.log('Loading Directories to process');
       this.directoryToSetCover =
         await ObjectManagers.getInstance().CoverManager.getPartialDirsWithoutCovers();
+      this.Progress.log(`Loaded ${this.directoryToSetCover.length} directories to create cover for`);
       this.availableSessions = await ObjectManagers.getInstance().SessionManager.getAvailableUserSessions();
       this.Progress.Left = this.directoryToSetCover.length + 2;
       return true;
