@@ -314,6 +314,7 @@ export class ClientSharingConfig {
     description: $localize`Requires password protected sharing links.`,
   })
   passwordRequired: boolean = false;
+
   @ConfigProperty({
     type: 'unsignedInt', min: 8, max: 64,
     tags:
@@ -323,7 +324,7 @@ export class ClientSharingConfig {
       },
     description: $localize`The longer the keys are, the harder they are to guess. Changing this number won't invalidate existing sharing.`,
   })
-  sharingKeyLength: number = 32;
+  sharingKeyLength: number = 8;
 }
 
 @SubConfigClass({tags: {client: true}, softReadonly: true})

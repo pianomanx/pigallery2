@@ -6,6 +6,8 @@ import {Config} from '../../common/config/private/Config';
 import {QueryParams} from '../../common/QueryParams';
 import * as path from 'path';
 import {UserRoles} from '../../common/entities/UserDTO';
+import {SearchQueryDTO, SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes} from '../../common/entities/SearchQueryDTO';
+import * as crypto from 'crypto';
 
 export class SharingMWs {
   public static async getSharing(
@@ -84,18 +86,18 @@ export class SharingMWs {
         );
       }
 
-    let sharingKey = SharingMWs.generateKey(Config.Sharing.sharingKeyLength);
+      let sharingKey = SharingMWs.generateKey(Config.Sharing.sharingKeyLength);
 
-    // create one not yet used
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      try {
-        await ObjectManagers.getInstance().SharingManager.findOne(sharingKey);
-        sharingKey = this.generateKey(Config.Sharing.sharingKeyLength);
-      } catch (err) {
-        break;
+      // create one not yet used
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        try {
+          await ObjectManagers.getInstance().SharingManager.findOne(sharingKey);
+          sharingKey = this.generateKey(Config.Sharing.sharingKeyLength);
+        } catch (err) {
+          break;
+        }
       }
-    }
 
       const directoryName = path.normalize(req.params['directory'] || '/');
 
@@ -296,14 +298,9 @@ export class SharingMWs {
     }
   }
 
-  private static generateKey(length:number): string {
-    function randomInt(max:number): number {
-      return Math.floor(Math.random() * max);
-    }
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    return [...Array(length).keys()].reduce(
-      (result) => result + characters.charAt(randomInt(characters.length)),
-      ""
-    );
+  private static generateKey(length: number): string {
+    return crypto.randomBytes(Math.ceil(length * 3 / 4))
+      .toString('base64url')
+      .slice(0, length);
   }
 }
