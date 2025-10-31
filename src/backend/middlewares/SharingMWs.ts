@@ -7,6 +7,7 @@ import {QueryParams} from '../../common/QueryParams';
 import * as path from 'path';
 import {UserRoles} from '../../common/entities/UserDTO';
 import {SearchQueryDTO, SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes} from '../../common/entities/SearchQueryDTO';
+import * as crypto from 'crypto';
 
 export class SharingMWs {
   public static async getSharing(
@@ -85,14 +86,14 @@ export class SharingMWs {
         );
       }
 
-      let sharingKey = SharingMWs.generateKey();
+      let sharingKey = SharingMWs.generateKey(Config.Sharing.sharingKeyLength);
 
       // create one not yet used
       // eslint-disable-next-line no-constant-condition
       while (true) {
         try {
           await ObjectManagers.getInstance().SharingManager.findOne(sharingKey);
-          sharingKey = this.generateKey();
+          sharingKey = this.generateKey(Config.Sharing.sharingKeyLength);
         } catch (err) {
           break;
         }
@@ -297,13 +298,9 @@ export class SharingMWs {
     }
   }
 
-  private static generateKey(): string {
-    function s4(): string {
-      return Math.floor((1 + Math.random()) * 0x10000)
-        .toString(16)
-        .substring(1);
-    }
-
-    return s4() + s4();
+  private static generateKey(length: number): string {
+    return crypto.randomBytes(Math.ceil(length * 3 / 4))
+      .toString('base64url')
+      .slice(0, length);
   }
 }
