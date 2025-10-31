@@ -10,7 +10,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1023</context>
+          <context context-type="linenumber">1030</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/subconfigs/MessagingConfig.ts</context>
@@ -26,7 +26,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1011</context>
+          <context context-type="linenumber">1018</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/subconfigs/MessagingConfig.ts</context>
@@ -42,7 +42,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1073</context>
+          <context context-type="linenumber">1080</context>
         </context-group>
         <target>Databas</target>
       </trans-unit>
@@ -842,19 +842,19 @@
         </context-group>
         <target>Cover Sorting</target>
       </trans-unit>
-      <trans-unit id="7281714126487619000" datatype="html">
-        <source>If multiple cover is available sorts them by these methods and selects the first one.</source>
+      <trans-unit id="6204651268444833999" datatype="html">
+        <source>If multiple cover is available sorts them by these methods and selects the first one. Using random sorting does not allow to use any other sorting method.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">918</context>
+          <context context-type="linenumber">925</context>
         </context-group>
-        <target>If multiple cover is available sorts them by these methods and selects the first one.</target>
+        <target>If multiple cover is available sorts them by these methods and selects the first one. Using random sorting does not allow to use any other sorting method.</target>
       </trans-unit>
       <trans-unit id="4487775872787805732" datatype="html">
         <source>Images folder</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">932</context>
+          <context context-type="linenumber">939</context>
         </context-group>
         <target>Bildmapp</target>
       </trans-unit>
@@ -862,7 +862,7 @@
         <source>Images are loaded from this folder (read permission required)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">937</context>
+          <context context-type="linenumber">944</context>
         </context-group>
         <target>Bilder laddas från denna mapp (läsrättighet krävs)</target>
       </trans-unit>
@@ -870,7 +870,7 @@
         <source>Temp folder</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">943</context>
+          <context context-type="linenumber">950</context>
         </context-group>
         <target>Mapp för tillfälliga filer</target>
       </trans-unit>
@@ -878,7 +878,7 @@
         <source>Thumbnails, converted photos, videos will be stored here (write permission required)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">948</context>
+          <context context-type="linenumber">955</context>
         </context-group>
         <target>Miniatyrer, konverterade bilder, videos kommer att sparas här (skrivrättighet krävs))</target>
       </trans-unit>
@@ -886,7 +886,7 @@
         <source>Video</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">954</context>
+          <context context-type="linenumber">961</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/public/ClientConfig.ts</context>
@@ -898,7 +898,7 @@
         <source>Video support uses ffmpeg. ffmpeg and ffprobe binaries need to be available in the PATH or the @ffmpeg-installer/ffmpeg and @ffprobe-installer/ffprobe optional node packages need to be installed.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">963</context>
+          <context context-type="linenumber">970</context>
         </context-group>
         <target>Video support uses ffmpeg. ffmpeg and ffprobe binaries need to be available in the PATH or the @ffmpeg-installer/ffmpeg and @ffprobe-installer/ffprobe optional node packages need to be installed.</target>
       </trans-unit>
@@ -906,7 +906,7 @@
         <source>Photo</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">968</context>
+          <context context-type="linenumber">975</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/public/ClientConfig.ts</context>
@@ -918,7 +918,7 @@
         <source>Session Timeout</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">991</context>
+          <context context-type="linenumber">998</context>
         </context-group>
         <target>Session Timeout</target>
       </trans-unit>
@@ -926,7 +926,7 @@
         <source>Users kept logged in for this long time.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">995</context>
+          <context context-type="linenumber">1002</context>
         </context-group>
         <target>Users kept logged in for this long time.</target>
       </trans-unit>
@@ -934,7 +934,7 @@
         <source>Trust Proxy</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1001</context>
+          <context context-type="linenumber">1008</context>
         </context-group>
         <target>Trust Proxy</target>
       </trans-unit>
@@ -942,7 +942,7 @@
         <source>Should the backend trust proxies to extract remote Client IP. See express docs, for valid values: https://expressjs.com/en/guide/behind-proxies.html</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1005</context>
+          <context context-type="linenumber">1012</context>
         </context-group>
         <target>Should the backend trust proxies to extract remote Client IP. See express docs, for valid values: https://expressjs.com/en/guide/behind-proxies.html</target>
       </trans-unit>
@@ -950,7 +950,7 @@
         <source>Port number. Port 80 is usually what you need.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1016</context>
+          <context context-type="linenumber">1023</context>
         </context-group>
         <target>Portnummer. Port 80 är den du förmodligen vill använda.</target>
       </trans-unit>
@@ -958,7 +958,7 @@
         <source>Server will accept connections from this IPv6 or IPv4 address.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1028</context>
+          <context context-type="linenumber">1035</context>
         </context-group>
         <target>Servern accepterar anslutningar från denna IPv6 eller IPv4 adress.</target>
       </trans-unit>
@@ -966,7 +966,7 @@
         <source>Logs</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1034</context>
+          <context context-type="linenumber">1041</context>
         </context-group>
         <target>Loggar</target>
       </trans-unit>
@@ -974,7 +974,7 @@
         <source>Server</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1065</context>
+          <context context-type="linenumber">1072</context>
         </context-group>
         <target>Server</target>
       </trans-unit>
@@ -982,7 +982,7 @@
         <source>Users</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1081</context>
+          <context context-type="linenumber">1088</context>
         </context-group>
         <target>Users</target>
       </trans-unit>
@@ -990,7 +990,7 @@
         <source>Indexing</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1089</context>
+          <context context-type="linenumber">1096</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/model/backendtext.service.ts</context>
@@ -1002,7 +1002,7 @@
         <source>If you add a new folder to your gallery, the site indexes it automatically.  If you would like to trigger indexing manually, click index button. (Note: search only works among the indexed directories.)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1094</context>
+          <context context-type="linenumber">1101</context>
         </context-group>
         <target>If you add a new folder to your gallery, the site indexes it automatically. If you would like to trigger indexing manually, click index button. (Note: search only works among the indexed directories.)</target>
       </trans-unit>
@@ -1010,7 +1010,7 @@
         <source>Media</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1105</context>
+          <context context-type="linenumber">1112</context>
         </context-group>
         <target>Media</target>
       </trans-unit>
@@ -1018,7 +1018,7 @@
         <source>Meta file</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1113</context>
+          <context context-type="linenumber">1120</context>
         </context-group>
         <target>Metafil</target>
       </trans-unit>
@@ -1026,7 +1026,7 @@
         <source>Album cover</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1121</context>
+          <context context-type="linenumber">1128</context>
         </context-group>
         <target>Album cover</target>
       </trans-unit>
@@ -1034,7 +1034,7 @@
         <source>Specify a search query and sorting that the app can use to pick the best photo for an album and folder cover. There is no way to manually pick folder and album cover in the app. You can tag some of your photos with 'cover' and set that as search query or rate them to 5 and set sorting to descending by rating.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1132</context>
+          <context context-type="linenumber">1139</context>
         </context-group>
         <target>Specify a search query and sorting that the app can use to pick the best photo for an album and folder cover. There is no way to manually pick folder and album cover in the app. You can tag some of your photos with 'cover' and set that as search query or rate them to 5 and set sorting to descending by rating.</target>
       </trans-unit>
@@ -1042,7 +1042,7 @@
         <source>Sharing</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1138</context>
+          <context context-type="linenumber">1145</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/gallery/share/share.gallery.component.html</context>
@@ -1062,7 +1062,7 @@
         <source>Duplicates</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1146</context>
+          <context context-type="linenumber">1153</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/frontend/app/ui/duplicates/duplicates.component.ts</context>
@@ -1078,7 +1078,7 @@
         <source>Messaging</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1154</context>
+          <context context-type="linenumber">1161</context>
         </context-group>
         <target>Messaging</target>
       </trans-unit>
@@ -1086,7 +1086,7 @@
         <source>The App can send messages (like photos on the same day a year ago. aka: "Top Pick"). Here you can configure the delivery method.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1158</context>
+          <context context-type="linenumber">1165</context>
         </context-group>
         <target>The App can send messages (like photos on the same day a year ago. aka: "Top Pick"). Here you can configure the delivery method.</target>
       </trans-unit>
@@ -1094,7 +1094,7 @@
         <source>Extensions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1165</context>
+          <context context-type="linenumber">1172</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/public/ClientConfig.ts</context>
@@ -1106,7 +1106,7 @@
         <source>Jobs</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/common/config/private/PrivateConfig.ts</context>
-          <context context-type="linenumber">1173</context>
+          <context context-type="linenumber">1180</context>
         </context-group>
         <target>Jobb</target>
       </trans-unit>
