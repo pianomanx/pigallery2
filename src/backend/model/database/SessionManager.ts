@@ -82,6 +82,13 @@ export class SessionManager {
   }
 
   async getAvailableUserSessions(): Promise<SessionContext[]> {
+    // If authentication is not required, expose the unauthenticated session only
+    if (Config.Users.authenticationRequired === false) {
+      const user = ObjectManagers.getInstance().UserManager.getUnAuthenticatedUser();
+      const ctx = await this.buildContext(user as unknown as ContextUser);
+      return [ctx];
+    }
+
     // List all users and build a session context for each
     const users = await ObjectManagers.getInstance().UserManager.find({} as any);
     const sessions: SessionContext[] = [];

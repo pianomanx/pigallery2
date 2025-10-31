@@ -18,6 +18,8 @@ export class AlbumCoverFillingJob extends Job {
 
   protected async init(): Promise<void> {
     this.status = 'Persons';
+    this.directoryToSetCover = null;
+    this.availableSessions = null;
   }
 
   protected async step(): Promise<boolean> {

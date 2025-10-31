@@ -5,6 +5,7 @@ import {PasswordHelper} from '../PasswordHelper';
 import {FindOptionsWhere} from 'typeorm';
 import {UserSettingsDTO} from '../../../common/entities/UserSettingsDTO';
 import {SearchQueryUtils} from '../../../common/SearchQueryUtils';
+import {Config} from '../../../common/config/private/Config';
 
 export class UserManager {
 
@@ -87,4 +88,10 @@ export class UserManager {
     return userRepository.save(user);
   }
 
+  getUnAuthenticatedUser(): UserDTO {
+    return {
+      name: UserRoles[Config.Users.unAuthenticatedUserRole],
+      role: Config.Users.unAuthenticatedUserRole,
+    } as UserDTO;
+  }
 }

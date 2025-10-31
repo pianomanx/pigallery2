@@ -20,10 +20,7 @@ export class AuthenticationMWs {
     next: NextFunction
   ): Promise<void> {
     if (Config.Users.authenticationRequired === false) {
-      const user = {
-        name: UserRoles[Config.Users.unAuthenticatedUserRole],
-        role: Config.Users.unAuthenticatedUserRole,
-      } as UserDTO;
+      const user =  ObjectManagers.getInstance().UserManager.getUnAuthenticatedUser();
       req.session.context = await ObjectManagers.getInstance().SessionManager.buildContext(user);
       return next();
     }
@@ -46,10 +43,7 @@ export class AuthenticationMWs {
     next: NextFunction
   ): Promise<void> {
     if (Config.Users.authenticationRequired === false) {
-      const user = {
-        name: UserRoles[Config.Users.unAuthenticatedUserRole],
-        role: Config.Users.unAuthenticatedUserRole,
-      } as UserDTO;
+      const user =  ObjectManagers.getInstance().UserManager.getUnAuthenticatedUser();
       req.session.context = await ObjectManagers.getInstance().SessionManager.buildContext(user);
       return next();
     }

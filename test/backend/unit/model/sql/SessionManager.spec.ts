@@ -8,6 +8,7 @@ import {Brackets} from 'typeorm';
 import {DBTestHelper} from '../../../DBTestHelper';
 import {SharingEntity} from '../../../../../src/backend/model/database/enitites/SharingEntity';
 import {SessionManager} from '../../../../../src/backend/model/database/SessionManager';
+import {Config} from '../../../../../src/common/config/private/Config';
 
 declare let describe: any;
 declare const it: any;
@@ -322,4 +323,88 @@ describe('SessionManager', (sqlHelper: DBTestHelper) => {
       expect(result.list[1]).to.be.eql(sharing.searchQuery);
     });
   });
+
+  describe('getAvailableUserSessions', () => {
+    // Reset ObjectManagers before each test
+    beforeEach(async () => {
+      await sqlHelper.initDB();
+    });
+
+    afterEach(sqlHelper.clearDB);
+
+    it('should return unauthenticated session when authenticationRequired is false', async () => {
+      const sm = new SessionManager();
+
+      // Backup and override config
+      const originalAuthRequired = Config.Users.authenticationRequired;
+      (Config.Users as any).authenticationRequired = false;
+
+      // Stub UserManager.getUnAuthenticatedUser
+      const om = ObjectManagers.getInstance();
+      const originalGetUnauth = (om.UserManager as any).getUnAuthenticatedUser;
+
+      const unauthUser = new UserEntity();
+      unauthUser.id = 99 as any;
+      unauthUser.name = 'unauth';
+      unauthUser.role = UserRoles.Guest as any;
+
+      (om.UserManager as any).getUnAuthenticatedUser = () => unauthUser;
+
+      // Also ensure find() would not be used (defensive)
+      const originalFind = (om.UserManager as any).find;
+      (om.UserManager as any).find = () => { throw new Error('find() should not be called when auth is disabled'); };
+
+      try {
+        const sessions = await sm.getAvailableUserSessions();
+        expect(sessions).to.have.lengthOf(1);
+        expect(sessions[0].user).to.eql(unauthUser);
+        expect(sessions[0].projectionQuery).to.be.undefined;
+        expect(sessions[0].user.projectionKey).to.be.a('string').and.not.empty;
+      } finally {
+        // restore stubs and config
+        (om.UserManager as any).getUnAuthenticatedUser = originalGetUnauth;
+        (om.UserManager as any).find = originalFind;
+        (Config.Users as any).authenticationRequired = originalAuthRequired;
+      }
+    });
+
+    it('should return contexts for users when authenticationRequired is true', async () => {
+      const sm = new SessionManager();
+
+      // Backup and enforce config
+      const originalAuthRequired = Config.Users.authenticationRequired;
+      (Config.Users as any).authenticationRequired = true;
+
+      const om = ObjectManagers.getInstance();
+      // Stub UserManager.find to return two users
+      const originalFind = (om.UserManager as any).find;
+
+      const u1 = new UserEntity();
+      u1.id = 1 as any;
+      u1.name = 'u1';
+      u1.role = UserRoles.User as any;
+
+      const u2 = new UserEntity();
+      u2.id = 2 as any;
+      u2.name = 'u2';
+      u2.role = UserRoles.Admin as any;
+
+      (om.UserManager as any).find = () => Promise.resolve([u1, u2]);
+
+      try {
+        const sessions = await sm.getAvailableUserSessions();
+        expect(sessions).to.have.lengthOf(2);
+        const users = sessions.map(s => s.user);
+        expect(users).to.have.members([u1 as any, u2 as any]);
+        sessions.forEach(s => {
+          expect(s.projectionQuery).to.be.undefined;
+          expect(s.user.projectionKey).to.be.a('string').and.not.empty;
+        });
+      } finally {
+        (om.UserManager as any).find = originalFind;
+        (Config.Users as any).authenticationRequired = originalAuthRequired;
+      }
+    });
+  });
 });
+
