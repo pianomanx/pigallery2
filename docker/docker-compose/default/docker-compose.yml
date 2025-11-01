@@ -19,6 +19,7 @@ services:
     environment:
       - NODE_ENV=production # set to 'debug' for full debug logging
       # - NODE_OPTIONS=--enable-source-maps # enable source map support on the backend for development
+      # volumes are "host path: docker path", see: https://docs.docker.com/reference/compose-file/volumes/
     volumes:
       - "./pigallery2/config:/app/data/config" # CHANGE ME
       - "db-data:/app/data/db"
