@@ -20,6 +20,7 @@ import {SessionContext} from '../SessionContext';
 import {IClientMediaButtonConfig} from '../../../common/entities/extension/IClientUIConfig';
 import {MediaEntity} from '../database/enitites/MediaEntity';
 import {VideoConverterInput} from '../fileaccess/VideoConverterWorker';
+import {ProjectedDirectoryCacheEntity} from '../database/enitites/ProjectedDirectoryCacheEntity';
 
 
 export type IExtensionBeforeEventHandler<I extends unknown[], O> = (input: I, event: { stopPropagation: boolean }) => Promise<I | O>;
@@ -59,8 +60,17 @@ export interface IExtensionEvents {
        * Invalidates directory covers and caches for a given directory and every parent
        */
       invalidateDirectoryCache: IExtensionEvent<[ParentDirectoryDTO], void>;
+      /**
+       * Returns the projected directory cache for a given directory
+       * ProjectedDirectoryCacheEntity contains information, like the number of photos, videos, etc..
+       */
+      getCacheForDirectory: IExtensionEvent<[connection: Connection, session: SessionContext, dir: {
+        id: number,
+        name: string,
+        path: string
+      }], ProjectedDirectoryCacheEntity>;
     },
-    VideoConverter:{
+    VideoConverter: {
       /**
        * Converts videos with ffmpeg
        */

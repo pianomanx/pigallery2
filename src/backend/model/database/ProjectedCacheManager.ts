@@ -93,7 +93,9 @@ export class ProjectedCacheManager implements IObjectManager {
       .execute();
   }
 
-  public async setAndGetCacheForDirectory(connection: Connection, session: SessionContext, dir: {
+
+  @ExtensionDecorator(e => e.gallery.ProjectedCacheManager.getCacheForDirectory)
+  public async getCacheForDirectory(connection: Connection, session: SessionContext, dir: {
     id: number,
     name: string,
     path: string
@@ -173,6 +175,16 @@ export class ProjectedCacheManager implements IObjectManager {
     row.cover = coverMedia as any;
     row.valid = true;
 
+    return row;
+  }
+
+  public async setAndGetCacheForDirectory(connection: Connection, session: SessionContext, dir: {
+    id: number,
+    name: string,
+    path: string
+  }): Promise<ProjectedDirectoryCacheEntity> {
+    const cacheRepo = connection.getRepository(ProjectedDirectoryCacheEntity);
+    const row = await this.getCacheForDirectory(connection, session, dir);
     const ret = await cacheRepo.save(row);
     // we would not select these either
     delete ret.projectionKey;
