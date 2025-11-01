@@ -234,7 +234,8 @@ export class ExtensionManager implements IObjectManager {
           getCoverForAlbum: new ExtensionEvent(),
         },
         ProjectedCacheManager: {
-          invalidateDirectoryCache: new ExtensionEvent()
+          invalidateDirectoryCache: new ExtensionEvent(),
+          getCacheForDirectory: new ExtensionEvent()
         },
         DiskManager: {
           excludeDir: new ExtensionEvent(),
@@ -242,6 +243,9 @@ export class ExtensionManager implements IObjectManager {
         },
         ImageRenderer: {
           render: new ExtensionEvent()
+        },
+        VideoConverter: {
+          convert: new ExtensionEvent()
         }
       }
     };
