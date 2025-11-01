@@ -813,7 +813,7 @@ export class VideoTranscodingConfig {
       {
         name: $localize`MP4 codec`,
         priority: ConfigPriority.underTheHood,
-        uiOptions: ['libx264', 'libx265'],
+        uiOptions: ['libx264', 'libx265', 'h264_rkmpp'],
         relevant: (c: any) => c.format === 'mp4'
       }
   })
