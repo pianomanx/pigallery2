@@ -19,6 +19,7 @@ import {DirectoryScanSettings} from '../fileaccess/DiskManager';
 import {SessionContext} from '../SessionContext';
 import {IClientMediaButtonConfig} from '../../../common/entities/extension/IClientUIConfig';
 import {MediaEntity} from '../database/enitites/MediaEntity';
+import {VideoConverterInput} from '../fileaccess/VideoConverterWorker';
 
 
 export type IExtensionBeforeEventHandler<I extends unknown[], O> = (input: I, event: { stopPropagation: boolean }) => Promise<I | O>;
@@ -58,6 +59,12 @@ export interface IExtensionEvents {
        * Invalidates directory covers and caches for a given directory and every parent
        */
       invalidateDirectoryCache: IExtensionEvent<[ParentDirectoryDTO], void>;
+    },
+    VideoConverter:{
+      /**
+       * Converts videos with ffmpeg
+       */
+      convert: IExtensionEvent<[VideoConverterInput], void>
     },
     ImageRenderer: {
       /**

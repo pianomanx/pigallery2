@@ -139,6 +139,7 @@ App CLI options:
   --Search-listMetafiles                                                    Search also returns with metafiles from directories that contain a media file of the matched search result. (default: true)
   --Sharing-enabled                                                         Enables sharing. (default: true)
   --Sharing-passwordRequired                                                Requires password protected sharing links. (default: false)
+  --Sharing-sharingKeyLength                                                The longer the keys are, the harder they are to guess. Changing this number won't invalidate existing sharing. (default: 8)
   --Sharing-updateTimeout                                                   After creating a sharing link, it can be updated for this long. (default: 300000)
   --Map-enabled                                                              (default: true)
   --Map-useImageMarkers                                                     Map will use thumbnail images as markers instead of the default pin. (default: true)
@@ -170,7 +171,7 @@ App CLI options:
   --Indexing-excludeFolderList                                              Folders to exclude from indexing. If an entry starts with '/' it is treated as an absolute path. If it doesn't start with '/' but contains a '/', the path is relative to the image directory. If it doesn't contain a '/', any folder with this name will be excluded. (default: [".Trash-1000",".dtrash","$RECYCLE.BIN"])
   --Indexing-excludeFileList                                                Files that mark a folder to be excluded from indexing. Any folder that contains a file with this name will be excluded from indexing. (default: [])
   --AlbumCover-SearchQuery                                                  Filters the sub-folders with this search query. If filter results no photo, the app will search again without the filter. (default: {"type":100,"text":""})
-  --AlbumCover-Sorting                                                      If multiple cover is available sorts them by these methods and selects the first one. (default: [{"method":30,"ascending":false},{"method":20,"ascending":false},{"method":40,"ascending":false}])
+  --AlbumCover-Sorting                                                      If multiple cover is available sorts them by these methods and selects the first one. Using random sorting does not allow to use any other sorting method. (default: [{"method":30,"ascending":false},{"method":20,"ascending":false},{"method":40,"ascending":false}])
   --Duplicates-listingLimit                                                 Maximum number of duplicates to list. (default: 1000)
   --Messaging-Email-emailFrom                                               Some services do not allow sending from random e-mail addresses. Set this accordingly. (default: 'noreply@pigallery2.com')
   --Messaging-Email-smtp-host                                               SMTP host server (default: '')
@@ -298,6 +299,7 @@ Environmental variables:
   Search-listMetafiles                                                  Search also returns with metafiles from directories that contain a media file of the matched search result. (default: true)
   Sharing-enabled                                                       Enables sharing. (default: true)
   Sharing-passwordRequired                                              Requires password protected sharing links. (default: false)
+  Sharing-sharingKeyLength                                              The longer the keys are, the harder they are to guess. Changing this number won't invalidate existing sharing. (default: 8)
   Sharing-updateTimeout                                                 After creating a sharing link, it can be updated for this long. (default: 300000)
   Map-enabled                                                            (default: true)
   Map-useImageMarkers                                                   Map will use thumbnail images as markers instead of the default pin. (default: true)
@@ -334,7 +336,7 @@ Environmental variables:
   Indexing-excludeFolderList                                            Folders to exclude from indexing. If an entry starts with '/' it is treated as an absolute path. If it doesn't start with '/' but contains a '/', the path is relative to the image directory. If it doesn't contain a '/', any folder with this name will be excluded. (default: [".Trash-1000",".dtrash","$RECYCLE.BIN"])
   Indexing-excludeFileList                                              Files that mark a folder to be excluded from indexing. Any folder that contains a file with this name will be excluded from indexing. (default: [])
   AlbumCover-SearchQuery                                                Filters the sub-folders with this search query. If filter results no photo, the app will search again without the filter. (default: {"type":100,"text":""})
-  AlbumCover-Sorting                                                    If multiple cover is available sorts them by these methods and selects the first one. (default: [{"method":30,"ascending":false},{"method":20,"ascending":false},{"method":40,"ascending":false}])
+  AlbumCover-Sorting                                                    If multiple cover is available sorts them by these methods and selects the first one. Using random sorting does not allow to use any other sorting method. (default: [{"method":30,"ascending":false},{"method":20,"ascending":false},{"method":40,"ascending":false}])
   Duplicates-listingLimit                                               Maximum number of duplicates to list. (default: 1000)
   Messaging-Email-emailFrom                                             Some services do not allow sending from random e-mail addresses. Set this accordingly. (default: 'noreply@pigallery2.com')
   Messaging-Email-smtp-host                                             SMTP host server (default: '')
@@ -686,6 +688,8 @@ Environmental variables:
         "enabled": true,
         "//[passwordRequired]": "Requires password protected sharing links.",
         "passwordRequired": false,
+        "//[sharingKeyLength]": "The longer the keys are, the harder they are to guess. Changing this number won't invalidate existing sharing.",
+        "sharingKeyLength": 8,
         "//[updateTimeout]": "After creating a sharing link, it can be updated for this long.",
         "updateTimeout": 300000
     },
@@ -984,7 +988,7 @@ Environmental variables:
             "type": 100,
             "text": ""
         },
-        "//[Sorting]": "If multiple cover is available sorts them by these methods and selects the first one.",
+        "//[Sorting]": "If multiple cover is available sorts them by these methods and selects the first one. Using random sorting does not allow to use any other sorting method.",
         "Sorting": [
             {
                 "method": "Rating",

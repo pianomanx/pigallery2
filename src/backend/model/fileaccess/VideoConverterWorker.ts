@@ -3,6 +3,7 @@ import {promises as fsp} from 'fs';
 import {FfmpegCommand} from 'fluent-ffmpeg';
 import {FFmpegFactory} from '../FFmpegFactory';
 import {FFmpegPresets, videoCodecType, videoFormatType, videoResolutionType,} from '../../../common/config/private/PrivateConfig';
+import {ExtensionDecorator} from '../extension/ExtensionDecorator';
 
 export interface VideoConverterInput {
   videoPath: string;
@@ -25,6 +26,7 @@ export interface VideoConverterInput {
 export class VideoConverterWorker {
   private static ffmpeg = FFmpegFactory.get();
 
+  @ExtensionDecorator(e => e.gallery.VideoConverter.convert)
   public static async convert(input: VideoConverterInput): Promise<void> {
     const origPath = input.output.path;
     input.output.path = origPath + '.part';
@@ -90,7 +92,6 @@ export class VideoConverterWorker {
       if (input.output.customOptions) {
         command.addOption(input.output.customOptions);
       }
-
       // set output format to force
       command
           .format(input.output.format)
