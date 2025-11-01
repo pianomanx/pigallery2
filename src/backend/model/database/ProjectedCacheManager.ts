@@ -98,7 +98,6 @@ export class ProjectedCacheManager implements IObjectManager {
     name: string,
     path: string
   }): Promise<ProjectedDirectoryCacheEntity> {
-    console.log('setAndGetCacheForDirectory', session.user?.projectionKey); // TODO: remove
     // Compute aggregates under the current projection (if any)
     const mediaRepo = connection.getRepository(MediaEntity);
     const baseQb = mediaRepo
