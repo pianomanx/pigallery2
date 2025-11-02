@@ -59,3 +59,4 @@ test2.*
 /docs/index.html.js*
 /bm_config.json
 /cypress.env.json
+/wiki/
