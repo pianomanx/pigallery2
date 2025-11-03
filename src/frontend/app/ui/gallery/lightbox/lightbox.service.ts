@@ -116,7 +116,6 @@ export class LightboxService {
 
   private updateQuery(key: string, defValue: boolean | number, newValue: boolean | number) {
     if (defValue === newValue) {
-      console.log(key, 'is the same');
       newValue = null;
     }
     // Merge this param into the current URL
