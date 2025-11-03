@@ -27,13 +27,10 @@ export class QueryService {
     }
   }
 
-  getParams(lightbox?: { media?: MediaDTO, playing?: boolean }): { [key: string]: string } {
+  getParams(lightbox?: { media?: MediaDTO}): { [key: string]: string } {
     const query: { [key: string]: string } = {};
     if (lightbox?.media) {
       query[QueryParams.gallery.photo] = this.getMediaStringId(lightbox?.media);
-    }
-    if (lightbox?.playing) {
-      query[QueryParams.gallery.playback] = 'true';
     }
     if (Config.Sharing.enabled === true) {
       if (this.shareService.isSharing()) {

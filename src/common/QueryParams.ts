@@ -14,11 +14,19 @@ export const QueryParams = {
       query: 'qs',
     },
     photo: 'p',
-    playback: 'play',
     sharingKey_query: 'sk',
     sharingKey_params: 'sharingKey',
     directory: 'directory',
     knownLastModified: 'klm',
     knownLastScanned: 'kls',
+    fullscreen: 'fullscreen',
+    lightbox: {
+      playback: 'play',
+      captionAlwaysOn: 'captionAlwaysOn',
+      facesAlwaysOn: 'facesAlwaysOn',
+      loopVideos: 'loopVideos',
+      loopSlideshow: 'loopSlideshow',
+      slideshowSpeed: 'slideshowSpeed'
+    }
   },
 };

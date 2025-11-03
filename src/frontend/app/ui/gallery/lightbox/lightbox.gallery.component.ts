@@ -132,7 +132,7 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
           params[QueryParams.gallery.photo] !== '';
 
 
-        if (params[QueryParams.gallery.playback]) {
+        if (params[QueryParams.gallery.lightbox.playback]) {
           this.runSlideShow();
         } else {
           this.stopSlideShow();
@@ -426,7 +426,7 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
   onVideoSourceError(): void {
     this.videoSourceError = true;
   }
-
+/*
   togglePlayback(value: boolean): void {
     if (this.slideShowRunning === value) {
       return;
@@ -435,7 +435,7 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
     // resets query. This side effect is to assign playback = true to the url
     this.navigateToPhoto(this.activePhotoId);
   }
-
+*/
   private updateInfoPanelWidth() {
     this.infoPanelMaxWidth = Math.min(400, Math.ceil(window.innerWidth + 1));
     if ((window.innerWidth - this.infoPanelMaxWidth) < this.infoPanelMaxWidth * 0.3) {
@@ -478,8 +478,9 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
     this.router
       .navigate([], {
         queryParams: this.queryService.getParams(
-          {media: this.gridPhotoQL.get(photoIndex).gridMedia.media, playing: this.slideShowRunning}
+          {media: this.gridPhotoQL.get(photoIndex).gridMedia.media}
         ),
+        queryParamsHandling: 'merge', // keep existing params
         replaceUrl: true,
       })
       .then(() => {

@@ -933,7 +933,7 @@ export class ClientLightboxConfig {
     },
     description: $localize`Default time interval for displaying a photo in the slide show.`
   })
-  defaultSlideshowSpeed: number = 5;
+  slideshowSpeed: number = 5;
 
   @ConfigProperty({
     tags: {

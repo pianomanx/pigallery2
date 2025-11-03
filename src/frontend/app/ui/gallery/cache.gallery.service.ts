@@ -380,25 +380,6 @@ export class GalleryCacheService {
     }
   }
 
-  getSlideshowSpeed(): number {
-    const key = GalleryCacheService.SLIDESHOW_SPEED;
-    const tmp = localStorage.getItem(key);
-    if (tmp != null) {
-      return parseInt(tmp, 10);
-    }
-    return null;
-  }
-
-  setSlideshowSpeed(speed: number): void {
-    try {
-      const key = GalleryCacheService.SLIDESHOW_SPEED;
-      localStorage.setItem(key, speed.toString());
-    } catch (e) {
-      this.reset();
-      console.error(e);
-    }
-  }
-
   getThemeMode(): ThemeModes {
     const key = GalleryCacheService.THEME_MODE;
     const tmp = localStorage.getItem(key) as keyof typeof ThemeModes;

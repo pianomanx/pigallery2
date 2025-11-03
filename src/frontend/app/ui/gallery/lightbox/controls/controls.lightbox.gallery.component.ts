@@ -1,4 +1,4 @@
-import {Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild,} from '@angular/core';
+import {Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, ViewChild,} from '@angular/core';
 import {MediaDTOUtils} from '../../../../../../common/entities/MediaDTO';
 import {FullScreenService} from '../../fullscreen.service';
 import {GalleryPhotoComponent} from '../../grid/photo/photo.grid.gallery.component';
@@ -13,62 +13,54 @@ import {LightboxService} from '../lightbox.service';
 import {GalleryCacheService} from '../../cache.gallery.service';
 import {Utils} from '../../../../../../common/Utils';
 import {FileSizePipe} from '../../../../pipes/FileSizePipe';
-import { DatePipe, NgIf, NgFor } from '@angular/common';
+import {DatePipe, NgFor, NgIf} from '@angular/common';
 import {LightBoxTitleTexts} from '../../../../../../common/config/public/ClientConfig';
-import { NgIconComponent } from '@ng-icons/core';
-import { BsDropdownDirective, BsDropdownToggleDirective, BsDropdownMenuDirective } from 'ngx-bootstrap/dropdown';
-import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import {NgIconComponent} from '@ng-icons/core';
+import {BsDropdownDirective, BsDropdownMenuDirective, BsDropdownToggleDirective} from 'ngx-bootstrap/dropdown';
+import {FormsModule} from '@angular/forms';
+import {RouterLink} from '@angular/router';
 
 
 @Component({
-    selector: 'app-lightbox-controls',
-    styleUrls: ['./controls.lightbox.gallery.component.css', './inputrange.css'],
-    templateUrl: './controls.lightbox.gallery.component.html',
-    imports: [
-        NgIf,
-        NgIconComponent,
-        BsDropdownDirective,
-        BsDropdownToggleDirective,
-        BsDropdownMenuDirective,
-        FormsModule,
-        NgFor,
-        RouterLink,
-    ]
+  selector: 'app-lightbox-controls',
+  styleUrls: ['./controls.lightbox.gallery.component.css', './inputrange.css'],
+  templateUrl: './controls.lightbox.gallery.component.html',
+  imports: [
+    NgIf,
+    NgIconComponent,
+    BsDropdownDirective,
+    BsDropdownToggleDirective,
+    BsDropdownMenuDirective,
+    FormsModule,
+    NgFor,
+    RouterLink,
+  ]
 })
-export class ControlsLightboxComponent implements OnDestroy, OnInit, OnChanges {
+export class ControlsLightboxComponent implements OnDestroy, OnChanges {
   readonly MAX_ZOOM = 10;
   @ViewChild('canvas')
   canvas: ElementRef<HTMLCanvasElement>;
-  private ctx: CanvasRenderingContext2D;
-
   @ViewChild('root', {static: false}) root: ElementRef;
   @Output() closed = new EventEmitter();
   @Output() toggleInfoPanel = new EventEmitter();
   @Output() toggleFullScreen = new EventEmitter();
   @Output() nextPhoto = new EventEmitter();
   @Output() previousPhoto = new EventEmitter();
-  @Output() togglePlayback = new EventEmitter<boolean>();
-
   @Input() navigation = {hasPrev: true, hasNext: true};
   @Input() activePhoto: GalleryPhotoComponent;
   @Input() mediaElement: GalleryLightboxMediaComponent;
   @Input() photoFrameDim = {width: 1, height: 1, aspect: 1};
   @Input() slideShowRunning: boolean;
-
   public readonly facesEnabled = Config.Faces.enabled;
-
   public zoom = 1;
   public playBackDurations = [1, 2, 5, 10, 15, 20, 30, 60];
-  public selectedSlideshowSpeed: number = null;
   public controllersDimmed = false;
-
   public controllersVisible = true;
   public drag = {x: 0, y: 0};
   public SearchQueryTypes = SearchQueryTypes;
   public faceContainerDim = {width: 0, height: 0};
   public searchEnabled: boolean;
-
+  private ctx: CanvasRenderingContext2D;
   private visibilityTimer: number = null;
   private timerSub: Subscription;
   private prevDrag = {x: 0, y: 0};
@@ -78,7 +70,6 @@ export class ControlsLightboxComponent implements OnDestroy, OnInit, OnChanges {
     public lightboxService: LightboxService,
     public fullScreenService: FullScreenService,
     private authService: AuthenticationService,
-    private cacheService: GalleryCacheService,
     private fileSizePipe: FileSizePipe,
     private datePipe: DatePipe
   ) {
@@ -113,16 +104,24 @@ export class ControlsLightboxComponent implements OnDestroy, OnInit, OnChanges {
     this.checkZoomAndDrag();
   }
 
-  public containerWidth(): void {
-    return this.root.nativeElement.width;
+  get TopLeftTitle(): string {
+    return this.getText(Config.Gallery.Lightbox.Titles.topLeftTitle);
   }
 
-  ngOnInit(): void {
-    if (this.cacheService.getSlideshowSpeed()) {
-      this.selectedSlideshowSpeed = this.cacheService.getSlideshowSpeed();
-    } else {
-      this.selectedSlideshowSpeed = Config.Gallery.Lightbox.defaultSlideshowSpeed;
-    }
+  get TopLeftSubtitle(): string {
+    return this.getText(Config.Gallery.Lightbox.Titles.topLeftSubtitle);
+  }
+
+  get BottomLeftTitle(): string {
+    return this.getText(Config.Gallery.Lightbox.Titles.bottomLeftTitle);
+  }
+
+  get BottomLeftSubtitle(): string {
+    return this.getText(Config.Gallery.Lightbox.Titles.bottomLeftSubtitle);
+  }
+
+  public containerWidth(): void {
+    return this.root.nativeElement.width;
   }
 
   ngOnDestroy(): void {
@@ -294,8 +293,123 @@ export class ControlsLightboxComponent implements OnDestroy, OnInit, OnChanges {
     }
   }
 
+  public runSlideShow(): void {
+    //timer already running, do not reset it.
+    if (this.timerSub) {
+      return;
+    }
+    this.stopSlideShow();
+    this.drawSliderProgress(0);
+    this.timerSub = interval(100)
+      .pipe(filter((t) => {
+        this.drawSliderProgress(t);
+        return t % (this.lightboxService.slideshowSpeed * 10) === 0; // ticks every 100 ms
+      }))
+      .pipe(skip(1)) // do not skip to next photo right away
+      .subscribe(this.showNextMedia);
+  }
+
+  @HostListener('mousemove')
+  onMouseMove(): void {
+    this.showControls();
+  }
+
+  public stopSlideShow(): void {
+    if (this.timerSub != null) {
+      this.timerSub.unsubscribe();
+      this.timerSub = null;
+    }
+    this.ctx = null;
+  }
+
+  playClicked() {
+    this.lightboxService.playback = true;
+  }
+
+  pauseClicked() {
+    this.lightboxService.playback = false;
+  }
+
+  resetZoom(): void {
+    this.Zoom = 1;
+  }
+
+  onResize(): void {
+    this.checkZoomAndDrag();
+  }
+
+  public closeLightbox(): void {
+    this.hideControls();
+    this.closed.emit();
+  }
+
+  getPersonSearchQuery(name: string): string {
+    return JSON.stringify({
+      type: SearchQueryTypes.person,
+      matchType: TextSearchQueryMatchTypes.exact_match,
+      text: name,
+    } as TextSearch);
+  }
+
+  nextMediaManuallyTriggered() {
+    this.resetSlideshowTimer();
+    this.nextPhoto.emit();
+  }
+
+  getText(type: LightBoxTitleTexts): string {
+    if (!this.activePhoto?.gridMedia?.media) {
+      return null;
+    }
+    const m = this.activePhoto.gridMedia.media as PhotoDTO;
+    switch (type) {
+      case LightBoxTitleTexts.file:
+        return Utils.concatUrls(
+          m.directory.path,
+          m.directory.name,
+          m.name
+        );
+      case LightBoxTitleTexts.resolution:
+        return `${m.metadata.size.width}x${m.metadata.size.height}`;
+      case LightBoxTitleTexts.size:
+        return this.fileSizePipe.transform(m.metadata.fileSize);
+      case LightBoxTitleTexts.title:
+        return m.metadata.title;
+      case LightBoxTitleTexts.caption:
+        return m.metadata.caption;
+      case LightBoxTitleTexts.keywords:
+        return m.metadata.keywords.join(', ');
+      case LightBoxTitleTexts.persons:
+        return m.metadata.faces?.map(f => f.name)?.join(', ');
+      case LightBoxTitleTexts.date:
+        return this.datePipe.transform(Utils.getTimeMS(m.metadata.creationDate, m.metadata.creationDateOffset, Config.Gallery.ignoreTimestampOffset), 'longDate', 'UTC');
+      case LightBoxTitleTexts.location:
+        if (!m.metadata.positionData) {
+          return '';
+        }
+        return [
+          m.metadata.positionData.city,
+          m.metadata.positionData.state,
+          m.metadata.positionData.country
+        ].filter(elm => elm).join(', ').trim(); //Filter removes empty elements, join concats the values separated by ', '
+      case LightBoxTitleTexts.camera:
+        return m.metadata.cameraData?.model;
+      case LightBoxTitleTexts.lens:
+        return m.metadata.cameraData?.lens;
+      case LightBoxTitleTexts.iso:
+        return m.metadata.cameraData?.ISO.toString();
+      case LightBoxTitleTexts.fstop:
+        if (m.metadata.cameraData?.fStop > 1) {
+          return m.metadata.cameraData?.fStop.toString();
+        }
+        return '1/' + Math.round(1 / m.metadata.cameraData?.fStop);
+      case LightBoxTitleTexts.focal_length:
+        return m.metadata.cameraData?.focalLength.toString();
+    }
+    return null;
+  }
+
   private showNextMedia = () => {
-    if(!this.navigation.hasNext){
+    if (!this.navigation.hasNext) {
       this.pauseClicked();
       return;
     }
@@ -321,7 +435,7 @@ export class ControlsLightboxComponent implements OnDestroy, OnInit, OnChanges {
     if (!(this.activePhoto &&
       this.activePhoto.gridMedia.isVideo() &&
       !this.mediaElement.Paused)) {
-      p = (t % (this.selectedSlideshowSpeed * 10)) / this.selectedSlideshowSpeed / 10;  // ticks every 100 ms
+      p = (t % (this.lightboxService.slideshowSpeed * 10)) / this.lightboxService.slideshowSpeed / 10;  // ticks every 100 ms
 
     }
     if (!this.canvas) {
@@ -346,68 +460,6 @@ export class ControlsLightboxComponent implements OnDestroy, OnInit, OnChanges {
       this.stopSlideShow();
       this.runSlideShow();
     }
-  }
-
-  public runSlideShow(): void {
-    //timer already running, do not reset it.
-    if (this.timerSub) {
-      return;
-    }
-    this.stopSlideShow();
-    this.drawSliderProgress(0);
-    this.timerSub = interval(100)
-      .pipe(filter((t) => {
-        this.drawSliderProgress(t);
-        return t % (this.selectedSlideshowSpeed * 10) === 0; // ticks every 100 ms
-      }))
-      .pipe(skip(1)) // do not skip to next photo right away
-      .subscribe(this.showNextMedia);
-  }
-
-  public slideshowSpeedChanged() {
-    this.cacheService.setSlideshowSpeed(this.selectedSlideshowSpeed);
-  }
-
-  @HostListener('mousemove')
-  onMouseMove(): void {
-    this.showControls();
-  }
-
-  public stopSlideShow(): void {
-    if (this.timerSub != null) {
-      this.timerSub.unsubscribe();
-      this.timerSub = null;
-    }
-    this.ctx = null;
-  }
-
-  playClicked() {
-    this.togglePlayback.emit(true);
-  }
-
-  pauseClicked() {
-    this.togglePlayback.emit(false);
-  }
-
-  resetZoom(): void {
-    this.Zoom = 1;
-  }
-
-  onResize(): void {
-    this.checkZoomAndDrag();
-  }
-
-  public closeLightbox(): void {
-    this.hideControls();
-    this.closed.emit();
-  }
-
-  getPersonSearchQuery(name: string): string {
-    return JSON.stringify({
-      type: SearchQueryTypes.person,
-      matchType: TextSearchQueryMatchTypes.exact_match,
-      text: name,
-    } as TextSearch);
   }
 
   private checkZoomAndDrag(): void {
@@ -493,80 +545,6 @@ export class ControlsLightboxComponent implements OnDestroy, OnInit, OnChanges {
       this.faceContainerDim.height = this.photoFrameDim.width / photoAspect;
       this.faceContainerDim.width = this.photoFrameDim.width;
     }
-  }
-
-  nextMediaManuallyTriggered() {
-    this.resetSlideshowTimer();
-    this.nextPhoto.emit();
-  }
-
-
-  getText(type: LightBoxTitleTexts): string {
-    if (!this.activePhoto?.gridMedia?.media) {
-      return null;
-    }
-    const m = this.activePhoto.gridMedia.media as PhotoDTO;
-    switch (type) {
-      case LightBoxTitleTexts.file:
-        return Utils.concatUrls(
-          m.directory.path,
-          m.directory.name,
-          m.name
-        );
-      case LightBoxTitleTexts.resolution:
-        return `${m.metadata.size.width}x${m.metadata.size.height}`;
-      case LightBoxTitleTexts.size:
-        return this.fileSizePipe.transform(m.metadata.fileSize);
-      case LightBoxTitleTexts.title:
-        return m.metadata.title;
-      case LightBoxTitleTexts.caption:
-        return m.metadata.caption;
-      case LightBoxTitleTexts.keywords:
-        return m.metadata.keywords.join(', ');
-      case LightBoxTitleTexts.persons:
-        return m.metadata.faces?.map(f => f.name)?.join(', ');
-      case LightBoxTitleTexts.date:
-        return this.datePipe.transform(Utils.getTimeMS(m.metadata.creationDate, m.metadata.creationDateOffset, Config.Gallery.ignoreTimestampOffset) , 'longDate', 'UTC');
-      case LightBoxTitleTexts.location:
-        if (!m.metadata.positionData) {
-          return '';
-        }
-        return [
-          m.metadata.positionData.city,
-          m.metadata.positionData.state,
-          m.metadata.positionData.country
-        ].filter(elm => elm).join(', ').trim(); //Filter removes empty elements, join concats the values separated by ', '
-      case LightBoxTitleTexts.camera:
-        return m.metadata.cameraData?.model;
-      case LightBoxTitleTexts.lens:
-        return m.metadata.cameraData?.lens;
-      case LightBoxTitleTexts.iso:
-        return m.metadata.cameraData?.ISO.toString();
-      case LightBoxTitleTexts.fstop:
-        if (m.metadata.cameraData?.fStop > 1) {
-          return m.metadata.cameraData?.fStop.toString();
-        }
-        return '1/' + Math.round(1 / m.metadata.cameraData?.fStop);
-      case LightBoxTitleTexts.focal_length:
-        return m.metadata.cameraData?.focalLength.toString();
-    }
-    return null;
-  }
-
-  get TopLeftTitle(): string {
-    return this.getText(Config.Gallery.Lightbox.Titles.topLeftTitle);
-  }
-
-  get TopLeftSubtitle(): string {
-    return this.getText(Config.Gallery.Lightbox.Titles.topLeftSubtitle);
-  }
-
-  get BottomLeftTitle(): string {
-    return this.getText(Config.Gallery.Lightbox.Titles.bottomLeftTitle);
-  }
-
-  get BottomLeftSubtitle(): string {
-    return this.getText(Config.Gallery.Lightbox.Titles.bottomLeftSubtitle);
   }
 
 }

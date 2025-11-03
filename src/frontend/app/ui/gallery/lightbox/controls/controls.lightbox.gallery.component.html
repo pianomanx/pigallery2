@@ -60,8 +60,7 @@
               <span class="pe-2" i18n-title title="Slideshow playback speed" i18n>Slideshow speed:</span>
               <select
                 class="form-select d-inline-block w-auto"
-                [(ngModel)]="selectedSlideshowSpeed"
-                (ngModelChange)="slideshowSpeedChanged()">
+                [(ngModel)]="lightboxService.slideshowSpeed">
                 <option *ngFor="let speed of playBackDurations" [value]="speed">{{ speed }}s</option>
               </select>
             </div>
