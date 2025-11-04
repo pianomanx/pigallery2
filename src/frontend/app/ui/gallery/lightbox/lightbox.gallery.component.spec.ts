@@ -69,7 +69,7 @@ class MockAuthenticationService {
 }
 
 class MockGalleryCacheService {
-  getSlideshowSpeed(){
+  getSlideshowSpeed() {
     return 1000;
   }
 }
@@ -85,12 +85,6 @@ class MockPiTitleService {
   }
 }
 
-class MockLightboxService {
-  captionAlwaysOn = false;
-  facesAlwaysOn = false;
-  loopVideos = false;
-  loopSlideshow = false;
-}
 
 class MockAnimationBuilder {
   build() {
@@ -110,7 +104,16 @@ class MockAnimationBuilder {
 }
 
 class MockRouter {
-  navigate() {
+  constructor(private ac: MockActivatedRoute) {
+  }
+
+  navigate(commands: any, extras: any) {
+    let newQP = {};
+    if (extras.queryParamsHandling == 'merge') {
+      newQP = this.ac.queryParams.value;
+    }
+    newQP = {...newQP, ...extras.queryParams};
+    this.ac.queryParams.next(newQP);
     return Promise.resolve(true);
   }
 }
@@ -143,8 +146,8 @@ function createMockPhoto(name: string, index: number): PhotoDTO {
 
 describe('GalleryLightboxComponent - Slideshow Tests', () => {
   let component: GalleryLightboxComponent;
+  let lightboxService: LightboxService;
   let fixture: ComponentFixture<GalleryLightboxComponent>;
-  let mockLightboxService: MockLightboxService;
   let mockActivatedRoute: MockActivatedRoute;
   let mockRouter: MockRouter;
   let mockAuthenticationService: MockAuthenticationService;
@@ -152,9 +155,8 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
   let photoComponents: GalleryPhotoComponent[];
 
   beforeEach(async () => {
-    mockLightboxService = new MockLightboxService();
     mockActivatedRoute = new MockActivatedRoute();
-    mockRouter = new MockRouter();
+    mockRouter = new MockRouter(mockActivatedRoute);
     mockAuthenticationService = new MockAuthenticationService();
     mockGalleryCacheService = new MockGalleryCacheService();
 
@@ -170,7 +172,6 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
         {provide: QueryService, useClass: MockQueryService},
         {provide: ActivatedRoute, useValue: mockActivatedRoute},
         {provide: PiTitleService, useClass: MockPiTitleService},
-        {provide: LightboxService, useValue: mockLightboxService},
         {provide: AuthenticationService, useValue: mockAuthenticationService},
         {provide: GalleryCacheService, useValue: mockGalleryCacheService},
         {provide: FileSizePipe, useValue: MockFileSizePipe},
@@ -183,6 +184,7 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
     fixture = TestBed.createComponent(GalleryLightboxComponent);
     component = fixture.componentInstance;
 
+    lightboxService = TestBed.inject(LightboxService);
     // Create mock photo components
     const photos = [
       createMockPhoto('photo1.jpg', 0),
@@ -224,7 +226,7 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
     component.onNavigateTo('photo1.jpg'); // Use public API
 
     // Act
-    component.togglePlayback(true);
+    lightboxService.playback = true;
     tick();
 
     // Assert
@@ -232,6 +234,7 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
   }));
 
   it('should cycle through images during slideshow', fakeAsync(() => {
+    expect(lightboxService).toBeTruthy();
     // Arrange
     spyOn(mockRouter, 'navigate').and.returnValue(Promise.resolve(true));
     component.status = LightboxStates.Open;
@@ -248,7 +251,7 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
 
   it('should stop slideshow at last image when loopSlideshow is disabled', fakeAsync(() => {
     // Arrange
-    mockLightboxService.loopSlideshow = false;
+    lightboxService.loopSlideshow = false;
     spyOn(mockRouter, 'navigate').and.returnValue(Promise.resolve(true));
     component.status = LightboxStates.Open;
     component.onNavigateTo('photo3.jpg'); // Navigate to last photo using public API
@@ -265,7 +268,7 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
 
   it('should continue slideshow from first image when loopSlideshow is enabled', fakeAsync(() => {
     // Arrange
-    mockLightboxService.loopSlideshow = true;
+    lightboxService.loopSlideshow = true;
     spyOn(mockRouter, 'navigate').and.returnValue(Promise.resolve(true));
     component.status = LightboxStates.Open;
     component.onNavigateTo('photo3.jpg'); // Navigate to last photo using public API
@@ -286,7 +289,7 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
     component.onNavigateTo('photo1.jpg');
 
     // Act
-    component.togglePlayback(false);
+    lightboxService.playback = false;
     tick();
 
     // Assert
@@ -298,7 +301,7 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
     const initialSlideShowState = component.slideShowRunning;
 
     // Act - simulate playback param in route
-    mockActivatedRoute.queryParams.next({[QueryParams.gallery.playback]: 'true'});
+    mockActivatedRoute.queryParams.next({[QueryParams.gallery.lightbox.playback]: 'true'});
     tick();
 
     // Assert
@@ -320,7 +323,7 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
     // Act
     mockActivatedRoute.queryParams.next({
       [QueryParams.gallery.photo]: 'photo2.jpg',
-      [QueryParams.gallery.playback]: 'true'
+      [QueryParams.gallery.lightbox.playback]: 'true'
     });
     tick();
 
@@ -330,7 +333,7 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
 
   it('should not advance to next photo when no more photos and loopSlideshow disabled', () => {
     // Arrange
-    mockLightboxService.loopSlideshow = false;
+    lightboxService.loopSlideshow = false;
     component.status = LightboxStates.Open;
     component.onNavigateTo('photo3.jpg'); // Navigate to last photo using public API
 
@@ -341,7 +344,7 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
 
   it('should advance to first photo when at last photo and loopSlideshow enabled', () => {
     // Arrange
-    mockLightboxService.loopSlideshow = true;
+    lightboxService.loopSlideshow = true;
     component.status = LightboxStates.Open;
     component.onNavigateTo('photo3.jpg'); // Navigate to last photo using public API
 
