@@ -131,7 +131,6 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
         const validPhoto = params[QueryParams.gallery.photo] &&
           params[QueryParams.gallery.photo] !== '';
 
-
         if (params[QueryParams.gallery.lightbox.playback]) {
           this.runSlideShow();
         } else {
@@ -172,33 +171,6 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
     if (this.iPvisibilityTimer != null) {
       clearTimeout(this.iPvisibilityTimer);
     }
-  }
-
-  onNavigateTo(photoStringId: string): string {
-    if (
-      this.activePhoto &&
-      this.queryService.getMediaStringId(this.activePhoto.gridMedia.media) ===
-      photoStringId
-    ) {
-      return;
-    }
-
-    if (this.controls) {
-      this.controls.resetZoom();
-    }
-    const photo = this.gridPhotoQL.find(
-      (i): boolean =>
-        this.queryService.getMediaStringId(i.gridMedia.media) === photoStringId
-    );
-    if (!photo) {
-      return (this.delayedMediaShow = photoStringId);
-    }
-    if (this.status === LightboxStates.Closed) {
-      this.showLigthbox(photo.gridMedia.media);
-    } else {
-      this.showPhoto(this.gridPhotoQL.toArray().indexOf(photo));
-    }
-    this.delayedMediaShow = null;
   }
 
   setGridPhotoQL(value: QueryList<GalleryPhotoComponent>): void {
@@ -243,7 +215,7 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
   public nextImage(): void {
     if (this.activePhotoId + 1 < this.gridPhotoQL.length) {
       this.navigateToPhoto(this.activePhotoId + 1);
-    } else {
+    } else if (this.lightboxService.loopSlideshow) {
       this.navigateToPhoto(0);
     }
   }
@@ -426,16 +398,34 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
   onVideoSourceError(): void {
     this.videoSourceError = true;
   }
-/*
-  togglePlayback(value: boolean): void {
-    if (this.slideShowRunning === value) {
+
+  private onNavigateTo(photoStringId: string): string {
+    if (
+      this.activePhoto &&
+      this.queryService.getMediaStringId(this.activePhoto.gridMedia.media) ===
+      photoStringId
+    ) {
       return;
     }
-    this.slideShowRunning = value;
-    // resets query. This side effect is to assign playback = true to the url
-    this.navigateToPhoto(this.activePhotoId);
+
+    if (this.controls) {
+      this.controls.resetZoom();
+    }
+    const photo = this.gridPhotoQL.find(
+      (i): boolean =>
+        this.queryService.getMediaStringId(i.gridMedia.media) === photoStringId
+    );
+    if (!photo) {
+      return (this.delayedMediaShow = photoStringId);
+    }
+    if (this.status === LightboxStates.Closed) {
+      this.showLigthbox(photo.gridMedia.media);
+    } else {
+      this.showPhoto(this.gridPhotoQL.toArray().indexOf(photo));
+    }
+    this.delayedMediaShow = null;
   }
-*/
+
   private updateInfoPanelWidth() {
     this.infoPanelMaxWidth = Math.min(400, Math.ceil(window.innerWidth + 1));
     if ((window.innerWidth - this.infoPanelMaxWidth) < this.infoPanelMaxWidth * 0.3) {

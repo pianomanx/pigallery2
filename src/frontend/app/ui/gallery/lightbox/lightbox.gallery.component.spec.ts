@@ -19,6 +19,8 @@ import {AuthenticationService} from '../../../model/network/authentication.servi
 import {GalleryCacheService} from '../cache.gallery.service';
 import {FileSizePipe} from '../../../pipes/FileSizePipe';
 import {DatePipe} from '@angular/common';
+import {Utils} from '../../../../../common/Utils';
+import {MediaDTO} from '../../../../../common/entities/MediaDTO';
 
 // Mock classes
 class MockFullScreenService {
@@ -56,9 +58,14 @@ class MockQueryService {
     return media.name;
   }
 
-  getParams(params?: any) {
-    return params || {};
+  getParams(lightbox?: { media?: MediaDTO}): { [key: string]: string } {
+    const query: { [key: string]: string } = {};
+    if (lightbox?.media) {
+      query[QueryParams.gallery.photo] = this.getMediaStringId(lightbox?.media);
+    }
+    return query;
   }
+
 }
 
 
@@ -113,7 +120,10 @@ class MockRouter {
       newQP = this.ac.queryParams.value;
     }
     newQP = {...newQP, ...extras.queryParams};
-    this.ac.queryParams.next(newQP);
+    // prevent infinite loop
+    if (!Utils.equalsFilter(this.ac.queryParams.value, newQP)) {
+      this.ac.queryParams.next(newQP);
+    }
     return Promise.resolve(true);
   }
 }
@@ -176,8 +186,6 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
         {provide: GalleryCacheService, useValue: mockGalleryCacheService},
         {provide: FileSizePipe, useValue: MockFileSizePipe},
         {provide: DatePipe, useValue: MockFileSizePipe},
-
-
       ]
     }).compileComponents();
 
@@ -221,15 +229,15 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
 
   it('should start slideshow when playback button is clicked', fakeAsync(() => {
     // Arrange
-    spyOn(mockRouter, 'navigate').and.returnValue(Promise.resolve(true));
     component.status = LightboxStates.Open;
-    component.onNavigateTo('photo1.jpg'); // Use public API
+    (component as any).navigateToPhoto(0);
 
     // Act
     lightboxService.playback = true;
     tick();
 
     // Assert
+    expect(component.status).toBe(LightboxStates.Open);
     expect(component.slideShowRunning).toBe(true);
   }));
 
@@ -238,7 +246,7 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
     // Arrange
     spyOn(mockRouter, 'navigate').and.returnValue(Promise.resolve(true));
     component.status = LightboxStates.Open;
-    component.onNavigateTo('photo1.jpg'); // Use public API
+    (component as any).navigateToPhoto(0);
     component.slideShowRunning = true;
 
     // Act - simulate next image calls during slideshow
@@ -250,11 +258,10 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
   }));
 
   it('should stop slideshow at last image when loopSlideshow is disabled', fakeAsync(() => {
+    component.status = LightboxStates.Open;
+    (component as any).navigateToPhoto(2);
     // Arrange
     lightboxService.loopSlideshow = false;
-    spyOn(mockRouter, 'navigate').and.returnValue(Promise.resolve(true));
-    component.status = LightboxStates.Open;
-    component.onNavigateTo('photo3.jpg'); // Navigate to last photo using public API
     component.slideShowRunning = true;
 
     // Act - try to go to next image from last photo
@@ -268,25 +275,24 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
 
   it('should continue slideshow from first image when loopSlideshow is enabled', fakeAsync(() => {
     // Arrange
-    lightboxService.loopSlideshow = true;
-    spyOn(mockRouter, 'navigate').and.returnValue(Promise.resolve(true));
     component.status = LightboxStates.Open;
-    component.onNavigateTo('photo3.jpg'); // Navigate to last photo using public API
+    (component as any).navigateToPhoto(2); // Navigate to last photo
+    lightboxService.loopSlideshow = true;
     component.slideShowRunning = true;
 
-    // Act - try to go to next image from last photo
+    expect(component.NexGridMedia).toBe(photoComponents[0].gridMedia) // Should return first media when looping
+    // Act - go to next image from last photo
     component.nextImage();
     tick();
 
     // Assert - should wrap to first photo and continue slideshow
-    expect(component.NexGridMedia).toBe(photoComponents[0].gridMedia); // Should return first media when looping
-    expect(mockRouter.navigate).toHaveBeenCalled();
+    expect(component.NexGridMedia).toBe(photoComponents[1].gridMedia); // Should return first media when looping
   }));
 
   it('should stop slideshow when pause button is clicked', fakeAsync(() => {
     // Arrange
     component.slideShowRunning = true;
-    component.onNavigateTo('photo1.jpg');
+    (component as any).navigateToPhoto(0);
 
     // Act
     lightboxService.playback = false;
@@ -317,7 +323,6 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
 
   it('should navigate to specific photo and start slideshow', fakeAsync(() => {
     // Arrange
-    spyOn(mockRouter, 'navigate').and.returnValue(Promise.resolve(true));
     component.status = LightboxStates.Open;
 
     // Act
@@ -335,7 +340,7 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
     // Arrange
     lightboxService.loopSlideshow = false;
     component.status = LightboxStates.Open;
-    component.onNavigateTo('photo3.jpg'); // Navigate to last photo using public API
+    (component as any).navigateToPhoto(2); // Navigate to last photo
 
     // Act & Assert
     expect(component.navigation.hasNext).toBe(false);
@@ -346,7 +351,7 @@ describe('GalleryLightboxComponent - Slideshow Tests', () => {
     // Arrange
     lightboxService.loopSlideshow = true;
     component.status = LightboxStates.Open;
-    component.onNavigateTo('photo3.jpg'); // Navigate to last photo using public API
+    (component as any).navigateToPhoto(2); // Navigate to last photo
 
     // Act & Assert
     expect(component.NexGridMedia).toBe(photoComponents[0].gridMedia);
