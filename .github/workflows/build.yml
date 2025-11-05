@@ -139,9 +139,9 @@ jobs:
           platforms: ${{ matrix.platforms }}
           push: true
           tags: ${{ secrets.REGISTRY_NAMESPACE }}/pigallery2:experimental-${{ matrix.container }}
-      - name: Push edge on new master commit
+      - name: Push secondary edge builds on new master commit
         # github.ref:  branches the format is refs/heads/<branch_name>  PRs and Tags are different
-        if: ${{github.ref == 'refs/heads/master' }}
+        if: ${{github.ref == 'refs/heads/master' &&  matrix.container != 'debian-trixie'}}
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -149,6 +149,17 @@ jobs:
           platforms: ${{ matrix.platforms }}
           push: true
           tags: ${{ secrets.REGISTRY_NAMESPACE }}/pigallery2:edge-${{ matrix.container }}
+      - name: Push main edge build on new master commit
+        if: ${{github.ref == 'refs/heads/master' &&  matrix.container == 'debian-trixie'}}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/${{ matrix.container }}/Dockerfile.build
+          platforms: ${{ matrix.platforms }}
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_NAMESPACE }}/pigallery2:edge
+            ${{ secrets.REGISTRY_NAMESPACE }}/pigallery2:edge-${{ matrix.container }}
       - name: Push release on new Tag
         if: ${{ startsWith(github.ref_type , 'tag') &&  !github.event.issue.pull_request &&  matrix.container != 'debian-trixie'}}
         uses: docker/build-push-action@v5
