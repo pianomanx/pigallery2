@@ -30,10 +30,8 @@ export class ExtensionRepository {
     return text;
   }
 
-
-  public async fetchList(): Promise<ExtensionListItem[]> {
-    const res = await (await fetch(Config.Extensions.repositoryUrl)).text();
-    const lines = res.split('\n');
+  public repoMD(text: string): ExtensionListItem[] {
+    const lines = text.split('\n');
     lines.forEach(line => line.trim());
     const tableStartLine = lines.findIndex(l => l.startsWith('|     **Name**     |'));
     const tableHeaderLines = 2;
@@ -62,7 +60,12 @@ export class ExtensionRepository {
         zipUrl: this.getUrlFromMDLink(entries[3])
       });
     });
-    this.extensionsList = extensions;
+    return extensions;
+  }
+
+  public async fetchList(): Promise<ExtensionListItem[]> {
+    const res = await (await fetch(Config.Extensions.repositoryUrl)).text();
+    this.extensionsList = this.repoMD(res);
     this.lastUpdate = new Date().getTime();
     return this.extensionsList;
   }
