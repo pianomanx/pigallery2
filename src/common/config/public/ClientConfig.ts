@@ -1261,9 +1261,22 @@ export class ClientPhotoConfig {
 
   @ConfigProperty({
     volatile: true,
-    description: 'Updated to match he number of CPUs. This manny thumbnail will be concurrently generated.',
+    description: 'Updated to match the number of CPUs. This manny thumbnail will be concurrently generated.',
   })
   concurrentThumbnailGenerations: number = 1;
+
+
+  @ConfigProperty({
+
+    tags: {
+      name: $localize`Concurrent photo generation limit`,
+      priority: ConfigPriority.underTheHood,
+      uiResetNeeded: {server: true}
+    },
+    description: 'By default the app uses the number of cpus -1 concurent threads to generate thumbnails. Set this number higher than 0 to limit the number of concurrent threads.',
+  })
+  concurrentThumbnailGenerationsLimit: number = 0;
+
   @ConfigProperty({
     arrayType: 'string',
     tags: {
