@@ -69,7 +69,7 @@ App CLI options:
   --Gallery-NavBar-SortingGrouping-defaultSearchGroupingMethod-method        (default: 'Date')
   --Gallery-NavBar-SortingGrouping-defaultSearchGroupingMethod-ascending     (default: false)
   --Gallery-captionFirstNaming                                              Show the caption (IPTC 120) tags from the EXIF data instead of the filenames. (default: false)
-  --Gallery-Lightbox-defaultSlideshowSpeed                                  Default time interval for displaying a photo in the slide show. (default: 5)
+  --Gallery-Lightbox-slideshowSpeed                                         Default time interval for displaying a photo in the slide show. (default: 5)
   --Gallery-Lightbox-captionAlwaysOn                                        If enabled, lightbox will always show caption by default, not only on hover. (default: false)
   --Gallery-Lightbox-facesAlwaysOn                                          If enabled, lightbox will always show faces by default, not only on hover. (default: false)
   --Gallery-Lightbox-loopVideos                                             If enabled, lightbox will loop videos by default. (default: false)
@@ -102,6 +102,7 @@ App CLI options:
   --Media-Photo-iconSize                                                    Icon size (used on maps). (default: 45)
   --Media-Photo-personThumbnailSize                                         Person (face) thumbnail size. (default: 200)
   --Media-Photo-thumbnailSizes                                              Size of the thumbnails and photo previews. The best matching size will be used (smaller for photo and video thumbnail, bigger for photo preview). More sizes give better quality, but use more storage and CPU to render. If size is 240, that shorter side of the thumbnail will be 240 pixels. (default: [320,540,1080,2160])
+  --Media-Photo-concurrentThumbnailGenerationsLimit                         By default the app uses the number of cpus -1 concurrent threads to generate thumbnails. Set this number higher than 0 to limit the number of concurrent threads. (default: 0)
   --Media-Photo-supportedFormats                                            Photo formats that are supported. Browser needs to support these formats natively. Also sharp (libvips) package should be able to convert these formats. (default: ["gif","jpeg","jpg","jpe","png","webp","svg","avif","heic","dng","arw","tiff"])
   --Media-Photo-useLanczos3                                                 if true, 'lanczos3' will used to scale photos, otherwise faster but lower quality 'nearest'. (default: true)
   --Media-Photo-quality                                                     Between 0-100. (default: 80)
@@ -229,7 +230,7 @@ Environmental variables:
   Gallery-NavBar-SortingGrouping-defaultSearchGroupingMethod-method      (default: 'Date')
   Gallery-NavBar-SortingGrouping-defaultSearchGroupingMethod-ascending   (default: false)
   Gallery-captionFirstNaming                                            Show the caption (IPTC 120) tags from the EXIF data instead of the filenames. (default: false)
-  Gallery-Lightbox-defaultSlideshowSpeed                                Default time interval for displaying a photo in the slide show. (default: 5)
+  Gallery-Lightbox-slideshowSpeed                                       Default time interval for displaying a photo in the slide show. (default: 5)
   Gallery-Lightbox-captionAlwaysOn                                      If enabled, lightbox will always show caption by default, not only on hover. (default: false)
   Gallery-Lightbox-facesAlwaysOn                                        If enabled, lightbox will always show faces by default, not only on hover. (default: false)
   Gallery-Lightbox-loopVideos                                           If enabled, lightbox will loop videos by default. (default: false)
@@ -262,6 +263,7 @@ Environmental variables:
   Media-Photo-iconSize                                                  Icon size (used on maps). (default: 45)
   Media-Photo-personThumbnailSize                                       Person (face) thumbnail size. (default: 200)
   Media-Photo-thumbnailSizes                                            Size of the thumbnails and photo previews. The best matching size will be used (smaller for photo and video thumbnail, bigger for photo preview). More sizes give better quality, but use more storage and CPU to render. If size is 240, that shorter side of the thumbnail will be 240 pixels. (default: [320,540,1080,2160])
+  Media-Photo-concurrentThumbnailGenerationsLimit                       By default the app uses the number of cpus -1 concurrent threads to generate thumbnails. Set this number higher than 0 to limit the number of concurrent threads. (default: 0)
   Media-Photo-supportedFormats                                          Photo formats that are supported. Browser needs to support these formats natively. Also sharp (libvips) package should be able to convert these formats. (default: ["gif","jpeg","jpg","jpe","png","webp","svg","avif","heic","dng","arw","tiff"])
   Media-Photo-useLanczos3                                               if true, 'lanczos3' will used to scale photos, otherwise faster but lower quality 'nearest'. (default: true)
   Media-Photo-quality                                                   Between 0-100. (default: 80)
@@ -473,8 +475,8 @@ Environmental variables:
         "captionFirstNaming": false,
         "//[Lightbox]": "Photo and video preview window.",
         "Lightbox": {
-            "//[defaultSlideshowSpeed]": "Default time interval for displaying a photo in the slide show.",
-            "defaultSlideshowSpeed": 5,
+            "//[slideshowSpeed]": "Default time interval for displaying a photo in the slide show.",
+            "slideshowSpeed": 5,
             "//[captionAlwaysOn]": "If enabled, lightbox will always show caption by default, not only on hover.",
             "captionAlwaysOn": false,
             "//[facesAlwaysOn]": "If enabled, lightbox will always show faces by default, not only on hover.",
@@ -580,6 +582,8 @@ Environmental variables:
                 1080,
                 2160
             ],
+            "//[concurrentThumbnailGenerationsLimit]": "By default the app uses the number of cpus -1 concurrent threads to generate thumbnails. Set this number higher than 0 to limit the number of concurrent threads.",
+            "concurrentThumbnailGenerationsLimit": 0,
             "//[supportedFormats]": "Photo formats that are supported. Browser needs to support these formats natively. Also sharp (libvips) package should be able to convert these formats.",
             "supportedFormats": [
                 "gif",
