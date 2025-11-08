@@ -178,7 +178,7 @@ But it warms my hearth [seeing that it is useful for some people](docs/reference
 
 ## 6. Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=pigallery2/pigallery2&type=date&legend=top-left)](https://www.star-history.com/#pigallery2/pigallery2&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/svg?repos=bpatrik/pigallery2&type=date&legend=top-left)](https://www.star-history.com/#bpatrik/pigallery2&type=date&legend=top-left)
 
 ## 7. Credits
 Crossbrowser testing sponsored by [Browser Stack](https://www.browserstack.com)
