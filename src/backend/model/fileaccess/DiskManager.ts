@@ -153,19 +153,14 @@ export class DiskManager {
     }
     const list = await fsp.readdir(absoluteDirectoryName);
     let count = 0;
-    if (typeof global.gc !== 'function') {
-      console.warn('Manual garbage collection is disabled. Run Node with --expose-gc to enable.');
-    }
 
     for (const file of list) {
       count++;
 
       if (count % 1000 === 0) {
-        // Only attempt to call gc if it exists
-        if (typeof global.gc === 'function') {
+        if (global.gc) {
           global.gc(); 
         }
-        console.log(`Processed ${count} files.`);
       }
       const fullFilePath = path.normalize(
         path.join(absoluteDirectoryName, file)
