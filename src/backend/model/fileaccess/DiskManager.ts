@@ -160,13 +160,13 @@ export class DiskManager {
     for (const file of list) {
       count++;
 
-    if (count % 1000 === 0) {
-      // Only attempt to call gc if it exists
-      if (typeof global.gc === 'function') {
-        global.gc(); 
+      if (count % 1000 === 0) {
+        // Only attempt to call gc if it exists
+        if (typeof global.gc === 'function') {
+          global.gc(); 
+        }
+        console.log(`Processed ${count} files.`);
       }
-      console.log(`Processed ${count} files.`);
-    }
       const fullFilePath = path.normalize(
         path.join(absoluteDirectoryName, file)
       );
