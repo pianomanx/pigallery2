@@ -20,6 +20,7 @@ import {SessionManager} from '../database/SessionManager';
 
 
 const LOG_TAG = '[DiskManager]';
+declare const gc: () => void;
 
 export class DiskManager {
   public static calcLastModified(stat: Stats): number {
@@ -152,7 +153,20 @@ export class DiskManager {
       return directory;
     }
     const list = await fsp.readdir(absoluteDirectoryName);
+    let count = 0;
+
     for (const file of list) {
+      count++;
+
+      if (count % 1000 === 0) {
+        console.log(`Processed ${count} files. Forcing garbage collection...`);
+        // Check if gc() is available (if Node was run with --expose-gc)
+        if (typeof gc === 'function') {
+          gc(); // **Manually trigger garbage collection**
+        } else {
+          console.warn('Garbage collection is not exposed. Run Node with --expose-gc flag.');
+        }
+      }
       const fullFilePath = path.normalize(
         path.join(absoluteDirectoryName, file)
       );
