@@ -20,6 +20,7 @@ import {SessionManager} from '../database/SessionManager';
 
 
 const LOG_TAG = '[DiskManager]';
+declare const global: { gc: () => void };
 
 export class DiskManager {
   public static calcLastModified(stat: Stats): number {
