@@ -57,8 +57,7 @@ export class ContentLoaderService {
     // load from cache
     const cw = this.galleryCacheService.getDirectory(directoryName);
 
-    ContentWrapperUtils.unpack(cw);
-    this.setContent(cw);
+    this.setContent( ContentWrapperUtils.unpack(cw));
     this.lastRequest.directory = directoryName;
     this.currentContentRequest = {type: 'directory', value: directoryName};
 
@@ -99,10 +98,7 @@ export class ContentLoaderService {
       if (this.lastRequest.directory !== directoryName) {
         return;
       }
-
-      ContentWrapperUtils.unpack(cw);
-
-      this.setContent(cw);
+      this.setContent(ContentWrapperUtils.unpack(cw));
     } catch (e) {
       console.error(e);
       this.navigationService.toGallery().catch(console.error);
@@ -140,8 +136,7 @@ export class ContentLoaderService {
       return;
     }
 
-    ContentWrapperUtils.unpack(cw);
-    this.setContent(cw);
+    this.setContent(ContentWrapperUtils.unpack(cw));
   }
 
   isSearchResult(): boolean {

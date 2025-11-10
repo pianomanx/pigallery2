@@ -220,7 +220,7 @@ export class GalleryMWs {
       }
     }
 
-    ContentWrapperUtils.pack(cw);
+    req.resultPipe = ContentWrapperUtils.pack(cw);
 
     return next();
   }

@@ -64,7 +64,13 @@ export class ContentWrapperUtils {
     }
     const c1 = cw1.directory || cw1.searchResult;
     const c2 = cw2.directory || cw2.searchResult;
+    if (c1 === c2) {
+      return true;
+    }
 
+    if (!c1 || !c2) {
+      return false;
+    }
     if (!this.equalsDirectories(c1.directories, c2.directories)) {
       return false;
     }
@@ -181,7 +187,6 @@ export class ContentWrapperUtils {
 
   static pack(cwIn: ContentWrapper): PackedContentWrapper {
     const cw: PackedContentWrapper = {
-      ...cwIn,
       map: {
         faces: [], keywords: [], lens: [],
         camera: [], directories: []
@@ -189,7 +194,8 @@ export class ContentWrapperUtils {
       reverseMap: {
         faces: new Map(), keywords: new Map(),
         lens: new Map(), camera: new Map(), directories: new Map()
-      }
+      },
+      ...cwIn
     };
 
     if (cw?.directory) {
