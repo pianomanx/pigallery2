@@ -4,6 +4,7 @@ import {BehaviorSubject} from 'rxjs';
 import {Config} from '../../../../../common/config/public/Config';
 import {ContentLoaderService} from '../contentLoader.service';
 import {GridSizes} from '../../../../../common/entities/GridSizes';
+import {Utils} from '../../../../../common/Utils';
 
 @Injectable()
 export class GalleryNavigatorService {
@@ -18,13 +19,10 @@ export class GalleryNavigatorService {
     this.girdSize = new BehaviorSubject(this.getDefaultGridSize());
     this.galleryService.content.subscribe((c) => {
       if (c) {
-        if (c) {
-          const gs = this.galleryCacheService.getGridSize(c);
-          if (gs !== null) {
-            this.girdSize.next(gs);
-          } else {
-            this.girdSize.next(this.getDefaultGridSize());
-          }
+        const gs = this.galleryCacheService.getGridSize(c) ?? this.getDefaultGridSize();
+
+        if (!Utils.equalsFilter(this.girdSize.value,gs)) {
+          this.girdSize.next(gs);
         }
       }
     });
