@@ -7,7 +7,12 @@ import {MediaDTO} from '../../../../common/entities/MediaDTO';
 import {GroupingMethod, SortingMethod} from '../../../../common/entities/SortingMethods';
 import {VersionService} from '../../model/version.service';
 import {SearchQueryDTO, SearchQueryTypes,} from '../../../../common/entities/SearchQueryDTO';
-import {ContentWrapper, ContentWrapperWithError} from '../../../../common/entities/ContentWrapper';
+import {
+  ContentWrapper,
+  ContentWrapperWithError,
+  PackedContentWrapper,
+  PackedContentWrapperWithError
+} from '../../../../common/entities/ContentWrapper';
 import {ThemeModes} from '../../../../common/config/public/ClientConfig';
 import {GridSizes} from '../../../../common/entities/GridSizes';
 
@@ -55,10 +60,10 @@ export class GalleryCacheService {
     return perfEntries && perfEntries[0] && perfEntries[0].type === 'reload';
   }
 
-  private static loadCacheItem(key: string): ContentWrapperWithError {
+  private static loadCacheItem(key: string): PackedContentWrapper {
     const tmp = localStorage.getItem(key);
     if (tmp != null) {
-      const value: CacheItem<ContentWrapperWithError> = JSON.parse(tmp);
+      const value: CacheItem<PackedContentWrapper> = JSON.parse(tmp);
       if (
           value.timestamp <
           Date.now() - Config.Search.searchCacheTimeout
@@ -262,7 +267,7 @@ export class GalleryCacheService {
     }
   }
 
-  public getSearch(query: SearchQueryDTO): ContentWrapperWithError {
+  public getSearch(query: SearchQueryDTO): PackedContentWrapperWithError {
     if (Config.Gallery.enableCache === false) {
       return null;
     }
@@ -273,11 +278,11 @@ export class GalleryCacheService {
     return GalleryCacheService.loadCacheItem(key);
   }
 
-  public setSearch(cw: ContentWrapperWithError): void {
+  public setSearch(cw: PackedContentWrapperWithError): void {
     if (Config.Gallery.enableCache === false) {
       return;
     }
-    const tmp: CacheItem<ContentWrapperWithError> = {
+    const tmp: CacheItem<PackedContentWrapperWithError> = {
       timestamp: Date.now(),
       item: cw,
     };
@@ -290,7 +295,7 @@ export class GalleryCacheService {
     }
   }
 
-  public getDirectory(directoryName: string): ContentWrapperWithError {
+  public getDirectory(directoryName: string): PackedContentWrapperWithError {
     if (Config.Gallery.enableCache === false) {
       return null;
     }
@@ -304,10 +309,10 @@ export class GalleryCacheService {
     } catch (e) {
       // ignoring errors
     }
-    return new ContentWrapperWithError();
+    return {} as PackedContentWrapperWithError;
   }
 
-  public setDirectory(cw: ContentWrapper): void {
+  public setDirectory(cw: PackedContentWrapperWithError): void {
     if (Config.Gallery.enableCache === false) {
       return;
     }

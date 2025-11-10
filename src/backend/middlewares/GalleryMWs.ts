@@ -5,7 +5,7 @@ import {NextFunction, Request, Response} from 'express';
 import {ErrorCodes, ErrorDTO} from '../../common/entities/Error';
 import {ParentDirectoryDTO,} from '../../common/entities/DirectoryDTO';
 import {ObjectManagers} from '../model/ObjectManagers';
-import {ContentWrapper} from '../../common/entities/ContentWrapper';
+import {ContentWrapper, ContentWrapperUtils} from '../../common/entities/ContentWrapper';
 import {ProjectPath} from '../ProjectPath';
 import {Config} from '../../common/config/private/Config';
 import {MediaDTO, MediaDTOUtils} from '../../common/entities/MediaDTO';
@@ -91,10 +91,10 @@ export class GalleryMWs {
         );
 
       if (directory == null) {
-        req.resultPipe = new ContentWrapper(null, null, true);
+        req.resultPipe = ContentWrapperUtils.build(null, null, true);
         return next();
       }
-      req.resultPipe = new ContentWrapper(directory, null);
+      req.resultPipe = ContentWrapperUtils.build(directory, null);
       return next();
     } catch (err) {
       return next(
@@ -220,7 +220,7 @@ export class GalleryMWs {
       }
     }
 
-    ContentWrapper.pack(cw);
+    ContentWrapperUtils.pack(cw);
 
     return next();
   }
@@ -304,7 +304,7 @@ export class GalleryMWs {
       result.directories.forEach(
         (dir): MediaDTO[] => (dir.media = dir.media || [])
       );
-      req.resultPipe = new ContentWrapper(null, result);
+      req.resultPipe = ContentWrapperUtils.build(null, result);
       return next();
     } catch (err) {
       if (err instanceof LocationLookupException) {

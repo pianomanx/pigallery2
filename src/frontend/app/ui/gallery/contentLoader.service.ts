@@ -1,6 +1,11 @@
 import {Injectable} from '@angular/core';
 import {NetworkService} from '../../model/network/network.service';
-import {ContentWrapper, ContentWrapperWithError} from '../../../../common/entities/ContentWrapper';
+import {
+  ContentWrapper,
+  ContentWrapperUtils,
+  ContentWrapperWithError,
+  PackedContentWrapperWithError
+} from '../../../../common/entities/ContentWrapper';
 import {SubDirectoryDTO,} from '../../../../common/entities/DirectoryDTO';
 import {GalleryCacheService} from './cache.gallery.service';
 import {BehaviorSubject, Observable} from 'rxjs';
@@ -12,6 +17,7 @@ import {ErrorCodes} from '../../../../common/entities/Error';
 import {map} from 'rxjs/operators';
 import {MediaDTO} from '../../../../common/entities/MediaDTO';
 import {FileDTO} from '../../../../common/entities/FileDTO';
+import {Utils} from '../../../../common/Utils';
 
 @Injectable()
 export class ContentLoaderService {
@@ -31,7 +37,7 @@ export class ContentLoaderService {
     private navigationService: NavigationService,
   ) {
     this.content = new BehaviorSubject<ContentWrapperWithError>(
-      new ContentWrapperWithError()
+      {} as ContentWrapperWithError
     );
     this.originalContent = this.content.pipe(
       map((c) => (c?.directory ? c?.directory : c?.searchResult))
@@ -40,6 +46,9 @@ export class ContentLoaderService {
   }
 
   setContent(content: ContentWrapperWithError): void {
+    if (ContentWrapperUtils.equals(this.content.value, content)) {
+      return;
+    }
     this.content.next(content);
   }
 
@@ -48,7 +57,7 @@ export class ContentLoaderService {
     // load from cache
     const cw = this.galleryCacheService.getDirectory(directoryName);
 
-    ContentWrapper.unpack(cw);
+    ContentWrapperUtils.unpack(cw);
     this.setContent(cw);
     this.lastRequest.directory = directoryName;
     this.currentContentRequest = {type: 'directory', value: directoryName};
@@ -76,7 +85,7 @@ export class ContentLoaderService {
     }
 
     try {
-      const cw = await this.networkService.getJson<ContentWrapperWithError>(
+      const cw = await this.networkService.getJson<PackedContentWrapperWithError>(
         '/gallery/content/' + encodeURIComponent(directoryName),
         params
       );
@@ -91,7 +100,7 @@ export class ContentLoaderService {
         return;
       }
 
-      ContentWrapper.unpack(cw);
+      ContentWrapperUtils.unpack(cw);
 
       this.setContent(cw);
     } catch (e) {
@@ -108,17 +117,17 @@ export class ContentLoaderService {
     this.ongoingSearch = query;
     this.currentContentRequest = {type: 'search', value: query};
 
-    this.setContent(new ContentWrapperWithError());
+    this.setContent({} as PackedContentWrapperWithError);
     let cw = this.galleryCacheService.getSearch(JSON.parse(query));
     if (forceReload || (!cw || cw.searchResult == null)) {
       try {
-        cw = await this.networkService.getJson<ContentWrapperWithError>('/search/' + encodeURIComponent(query));
+        cw = await this.networkService.getJson<PackedContentWrapperWithError>('/search/' + encodeURIComponent(query));
         this.galleryCacheService.setSearch(cw);
       } catch (e) {
         cw = cw || {
           directory: null,
           searchResult: null
-        };
+        } as PackedContentWrapperWithError;
         if (e.code === ErrorCodes.LocationLookUp_ERROR) {
           cw.error = $localize`Cannot find location` + ': ' + e.message;
         } else {
@@ -131,7 +140,7 @@ export class ContentLoaderService {
       return;
     }
 
-    ContentWrapper.unpack(cw);
+    ContentWrapperUtils.unpack(cw);
     this.setContent(cw);
   }
 

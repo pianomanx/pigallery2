@@ -8,43 +8,238 @@ import {VideoDTO} from './VideoDTO';
 import {PhotoDTO} from './PhotoDTO';
 
 
-export class ContentWrapper {
-  private map?: {
+export interface ContentWrapper {
+  directory: ParentDirectoryDTO;
+  searchResult: SearchResultDTO;
+  notModified?: boolean;
+}
+
+export interface PackedContentWrapper {
+  directory: ParentDirectoryDTO;
+  searchResult: SearchResultDTO;
+  notModified?: boolean;
+  map: {
     faces: string[],
     keywords: string[],
     lens: string[],
     camera: string[],
     directories: DirectoryPathDTO[]
   };
-  private reverseMap?: {
+  // temporal field
+  reverseMap?: {
     faces: Map<string, number>,
     keywords: Map<string, number>,
     lens: Map<string, number>,
     camera: Map<string, number>,
     directories: Map<string, number>
   };
-  public directory: ParentDirectoryDTO;
-  public searchResult: SearchResultDTO;
-  public notModified?: boolean;
+}
 
-  constructor(
-      directory: ParentDirectoryDTO = null,
-      searchResult: SearchResultDTO = null,
-      notModified?: boolean
-  ) {
-    if (directory) {
-      this.directory = directory;
+
+export interface ContentWrapperWithError extends ContentWrapper {
+  error?: string;
+}
+
+export interface PackedContentWrapperWithError extends PackedContentWrapper {
+  error?: string;
+}
+
+export class ContentWrapperUtils {
+
+  static equals(cw1: ContentWrapper, cw2: ContentWrapper): boolean {
+    if (cw1 === cw2) {
+      return true;
     }
-    if (searchResult) {
-      this.searchResult = searchResult;
+
+    if (!cw1 || !cw2) {
+      return false;
     }
-    if (notModified) {
-      this.notModified = notModified;
+
+    if (cw1.notModified !== cw2.notModified) {
+      return false;
     }
+
+    if (cw1.directory && !ContentWrapperUtils.equalsPartialDirectory(cw1.directory, cw2.directory)) {
+      return false;
+    }
+    const c1 = cw1.directory || cw1.searchResult;
+    const c2 = cw2.directory || cw2.searchResult;
+
+    if (!this.equalsDirectories(c1.directories, c2.directories)) {
+      return false;
+    }
+    if (!this.equalsFiles(c1.media, c2.media)) {
+      return false;
+    }
+    if (!this.equalsFiles(c1.metaFile, c2.metaFile)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  static equalsMedia(d1: FileDTO, d2: FileDTO): boolean {
+    if (d1 === d2) {
+      return true;
+    }
+    if (!d1 || !d2) {
+      return false;
+    }
+    const {directory: m1dir, ...pm1} = d1;
+    const {directory: m2dir, ...pm2} = d2;
+
+    if (m1dir.name !== m2dir.name || m1dir.path !== m2dir.path) {
+      return false;
+    }
+
+    if (!Utils.equalsFilter(pm1, pm2)) {
+      return false;
+    }
+
+    return true;
+
+
+  }
+
+  static equalsPartialDirectory(d1: DirectoryBaseDTO, d2: DirectoryBaseDTO): boolean {
+    if (d1 === d2) {
+      return true;
+    }
+    if (!d1 || !d2) {
+      return false;
+    }
+
+    if (!ContentWrapperUtils.equalsMedia(d1.cache?.cover, d2.cache?.cover)) {
+      return false;
+    }
+
+    const {cover: d1cover, ...d1c} = d1.cache;
+    const {cover: d2cover, ...d2c} = d2.cache;
+
+    if (!Utils.equalsFilter(d1c, d2c)) {
+      return false;
+    }
+
+    const {parent: d1parent, directories: d1directories, media: d1media, metaFile: d1metaFile, cache: d1cache, ...pd1} = d1;
+    const {parent: d2parent, directories: d2directories, media: d2media, metaFile: d2metaFile, cache: d2cache, ...pd2} = d2;
+
+    if (!Utils.equalsFilter(pd1, pd2)) {
+      return false;
+    }
+
+    return true;
+
+  }
+
+  static equalsDirectories(d1: DirectoryBaseDTO[], d2: DirectoryBaseDTO[]): boolean {
+    if (d1 === d2) {
+      return true;
+    }
+    if (!d1 || !d2) {
+      return false;
+    }
+    if (d1.length !== d2.length) {
+      return false;
+    }
+
+    const fullPath = (d: DirectoryBaseDTO) => d.path + '/' + d.name;
+
+    const d1c = d1.slice().sort((a, b) => fullPath(a).localeCompare(fullPath(b)));
+    const d2c = d2.slice().sort((a, b) => fullPath(a).localeCompare(fullPath(b)));
+    for (let i = 0; i < d1.length; ++i) {
+      if (ContentWrapperUtils.equalsPartialDirectory(d1c[i], d2c[i]) === false) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static equalsFiles(m1: FileDTO[], m2: FileDTO[]): boolean {
+    if (m1 === m2) {
+      return true;
+    }
+    if (!m1 || !m2) {
+      return false;
+    }
+
+    if (m1.length !== m2.length) {
+      return false;
+    }
+
+    const fullPath = (m: FileDTO) => m.directory.path + '/' + m.directory.name + '/' + m.name;
+    const m1c = m1.slice().sort((a, b) => fullPath(a).localeCompare(fullPath(b)));
+    const m2c = m2.slice().sort((a, b) => fullPath(a).localeCompare(fullPath(b)));
+
+    for (let i = 0; i < m1.length; ++i) {
+      if (ContentWrapperUtils.equalsMedia(m1c[i], m2c[i]) === false) {
+        return false;
+      }
+    }
+    return true;
   }
 
 
-  private static mapify(cw: ContentWrapper, media: FileDTO, isSearchResult: boolean): void {
+  static pack(cwIn: ContentWrapper): PackedContentWrapper {
+    const cw: PackedContentWrapper = {
+      ...cwIn,
+      map: {
+        faces: [], keywords: [], lens: [],
+        camera: [], directories: []
+      },
+      reverseMap: {
+        faces: new Map(), keywords: new Map(),
+        lens: new Map(), camera: new Map(), directories: new Map()
+      }
+    };
+
+    if (cw?.directory) {
+      ContentWrapperUtils.packDirectory(cw, cw.directory);
+    } else if (cw.searchResult) {
+      ContentWrapperUtils.packDirectory(cw, cw.searchResult, true);
+    }
+
+    // remove empty maps
+    for (const k in cw.map) {
+      // @ts-ignore
+      if (cw.map[k].length === 0) {
+        // @ts-ignore
+        delete cw.map[k];
+      }
+    }
+
+    delete cw.reverseMap;
+    return cw;
+
+  }
+
+  static unpack(cwIn: PackedContentWrapper): ContentWrapper {
+    const cw = {...cwIn};
+    if (!cw || cw.notModified) {
+      return cw;
+    }
+    if (cw?.directory) {
+      ContentWrapperUtils.unPackDirectory(cw, cw.directory);
+    } else if (cw.searchResult) {
+      ContentWrapperUtils.unPackDirectory(cw, cw.searchResult, true);
+    }
+    delete cw.map;
+    return cw;
+  }
+
+  public static build(
+    directory: ParentDirectoryDTO = null,
+    searchResult: SearchResultDTO = null,
+    notModified?: boolean
+  ) {
+    const cw: ContentWrapper = {
+      ...(directory && {directory}),
+      ...(searchResult && {searchResult}),
+      ...(notModified && {notModified}),
+    };
+    return cw;
+  }
+
+  private static mapify(cw: PackedContentWrapper, media: FileDTO, isSearchResult: boolean): void {
     if (isSearchResult) {
       const k = JSON.stringify(media.directory);
       if (!cw.reverseMap.directories.has(k)) {
@@ -143,15 +338,15 @@ export class ContentWrapper {
       if ((media as PhotoDTO).metadata.cameraData) {
         if ((media as PhotoDTO).metadata.cameraData.lens) {
           mapifyOne(cw.map.lens, cw.reverseMap.lens,
-              (media as PhotoDTO).metadata.cameraData, 'lens', 'l');
+            (media as PhotoDTO).metadata.cameraData, 'lens', 'l');
         }
         if ((media as PhotoDTO).metadata.cameraData.make) {
           mapifyOne(cw.map.camera, cw.reverseMap.camera,
-              (media as PhotoDTO).metadata.cameraData, 'make', 'm');
+            (media as PhotoDTO).metadata.cameraData, 'make', 'm');
         }
         if ((media as PhotoDTO).metadata.cameraData.model) {
           mapifyOne(cw.map.camera, cw.reverseMap.camera,
-              (media as PhotoDTO).metadata.cameraData, 'model', 'o');
+            (media as PhotoDTO).metadata.cameraData, 'model', 'o');
         }
 
         if ((media as PhotoDTO).metadata.cameraData.ISO) {
@@ -182,15 +377,15 @@ export class ContentWrapper {
       if ((media as PhotoDTO).metadata.positionData) {
         if ((media as PhotoDTO).metadata.positionData.country) {
           mapifyOne(cw.map.keywords, cw.reverseMap.keywords,
-              (media as PhotoDTO).metadata.positionData, 'country', 'c');
+            (media as PhotoDTO).metadata.positionData, 'country', 'c');
         }
         if ((media as PhotoDTO).metadata.positionData.city) {
           mapifyOne(cw.map.keywords, cw.reverseMap.keywords,
-              (media as PhotoDTO).metadata.positionData, 'city', 'cy');
+            (media as PhotoDTO).metadata.positionData, 'city', 'cy');
         }
         if ((media as PhotoDTO).metadata.positionData.state) {
           mapifyOne(cw.map.keywords, cw.reverseMap.keywords,
-              (media as PhotoDTO).metadata.positionData, 'state', 's');
+            (media as PhotoDTO).metadata.positionData, 'state', 's');
         }
 
         if ((media as PhotoDTO).metadata.positionData.GPSData) {
@@ -210,7 +405,7 @@ export class ContentWrapper {
 
   }
 
-  private static packMedia(cw: ContentWrapper, media: MediaDTO[], isSearchResult: boolean): void {
+  private static packMedia(cw: PackedContentWrapper, media: MediaDTO[], isSearchResult: boolean): void {
 
     // clean up media
     for (let i = 0; i < media.length; ++i) {
@@ -244,19 +439,19 @@ export class ContentWrapper {
             delete f.box;
           }
         }
-        ContentWrapper.mapify(cw, m, isSearchResult);
+        ContentWrapperUtils.mapify(cw, m, isSearchResult);
       } else if (MediaDTOUtils.isVideo(m)) {
         delete (m as PhotoDTO).metadata.caption;
         delete (m as PhotoDTO).metadata.cameraData;
         delete (m as PhotoDTO).metadata.faces;
         delete (m as PhotoDTO).metadata.positionData;
-        ContentWrapper.mapify(cw, m, isSearchResult);
+        ContentWrapperUtils.mapify(cw, m, isSearchResult);
       }
       Utils.removeNullOrEmptyObj(m);
     }
   }
 
-  private static packDirectory(cw: ContentWrapper, dir: DirectoryBaseDTO | SearchResultDTO, isSearchResult = false): void {
+  private static packDirectory(cw: PackedContentWrapper, dir: DirectoryBaseDTO | SearchResultDTO, isSearchResult = false): void {
     if ((dir as DirectoryBaseDTO).cache?.cover) {
       (dir as DirectoryBaseDTO).cache.cover.directory = {
         path: (dir as DirectoryBaseDTO).cache.cover.directory.path,
@@ -269,7 +464,7 @@ export class ContentWrapper {
     }
 
     if (dir.media) {
-      ContentWrapper.packMedia(cw, dir.media, isSearchResult);
+      ContentWrapperUtils.packMedia(cw, dir.media, isSearchResult);
     }
 
     if (dir.metaFile) {
@@ -280,14 +475,14 @@ export class ContentWrapper {
           delete dir.metaFile[i].directory;
         }
         delete dir.metaFile[i].id;
-        ContentWrapper.mapify(cw, dir.metaFile[i], isSearchResult);
+        ContentWrapperUtils.mapify(cw, dir.metaFile[i], isSearchResult);
       }
     }
     if (dir.directories) {
       for (let i = 0; i < dir.directories.length; ++i) {
         // first remove the parent otherwise it will be a infinite recursion
         delete dir.directories[i].parent;
-        ContentWrapper.packDirectory(cw, dir.directories[i]);
+        ContentWrapperUtils.packDirectory(cw, dir.directories[i]);
       }
     }
 
@@ -301,7 +496,7 @@ export class ContentWrapper {
     Utils.removeNullOrEmptyObj(dir);
   }
 
-  private static deMapify(cw: ContentWrapper, media: FileDTO, isSearchResult: boolean): void {
+  private static deMapify(cw: PackedContentWrapper, media: FileDTO, isSearchResult: boolean): void {
 
     const deMapifyOne = <T>(map: any[],
                             obj: T, key: keyof T, mappedKey: string) => {
@@ -357,7 +552,7 @@ export class ContentWrapper {
       // @ts-ignore
       if (typeof (media as PhotoDTO).metadata['o'] !== 'undefined') {
         // @ts-ignore
-        (media as PhotoDTO).metadata.creationDateOffset = Utils.getOffsetString((media as PhotoDTO).metadata['o']) ;//convert offset from minutes to String
+        (media as PhotoDTO).metadata.creationDateOffset = Utils.getOffsetString((media as PhotoDTO).metadata['o']);//convert offset from minutes to String
         // @ts-ignore
         delete (media as PhotoDTO).metadata['o'];
       }
@@ -434,17 +629,17 @@ export class ContentWrapper {
         // @ts-ignore
         if (typeof (media as PhotoDTO).metadata.cameraData.l !== 'undefined') {
           deMapifyOne(cw.map.lens,
-              (media as PhotoDTO).metadata.cameraData, 'lens', 'l');
+            (media as PhotoDTO).metadata.cameraData, 'lens', 'l');
         }
         // @ts-ignore
         if (typeof (media as PhotoDTO).metadata.cameraData.m !== 'undefined') {
           deMapifyOne(cw.map.camera,
-              (media as PhotoDTO).metadata.cameraData, 'make', 'm');
+            (media as PhotoDTO).metadata.cameraData, 'make', 'm');
         }
         // @ts-ignore
         if (typeof (media as PhotoDTO).metadata.cameraData['o'] !== 'undefined') {
           deMapifyOne(cw.map.camera,
-              (media as PhotoDTO).metadata.cameraData, 'model', 'o');
+            (media as PhotoDTO).metadata.cameraData, 'model', 'o');
         }
 
         // @ts-ignore
@@ -486,28 +681,28 @@ export class ContentWrapper {
         // @ts-ignore
         if (typeof (media as PhotoDTO).metadata.positionData.c !== 'undefined') {
           deMapifyOne(cw.map.keywords,
-              (media as PhotoDTO).metadata.positionData, 'country', 'c');
+            (media as PhotoDTO).metadata.positionData, 'country', 'c');
         }
         // @ts-ignore
         if (typeof (media as PhotoDTO).metadata.positionData.cy !== 'undefined') {
           deMapifyOne(cw.map.keywords,
-              (media as PhotoDTO).metadata.positionData, 'city', 'cy');
+            (media as PhotoDTO).metadata.positionData, 'city', 'cy');
         }
         // @ts-ignore
         if (typeof (media as PhotoDTO).metadata.positionData.s !== 'undefined') {
           deMapifyOne(cw.map.keywords,
-              (media as PhotoDTO).metadata.positionData, 'state', 's');
+            (media as PhotoDTO).metadata.positionData, 'state', 's');
         }
 
         // @ts-ignore
         if ((media as PhotoDTO).metadata.positionData['g']) {
           (media as PhotoDTO).metadata.positionData.GPSData =
-              {
-                // @ts-ignore
-                latitude: (media as PhotoDTO).metadata.positionData['g'][0],
-                // @ts-ignore
-                longitude: (media as PhotoDTO).metadata.positionData['g'][1]
-              };
+            {
+              // @ts-ignore
+              latitude: (media as PhotoDTO).metadata.positionData['g'][0],
+              // @ts-ignore
+              longitude: (media as PhotoDTO).metadata.positionData['g'][1]
+            };
           // @ts-ignore
           delete (media as PhotoDTO).metadata.positionData['g'];
         }
@@ -516,12 +711,12 @@ export class ContentWrapper {
 
   }
 
-  private static unPackMedia(cw: ContentWrapper, dir: DirectoryBaseDTO, media: MediaDTO[], isSearchResult: boolean): void {
+  private static unPackMedia(cw: PackedContentWrapper, dir: DirectoryBaseDTO, media: MediaDTO[], isSearchResult: boolean): void {
 // clean up media
     for (let i = 0; i < media.length; ++i) {
       const m = media[i];
 
-      ContentWrapper.deMapify(cw, m, isSearchResult);
+      ContentWrapperUtils.deMapify(cw, m, isSearchResult);
 
       if (!isSearchResult) {
         m.directory = dir;
@@ -529,9 +724,9 @@ export class ContentWrapper {
     }
   }
 
-  private static unPackDirectory(cw: ContentWrapper, dir: DirectoryBaseDTO | SearchResultDTO, isSearchResult = false): void {
+  private static unPackDirectory(cw: PackedContentWrapper, dir: DirectoryBaseDTO | SearchResultDTO, isSearchResult = false): void {
     if (dir.media) {
-      ContentWrapper.unPackMedia(cw, dir as DirectoryBaseDTO, dir.media, isSearchResult);
+      ContentWrapperUtils.unPackMedia(cw, dir as DirectoryBaseDTO, dir.media, isSearchResult);
     }
 
     if (dir.metaFile) {
@@ -539,12 +734,12 @@ export class ContentWrapper {
         if (!isSearchResult) {
           dir.metaFile[i].directory = dir as DirectoryBaseDTO;
         }
-        ContentWrapper.deMapify(cw, dir.metaFile[i], isSearchResult);
+        ContentWrapperUtils.deMapify(cw, dir.metaFile[i], isSearchResult);
       }
     }
     if (dir.directories) {
       for (let i = 0; i < dir.directories.length; ++i) {
-        ContentWrapper.unPackDirectory(cw, dir.directories[i]);
+        ContentWrapperUtils.unPackDirectory(cw, dir.directories[i]);
         if (!isSearchResult) {
           dir.directories[i].parent = dir as DirectoryBaseDTO;
         }
@@ -552,53 +747,5 @@ export class ContentWrapper {
     }
 
   }
-
-  static pack(cw: ContentWrapper): ContentWrapper {
-
-    // init CW for packing
-    cw.map = {
-      faces: [], keywords: [], lens: [],
-      camera: [], directories: []
-    };
-    cw.reverseMap = {
-      faces: new Map(), keywords: new Map(),
-      lens: new Map(), camera: new Map(), directories: new Map()
-    };
-
-    if (cw?.directory) {
-      ContentWrapper.packDirectory(cw, cw.directory);
-    } else if (cw.searchResult) {
-      ContentWrapper.packDirectory(cw, cw.searchResult, true);
-    }
-
-    // remove empty maps
-    for (const k in cw.map) {
-      // @ts-ignore
-      if (cw.map[k].length === 0) {
-        // @ts-ignore
-        delete cw.map[k];
-      }
-    }
-
-    delete cw.reverseMap;
-    return cw;
-
-  }
-
-  static unpack(cw: ContentWrapper): ContentWrapper {
-    if (!cw || cw.notModified) {
-      return cw;
-    }
-    if (cw?.directory) {
-      ContentWrapper.unPackDirectory(cw, cw.directory);
-    } else if (cw.searchResult) {
-      ContentWrapper.unPackDirectory(cw, cw.searchResult, true);
-    }
-    delete cw.map;
-    return cw;
-  }
 }
 
-export class ContentWrapperWithError extends ContentWrapper {
-  public error?: string;
-}
