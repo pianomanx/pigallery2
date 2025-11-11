@@ -1,6 +1,7 @@
 import {Utils} from '../../../../common/Utils';
 import {Config} from '../../../../common/config/public/Config';
 import {MediaDTO} from '../../../../common/entities/MediaDTO';
+import {ContentWrapperUtils} from '../../../../common/entities/ContentWrapper';
 
 export class MediaIcon {
   protected static readonly ThumbnailMap =
@@ -113,20 +114,12 @@ export class MediaIcon {
   equals(other: MediaDTO | MediaIcon): boolean {
     // is gridphoto
     if (other instanceof MediaIcon) {
-      return (
-        this.media.directory.path === other.media.directory.path &&
-        this.media.directory.name === other.media.directory.name &&
-        this.media.name === other.media.name
-      );
+      return ContentWrapperUtils.equalsMedia(this.media, other.media);
     }
 
     // is media
     if (other.directory) {
-      return (
-        this.media.directory.path === other.directory.path &&
-        this.media.directory.name === other.directory.name &&
-        this.media.name === other.name
-      );
+      return ContentWrapperUtils.equalsMedia(this.media, other);
     }
 
     return false;

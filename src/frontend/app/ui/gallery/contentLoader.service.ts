@@ -42,7 +42,6 @@ export class ContentLoaderService {
     this.originalContent = this.content.pipe(
       map((c) => (c?.directory ? c?.directory : c?.searchResult))
     );
-
   }
 
   setContent(content: ContentWrapperWithError): void {

@@ -48,6 +48,7 @@ export class ContentWrapperUtils {
 
   static equals(cw1: ContentWrapper, cw2: ContentWrapper): boolean {
     if (cw1 === cw2) {
+      console.log('the same objects');
       return true;
     }
 
@@ -177,7 +178,7 @@ export class ContentWrapperUtils {
     const m2c = m2.slice().sort((a, b) => fullPath(a).localeCompare(fullPath(b)));
 
     for (let i = 0; i < m1.length; ++i) {
-      if (ContentWrapperUtils.equalsMedia(m1c[i], m2c[i]) === false) {
+      if (!ContentWrapperUtils.equalsMedia(m1c[i], m2c[i])) {
         return false;
       }
     }
