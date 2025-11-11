@@ -58,6 +58,7 @@ export class GalleryGridComponent
   @Input() mediaGroups: MediaGroup[];
   mediaToRender: GridMediaGroup[] = [];
   containerWidth = 0;
+  containerMinHeight = 0; // used to fix container height while updating photos to prevent flickering
   screenHeight = 0;
   isAfterViewInit = false;
   subscriptions: {
@@ -94,9 +95,14 @@ export class GalleryGridComponent
     if (this.isAfterViewInit === false) {
       return;
     }
+
+    this.containerMinHeight = this.gridContainer.nativeElement.clientHeight; // reduce flickering
     this.updateContainerDimensions();
     this.mergeNewPhotos();
     this.renderMinimalPhotos();
+    setTimeout(() => {
+      this.containerMinHeight = 0; // remove min height after new photos are rendered
+    }, 0);
   }
 
   ngOnInit(): void {
