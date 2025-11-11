@@ -11,8 +11,8 @@ export class GalleryNavigatorService {
   public girdSize: BehaviorSubject<GridSizes>;
 
   constructor(
-      private galleryCacheService: GalleryCacheService,
-      private galleryService: ContentLoaderService,
+    private galleryCacheService: GalleryCacheService,
+    private galleryService: ContentLoaderService,
   ) {
 
     // TODO load def instead
@@ -20,28 +20,30 @@ export class GalleryNavigatorService {
     this.galleryService.content.subscribe((c) => {
       if (c) {
         const gs = this.galleryCacheService.getGridSize(c) ?? this.getDefaultGridSize();
-
-        if (!Utils.equalsFilter(this.girdSize.value,gs)) {
-          this.girdSize.next(gs);
-        }
+        this.nextGridSize(gs);
       }
     });
   }
 
+  nextGridSize(value: GridSizes): void {
+    if (!Utils.equalsFilter(this.girdSize.value, value)) {
+      this.girdSize.next(value);
+    }
+  }
 
   setGridSize(gs: GridSizes) {
-    this.girdSize.next(gs);
+    this.nextGridSize(gs);
     if (this.galleryService.content.value) {
       if (
-          !this.isDefaultGridSize()
+        !this.isDefaultGridSize()
       ) {
         this.galleryCacheService.setGridSize(
-            this.galleryService.content.value,
-            gs
+          this.galleryService.content.value,
+          gs
         );
       } else {
         this.galleryCacheService.removeGridSize(
-            this.galleryService.content.value
+          this.galleryService.content.value
         );
       }
     }
