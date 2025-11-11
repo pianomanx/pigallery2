@@ -922,6 +922,28 @@ export class ClientLightboxTitleConfig {
 }
 
 @SubConfigClass<TAGS>({tags: {client: true}, softReadonly: true})
+export class AutoUpdateConfig {
+  @ConfigProperty({
+    tags: {
+      name: $localize`Enable auto update`,
+      priority: ConfigPriority.advanced,
+      experimental: true,
+    },
+    description: $localize`Enable auto polling for new photos and videos in the gallery.`
+  })
+  enable: boolean = false;
+
+  @ConfigProperty({
+    tags: {
+      name: $localize`Interval`,
+      priority: ConfigPriority.advanced,
+    },
+    description: $localize`Frequency of the auto polling in seconds.`
+  })
+  interval:number = 60;
+}
+
+@SubConfigClass<TAGS>({tags: {client: true}, softReadonly: true})
 export class ClientLightboxConfig {
 
   @ConfigProperty({
@@ -1185,6 +1207,15 @@ export class ClientGalleryConfig {
     description: $localize`Makes top blog (*.md files content) auto-open.`
   })
   TopBlogStartsOpen: boolean = false;
+
+  @ConfigProperty({
+    tags: {
+      name: $localize`Auto update`,
+      priority: ConfigPriority.advanced,
+    } as TAGS,
+    description: $localize`makes the gallery poll the backend for new photos in the given directory or search`
+  })
+  AutoUpdate: AutoUpdateConfig = new AutoUpdateConfig();
 }
 
 @SubConfigClass({tags: {client: true}, softReadonly: true})

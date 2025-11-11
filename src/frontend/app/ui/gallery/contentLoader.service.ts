@@ -1,26 +1,20 @@
-import {Injectable} from '@angular/core';
+import {Injectable, OnDestroy} from '@angular/core';
 import {NetworkService} from '../../model/network/network.service';
-import {
-  ContentWrapper,
-  ContentWrapperUtils,
-  ContentWrapperWithError,
-  PackedContentWrapperWithError
-} from '../../../../common/entities/ContentWrapper';
+import {ContentWrapperUtils, ContentWrapperWithError, PackedContentWrapperWithError} from '../../../../common/entities/ContentWrapper';
 import {SubDirectoryDTO,} from '../../../../common/entities/DirectoryDTO';
 import {GalleryCacheService} from './cache.gallery.service';
-import {BehaviorSubject, Observable} from 'rxjs';
+import {BehaviorSubject, interval, Observable, Subscription} from 'rxjs';
 import {Config} from '../../../../common/config/public/Config';
 import {ShareService} from './share.service';
 import {NavigationService} from '../../model/navigation.service';
 import {QueryParams} from '../../../../common/QueryParams';
 import {ErrorCodes} from '../../../../common/entities/Error';
-import {map} from 'rxjs/operators';
+import {map, skip} from 'rxjs/operators';
 import {MediaDTO} from '../../../../common/entities/MediaDTO';
 import {FileDTO} from '../../../../common/entities/FileDTO';
-import {Utils} from '../../../../common/Utils';
 
 @Injectable()
-export class ContentLoaderService {
+export class ContentLoaderService implements OnDestroy {
   public content: BehaviorSubject<ContentWrapperWithError>;
   public originalContent: Observable<DirectoryContent>;
   lastRequest: { directory: string } = {
@@ -29,6 +23,7 @@ export class ContentLoaderService {
   private searchId: number;
   private ongoingSearch: string = null;
   private currentContentRequest: { type: 'directory' | 'search', value: string } = null;
+  private pollingTimeSub: Subscription;
 
   constructor(
     private networkService: NetworkService,
@@ -42,6 +37,25 @@ export class ContentLoaderService {
     this.originalContent = this.content.pipe(
       map((c) => (c?.directory ? c?.directory : c?.searchResult))
     );
+    this.setupAutoUpdate();
+  }
+
+  ngOnDestroy(): void {
+    if (this.pollingTimeSub) {
+      this.pollingTimeSub.unsubscribe();
+      this.pollingTimeSub = null;
+    }
+  }
+
+  setupAutoUpdate() {
+    if (!Config.Gallery.AutoUpdate.enable) {
+      return;
+    }
+    this.pollingTimeSub = interval(1000 * Config.Gallery.AutoUpdate.interval)
+      .pipe(skip(1)) // do not refresh right away
+      .subscribe(() => {
+        this.reloadCurrentContent().catch(console.error);
+      });
   }
 
   setContent(content: ContentWrapperWithError): void {
@@ -56,7 +70,7 @@ export class ContentLoaderService {
     // load from cache
     const cw = this.galleryCacheService.getDirectory(directoryName);
 
-    this.setContent( ContentWrapperUtils.unpack(cw));
+    this.setContent(ContentWrapperUtils.unpack(cw));
     this.lastRequest.directory = directoryName;
     this.currentContentRequest = {type: 'directory', value: directoryName};
 
