@@ -20,6 +20,7 @@ import {SessionManager} from '../database/SessionManager';
 
 
 const LOG_TAG = '[DiskManager]';
+declare const global: { gc: () => void };
 
 export class DiskManager {
   public static calcLastModified(stat: Stats): number {
@@ -152,7 +153,16 @@ export class DiskManager {
       return directory;
     }
     const list = await fsp.readdir(absoluteDirectoryName);
+    let count = 0;
+
     for (const file of list) {
+      count++;
+
+      if (count % 1000 === 0) {
+        if (global.gc) {
+          global.gc(); 
+        }
+      }
       const fullFilePath = path.normalize(
         path.join(absoluteDirectoryName, file)
       );
