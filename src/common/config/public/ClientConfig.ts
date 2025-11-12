@@ -390,8 +390,7 @@ export class SVGIconConfig {
   })
   items: string = '';
 
-  constructor(viewBox: string = '0 0 512 512', items: string) {
-   //  console.log(JSON.stringify(this), viewBox, items); uncomment this and works in firefox..
+  constructor(viewBox: string = '0 0 512 512', items: string = '') {
     this.viewBox = viewBox;
     this.items = items;
   }
@@ -427,9 +426,9 @@ export class PathThemeConfig {
     } as TAGS,
     description: $localize`Set the icon of the map marker pin.`,
   })
-  svgIcon: SVGIconConfig = new SVGIconConfig('','');
+  svgIcon: SVGIconConfig = new SVGIconConfig('', '');
 
-  constructor(color: string = '', dashArray: string = '', svgIcon: SVGIconConfig = new SVGIconConfig('','')) {
+  constructor(color: string = '', dashArray: string = '', svgIcon: SVGIconConfig = new SVGIconConfig('', '')) {
     this.color = color;
     this.dashArray = dashArray;
     this.svgIcon = svgIcon;
@@ -941,7 +940,7 @@ export class AutoUpdateConfig {
     },
     description: $localize`Frequency of the auto polling in seconds.`
   })
-  interval:number = 60;
+  interval: number = 60;
 }
 
 @SubConfigClass<TAGS>({tags: {client: true}, softReadonly: true})
