@@ -146,7 +146,7 @@
   "overrides": {
     "beasties": "^0.3.3"
   },
-  "notes":{
+  "notes": {
     "remove besties": "after angular v20: https://stackoverflow.com/questions/76798190/i-get-error-form-floatinglabel-in-ng-build"
   },
   "engines": {
