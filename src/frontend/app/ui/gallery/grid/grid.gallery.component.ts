@@ -439,7 +439,6 @@ export class GalleryGridComponent
   }
 
   private clearRenderedPhotos(): void {
-    console.log('[GalleryGridComponent]','clearRenderedPhotos');
     this.mediaToRender = [];
     this.changeDetector.detectChanges();
   }
