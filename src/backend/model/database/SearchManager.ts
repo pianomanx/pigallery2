@@ -397,13 +397,16 @@ export class SearchManager {
 
     if (Config.Search.listMetafiles === true) {
       const dIds = Array.from(new Set(result.media.map(m => (m.directory as unknown as { id: number }).id)));
-      result.metaFile = await connection
-        .getRepository(FileEntity)
-        .createQueryBuilder('file')
-        .select(['file', ...this.DIRECTORY_SELECT])
-        .where(`file.directoryId IN(${dIds})`)
-        .leftJoin('file.directory', 'directory')
-        .getMany();
+      result.metaFile = [];
+      if (dIds.length > 0) {
+        result.metaFile = await connection
+          .getRepository(FileEntity)
+          .createQueryBuilder('file')
+          .select(['file', ...this.DIRECTORY_SELECT])
+          .where(`file.directoryId IN(${dIds})`)
+          .leftJoin('file.directory', 'directory')
+          .getMany();
+      }
     }
 
     if (Config.Search.listDirectories === true) {
