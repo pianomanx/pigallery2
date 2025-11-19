@@ -5,6 +5,10 @@ export class PageHelper {
     (document.compatMode || '') === 'CSS1Compat';
 
   public static get ScrollY(): number {
+    // use the standard way to get Window scroll if available
+    if (window.scrollY !== undefined) {
+      return window.scrollY;
+    }
     return this.supportPageOffset
       ? window.pageYOffset
       : this.isCSS1Compat
@@ -25,6 +29,10 @@ export class PageHelper {
   }
 
   public static get MaxScrollY(): number {
+    // Detect if there is no visible scrollbar, so nothing to scroll
+    if (document.documentElement.scrollHeight > document.documentElement.clientHeight) {
+      return 0;
+    }
     return (
       Math.max(
         document.body.scrollHeight,

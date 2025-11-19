@@ -282,7 +282,7 @@ export class GalleryGridComponent
     // if all check passed, nothing to delete from the last group
     if (!diffFound &&
       lastOkIndex.media == this.mediaGroups[lastOkIndex.groups].media.length - 1) {
-      firstDeleteIndex.groups = lastOkIndex.groups;
+      firstDeleteIndex.groups = lastOkIndex.groups; // delete last ok group as we might want to add more photos
       firstDeleteIndex.media = lastOkIndex.media + 1;
     }
 
@@ -298,8 +298,6 @@ export class GalleryGridComponent
     this.mediaToRender.splice(firstDeleteIndex.groups + 1);
     const media = this.mediaToRender[firstDeleteIndex.groups].media;
     media.splice(firstDeleteIndex.media);
-
-
   }
 
   public renderARow(): number {
@@ -441,6 +439,7 @@ export class GalleryGridComponent
   }
 
   private clearRenderedPhotos(): void {
+    console.log('[GalleryGridComponent]','clearRenderedPhotos');
     this.mediaToRender = [];
     this.changeDetector.detectChanges();
   }
@@ -454,10 +453,9 @@ export class GalleryGridComponent
   private shouldRenderMore(offset = 0): boolean {
     const bottomOffset = this.getMaxRowHeight() * 2;
     const maxScroll = PageHelper.MaxScrollY + offset;
-
     return (
       Config.Gallery.enableOnScrollRendering === false ||
-      PageHelper.ScrollY >= maxScroll - bottomOffset ||
+      PageHelper.ScrollY >= maxScroll - bottomOffset || // too close to the bottom
       maxScroll * 0.85 < window.innerHeight
     );
   }

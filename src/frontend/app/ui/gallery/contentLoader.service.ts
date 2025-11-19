@@ -54,6 +54,7 @@ export class ContentLoaderService implements OnDestroy {
     this.pollingTimeSub = interval(1000 * Config.Gallery.AutoUpdate.interval)
       .pipe(skip(1)) // do not refresh right away
       .subscribe(() => {
+        //TODO: optimize this. no need to force reload directory if it's not changed' only dated search results
         this.reloadCurrentContent().catch(console.error);
       });
   }
