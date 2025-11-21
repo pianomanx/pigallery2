@@ -5,7 +5,7 @@ import * as path from 'path';
 import {ConfigClass} from 'typeconfig/node';
 import {IConfigClass} from 'typeconfig/common';
 import {PasswordHelper} from '../../../backend/model/PasswordHelper';
-import {TAGS} from '../public/ClientConfig';
+import {ClientConfig, TAGS} from '../public/ClientConfig';
 
 declare const process: any;
 const upTime = new Date().toISOString();
@@ -85,6 +85,14 @@ export class PrivateConfigClass extends ServerConfig {
       require('../../../../package.json').buildCommitHash;
     this.Environment.upTime = upTime;
     this.Environment.isDocker = !!process.env.PI_DOCKER;
+  }
+
+  getClientConfig() {
+    return (this as unknown as IConfigClass<TAGS>).toJSON({
+      attachVolatile: true,
+      skipTags: {secret: true} as TAGS,
+      keepTags: {client: true}
+    }) as unknown as ClientConfig;
   }
 
 

@@ -85,11 +85,7 @@ export class PublicRouter {
         } as UserDTO;
 
       }
-      const confCopy = Config.toJSON({
-        attachVolatile: true,
-        skipTags: {secret: true} as TAGS,
-        keepTags: {client: true}
-      }) as unknown as ClientConfig;
+      const confCopy = Config.getClientConfig();
       // Escaping html tags, like <script></script>
       confCopy.Server.customHTMLHead =
         confCopy.Server.customHTMLHead
