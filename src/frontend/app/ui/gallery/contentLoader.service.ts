@@ -76,7 +76,7 @@ export class ContentLoaderService implements OnDestroy {
   public async loadDirectory(directoryName: string, forceReload = false): Promise<void> {
 
     // load from cache
-    const cw = this.galleryCacheService.getDirectory(directoryName);
+    let cw = this.galleryCacheService.getDirectory(directoryName);
 
     this.setContent(ContentWrapperUtils.unpack(cw));
     this.ongoingContentRequest = directoryName;
@@ -105,28 +105,27 @@ export class ContentLoaderService implements OnDestroy {
     }
 
     try {
-      const cw = await this.networkService.getJson<PackedContentWrapperWithError>(
+      cw = await this.networkService.getJson<PackedContentWrapperWithError>(
         '/gallery/content/' + encodeURIComponent(directoryName),
         params
       );
-
-      if (this.ongoingContentRequest !== directoryName) {
-        return;
-      }
-      this.ongoingContentRequest = null;
-      this.pollingTimerRestart.next();
-
-      if (!cw || cw.notModified === true) {
-        return;
-      }
-
-      this.galleryCacheService.setDirectory(cw); // save it before adding references
-
-      this.setContent(ContentWrapperUtils.unpack(cw));
     } catch (e) {
       console.error(e);
-      this.navigationService.toGallery().catch(console.error);
     }
+    if (this.ongoingContentRequest !== directoryName) {
+      return;
+    }
+    this.ongoingContentRequest = null;
+    this.pollingTimerRestart.next();
+
+    if (!cw || cw.notModified === true) {
+      return;
+    }
+
+    this.galleryCacheService.setDirectory(cw); // save it before adding references
+
+    this.setContent(ContentWrapperUtils.unpack(cw));
+
   }
 
   public async search(query: string, forceReload = false): Promise<void> {
