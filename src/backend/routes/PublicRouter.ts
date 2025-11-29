@@ -9,7 +9,6 @@ import {CookieNames} from '../../common/CookieNames';
 import {ErrorCodes, ErrorDTO} from '../../common/entities/Error';
 import {UserDTO} from '../../common/entities/UserDTO';
 import {ServerTimeEntry} from '../middlewares/ServerTimingMWs';
-import {ClientConfig, TAGS} from '../../common/config/public/ClientConfig';
 import {QueryParams} from '../../common/QueryParams';
 import {PhotoProcessing} from '../model/fileaccess/fileprocessing/PhotoProcessing';
 import {Utils} from '../../common/Utils';

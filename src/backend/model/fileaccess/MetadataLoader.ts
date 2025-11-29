@@ -610,6 +610,7 @@ export class MetadataLoader {
           box.left = Math.round(Math.max(0, box.left - box.width / 2));
           box.top = Math.round(Math.max(0, box.top - box.height / 2));
 
+          name = Utils.decodeHTMLChars(name);
 
           faces.push({name, box});
         }
