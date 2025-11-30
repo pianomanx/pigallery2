@@ -35,6 +35,9 @@ export class ProjectedCacheManager implements IObjectManager {
     await this.invalidateDirectoryCache(changedDir);
   }
 
+  /**
+   * Includes all possible projection keys, including the default one and sharing keys too.
+   */
   public async getAllProjections(): Promise<string[]> {
     const connection = await SQLConnection.getConnection();
     const activeKeys = new Set<string>();

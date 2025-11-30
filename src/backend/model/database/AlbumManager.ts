@@ -57,7 +57,6 @@ export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
 
 
   protected async loadEntities(session: SessionContext): Promise<AlbumBaseEntity[]> {
-    Logger.debug(LOG_TAG, 'loadEntities called for projection key:', session.user.projectionKey);
     await this.updateAlbums(session);
     const connection = await SQLConnection.getConnection();
 
@@ -71,7 +70,6 @@ export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
       .select(['album', 'cache', 'cover.name', 'directory.name', 'directory.path'])
       .getMany();
 
-    Logger.debug(LOG_TAG, 'loadEntities returning', result.length, 'albums');
     return result;
   }
 

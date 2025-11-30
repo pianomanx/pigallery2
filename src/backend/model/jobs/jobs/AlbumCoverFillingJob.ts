@@ -29,11 +29,11 @@ export class AlbumCoverFillingJob extends Job {
 
   protected async step(): Promise<boolean> {
     if (!this.directoryToSetCover) {
-      this.Progress.log('Loading Directories to process');
-      this.directoryToSetCover =
-        await ObjectManagers.getInstance().CoverManager.getPartialDirsWithoutCovers();
-      this.Progress.log(`Loaded ${this.directoryToSetCover.length} directories to create cover for`);
+      this.Progress.log('Loading Directories to process.');
       this.availableSessions = await ObjectManagers.getInstance().SessionManager.getAvailableUserSessions();
+      this.directoryToSetCover =
+        await ObjectManagers.getInstance().CoverManager.getPartialDirsWithoutCovers(this.availableSessions.map(s => s.user.projectionKey));
+      this.Progress.log(`Loaded ${this.directoryToSetCover.length} directories to create cover for.`);
       this.Progress.Left = this.directoryToSetCover.length + 2;
       return true;
     }
@@ -74,10 +74,10 @@ export class AlbumCoverFillingJob extends Job {
   private async stepDirectoryCover(): Promise<boolean> {
     if (this.directoryToSetCover.length === 0) {
       this.directoryToSetCover =
-        await ObjectManagers.getInstance().CoverManager.getPartialDirsWithoutCovers();
+        await ObjectManagers.getInstance().CoverManager.getPartialDirsWithoutCovers(this.availableSessions.map(s => s.user.projectionKey));
       // double check if there is really no more
       if (this.directoryToSetCover.length > 0) {
-        this.Progress.log(`Loaded ${this.directoryToSetCover.length} more directories to create cover for`);
+        this.Progress.log(`Loaded ${this.directoryToSetCover.length} more directories to create cover for.`);
         return true; // continue
       }
       this.Progress.Left = 0;
