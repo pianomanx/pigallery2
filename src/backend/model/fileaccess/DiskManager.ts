@@ -160,7 +160,8 @@ export class DiskManager {
 
       if (count % 1000 === 0) {
         if (global.gc) {
-          global.gc(); 
+          Logger.silly(LOG_TAG, 'Triggering gc');
+          global.gc();
         }
       }
       const fullFilePath = path.normalize(

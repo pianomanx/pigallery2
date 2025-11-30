@@ -129,7 +129,10 @@ export abstract class Job<T extends Record<string, unknown> = Record<string, unk
     const finishState = this.Progress.State;
     this.progress = null;
     if (global.gc) {
+      Logger.silly(this.LOG_TAG, 'Triggering GC on Finish of ' + this.Name);
       global.gc();
+    } else {
+      Logger.silly(this.LOG_TAG, 'No GC on Finish of ' + this.Name);
     }
     Logger.info(this.LOG_TAG, 'Job finished: ' + this.Name);
     if (this.IsInstant) {
