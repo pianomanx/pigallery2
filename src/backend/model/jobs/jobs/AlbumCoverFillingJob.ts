@@ -12,6 +12,11 @@ export class AlbumCoverFillingJob extends Job {
   status: 'Persons' | 'Albums' | 'Directory' = 'Persons';
   private availableSessions: SessionContext[];
 
+
+  get LOG_TAG(): string {
+    return '[AlbumCoverFillingJob]';
+  }
+
   public get Supported(): boolean {
     return true;
   }

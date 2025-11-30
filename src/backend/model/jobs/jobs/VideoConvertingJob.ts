@@ -12,6 +12,11 @@ export class VideoConvertingJob extends FileJob {
     super({noPhoto: true, noMetaFile: true});
   }
 
+
+  get LOG_TAG(): string {
+    return '[VideoConvertingJob]';
+  }
+
   public get Supported(): boolean {
     return Config.Media.Video.enabled === true;
   }
