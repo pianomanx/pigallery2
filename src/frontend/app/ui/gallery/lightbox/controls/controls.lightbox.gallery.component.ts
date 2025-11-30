@@ -377,13 +377,13 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
       case LightBoxTitleTexts.caption:
         return m.metadata.caption;
       case LightBoxTitleTexts.keywords:
-        return m.metadata.keywords.join(', ');
+        return m.metadata.keywords?.join(', ');
       case LightBoxTitleTexts.persons:
-        return m.metadata.faces?.map(f => f.name)?.join(', ');
+        return m.metadata?.faces?.map(f => f.name)?.join(', ');
       case LightBoxTitleTexts.date:
         return this.datePipe.transform(Utils.getTimeMS(m.metadata.creationDate, m.metadata.creationDateOffset, Config.Gallery.ignoreTimestampOffset), 'longDate', 'UTC');
       case LightBoxTitleTexts.location:
-        if (!m.metadata.positionData) {
+        if (!m.metadata?.positionData) {
           return '';
         }
         return [
@@ -396,14 +396,14 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
       case LightBoxTitleTexts.lens:
         return m.metadata.cameraData?.lens;
       case LightBoxTitleTexts.iso:
-        return m.metadata.cameraData?.ISO.toString();
+        return m.metadata.cameraData?.ISO?.toString();
       case LightBoxTitleTexts.fstop:
         if (m.metadata.cameraData?.fStop > 1) {
-          return m.metadata.cameraData?.fStop.toString();
+          return m.metadata.cameraData?.fStop?.toString();
         }
         return '1/' + Math.round(1 / m.metadata.cameraData?.fStop);
       case LightBoxTitleTexts.focal_length:
-        return m.metadata.cameraData?.focalLength.toString();
+        return m.metadata.cameraData?.focalLength?.toString();
     }
     return null;
   }
