@@ -29,7 +29,7 @@ export class VideoConvertingJob extends FileJob {
   protected async processFile(mPath: string): Promise<void> {
     await VideoProcessing.convertVideo(mPath);
     if (global.gc) {
-      Logger.silly(LOG_TAG, 'Triggering gc');
+      Logger.silly(this.LOG_TAG, 'Triggering gc');
       global.gc();
     }
   }
