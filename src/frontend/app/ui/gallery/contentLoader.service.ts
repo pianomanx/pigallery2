@@ -133,7 +133,10 @@ export class ContentLoaderService implements OnDestroy {
     this.ongoingContentRequest = query;
     this.lastContentRequest = {type: 'search', value: query};
 
-    this.setContent({} as PackedContentWrapperWithError);
+    if (!forceReload) {
+      this.setContent({} as PackedContentWrapperWithError); // don't empty the page when its just a reload
+    }
+
     let cw = this.galleryCacheService.getSearch(JSON.parse(query));
     if (forceReload || (!cw || cw.searchResult == null)) {
       try {
