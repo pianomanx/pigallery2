@@ -183,6 +183,11 @@ export class IndexingManager {
     });
 
     this.savingQueue.push({dir: scannedDirectory, promise, resolve: resolveFn, reject: rejectFn});
+
+    if (this.savingQueue.length > 100) {
+      Logger.warn(LOG_TAG, 'Saving queue is growing large:', this.savingQueue.length);
+    }
+
     this.runSavingLoop().catch(console.error);
 
     return promise;

@@ -100,8 +100,10 @@ export class IndexingJob<
     if (this.Progress.State !== JobProgressStates.running) {
       return false;
     }
-    for (const item of scanned.directories) {
-      this.directoriesToIndex.push(path.join(item.path, item.name));
+    if (scanned && scanned.directories) {
+      for (const item of scanned.directories) {
+        this.directoriesToIndex.push(path.join(item.path, item.name));
+      }
     }
     return true;
   }
