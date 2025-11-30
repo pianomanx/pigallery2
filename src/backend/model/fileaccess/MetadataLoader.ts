@@ -22,6 +22,8 @@ const {imageSizeFromFile} = require('image-size/fromFile');
 const LOG_TAG = '[MetadataLoader]';
 const ffmpeg = FFmpegFactory.get();
 
+sharp.cache(false);
+
 export class MetadataLoader {
 
   private static readonly EMPTY_METADATA: PhotoMetadata = {
