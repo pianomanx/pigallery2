@@ -369,7 +369,7 @@ export class ConfigDiagnostics {
     }
 
     if(!global.gc){
-      Logger.debug(LOG_TAG, 'Garbage collector is not available, the app won\t be able to manually trigger it to save RAM.');
+      Logger.debug(LOG_TAG, 'Garbage collector is not available, the app won\'t be able to manually trigger it to save RAM.');
     }
 
     try {
