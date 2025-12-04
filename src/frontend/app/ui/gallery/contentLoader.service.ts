@@ -3,15 +3,15 @@ import {NetworkService} from '../../model/network/network.service';
 import {ContentWrapperUtils, ContentWrapperWithError, PackedContentWrapperWithError} from '../../../../common/entities/ContentWrapper';
 import {SubDirectoryDTO,} from '../../../../common/entities/DirectoryDTO';
 import {GalleryCacheService} from './cache.gallery.service';
-import {BehaviorSubject, interval, Observable, Subject, Subscription} from 'rxjs';
+import {BehaviorSubject, EMPTY, from, Observable, Subject, Subscription, timer} from 'rxjs';
 import {Config} from '../../../../common/config/public/Config';
 import {ShareService} from './share.service';
-import {NavigationService} from '../../model/navigation.service';
 import {QueryParams} from '../../../../common/QueryParams';
 import {ErrorCodes} from '../../../../common/entities/Error';
-import {map, skip, switchMap} from 'rxjs/operators';
+import {filter, map, startWith, switchMap} from 'rxjs/operators';
 import {MediaDTO} from '../../../../common/entities/MediaDTO';
 import {FileDTO} from '../../../../common/entities/FileDTO';
+import {GalleryService} from './gallery.service';
 
 @Injectable()
 export class ContentLoaderService implements OnDestroy {
@@ -19,14 +19,14 @@ export class ContentLoaderService implements OnDestroy {
   public originalContent: Observable<DirectoryContent>;
   private ongoingContentRequest: string = null;
   private lastContentRequest: { type: 'directory' | 'search', value: string } = null;
-  private pollingTimeSub: Subscription;
   private pollingTimerRestart = new Subject<void>();
+  private pollingSub: Subscription;
 
   constructor(
     private networkService: NetworkService,
     private galleryCacheService: GalleryCacheService,
     private shareService: ShareService,
-    private navigationService: NavigationService,
+    private galleryService: GalleryService
   ) {
     this.content = new BehaviorSubject<ContentWrapperWithError>(
       {} as ContentWrapperWithError
@@ -38,32 +38,34 @@ export class ContentLoaderService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.pollingTimeSub) {
-      this.pollingTimeSub.unsubscribe();
-      this.pollingTimeSub = null;
-    }
+    this.unSubPolling();
   }
 
   setupAutoUpdate() {
-    if (!Config.Gallery.AutoUpdate.enable) {
-      return;
-    }
-    this.pollingTimeSub = this.pollingTimerRestart
-      .pipe(
-        // start a new interval each time pollingTimerRestart emits
-        switchMap(() =>
-          interval(1000 * Config.Gallery.AutoUpdate.interval).pipe(skip(1))
-        )
-      )
-      .subscribe(() => {
-        if (this.ongoingContentRequest !== null) {
-          return;
-        } // do not refresh if another request is ongoing
-        //TODO: optimize this. no need to force reload directory if it's not changed' only dated search results
-        this.reloadCurrentContent().catch(console.error);
-      });
+    this.pollingSub = this.galleryService.autoPollS.pipe(
+      switchMap(ap => {
+        console.log('now poll settings', ap);
+        if (!ap) {
+          return EMPTY; // stop polling
+        }
 
-    this.pollingTimerRestart.next(); // start.
+        // Start polling or restart when pollingTimerRestart emits
+        return this.pollingTimerRestart.pipe(
+          startWith(void 0),
+          switchMap(() =>
+            timer(
+              Config.Gallery.AutoUpdate.interval * 1000,
+              Config.Gallery.AutoUpdate.interval * 1000
+            ).pipe(
+              filter(() => this.ongoingContentRequest === null),
+              switchMap(i => from(this.reloadCurrentContent()))
+            )
+          )
+        );
+      })
+    ).subscribe({
+      error: err => console.error(err)
+    });
   }
 
   setContent(content: ContentWrapperWithError): void {
@@ -177,6 +179,14 @@ export class ContentLoaderService implements OnDestroy {
       await this.loadDirectory(this.lastContentRequest.value, true);
     } else if (this.lastContentRequest.type === 'search') {
       await this.search(this.lastContentRequest.value, true);
+    }
+  }
+
+  private unSubPolling() {
+
+    if (this.pollingSub) {
+      this.pollingSub.unsubscribe();
+      this.pollingSub = null;
     }
   }
 }

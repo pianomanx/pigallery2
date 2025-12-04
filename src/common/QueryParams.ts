@@ -27,6 +27,7 @@ export const QueryParams = {
       loopVideos: 'loopVideos',
       loopSlideshow: 'loopSlideshow',
       slideshowSpeed: 'slideshowSpeed'
-    }
+    },
+    autoPoll: 'autoUpdate',
   },
 };

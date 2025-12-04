@@ -139,6 +139,7 @@ import {AppComponent} from './app/app.component';
 import {Marker} from 'leaflet';
 import {MarkerFactory} from './app/ui/gallery/map/MarkerFactory';
 import {DurationPipe} from './app/pipes/DurationPipe';
+import {GalleryService} from './app/ui/gallery/gallery.service';
 
 if (environment.production) {
   enableProdMode();
@@ -217,6 +218,7 @@ bootstrapApplication(AppComponent, {
     GalleryCacheService,
     ContentService,
     ContentLoaderService,
+    GalleryService,
     FilterService,
     GallerySortingService,
     GalleryNavigatorService,
