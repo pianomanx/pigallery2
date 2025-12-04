@@ -25,6 +25,7 @@ export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
       return;
     }
     await this.addSavedSearch(name, searchQuery, lockedAlbum);
+    this.resetMemoryCache();
   }
 
   public async addSavedSearch(
@@ -36,6 +37,7 @@ export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
     await connection
       .getRepository(SavedSearchEntity)
       .save({name, searchQuery, locked: lockedAlbum});
+    this.resetMemoryCache();
   }
 
   public async deleteAlbum(id: number): Promise<void> {
@@ -44,7 +46,7 @@ export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
       .getRepository(AlbumBaseEntity)
       .countBy({id, locked: false});
 
-    if (albumCount !== 0) {
+    if (albumCount == 0) {
       throw new Error(`Could not delete album, id: ${id}. Album id is not found or the album is locked.`);
     }
 
@@ -55,6 +57,8 @@ export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
     await connection
       .getRepository(AlbumBaseEntity)
       .delete({id, locked: false});
+
+    this.resetMemoryCache();
   }
 
   async deleteAll() {
@@ -64,6 +68,7 @@ export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
       .createQueryBuilder('album')
       .delete()
       .execute();
+    this.resetMemoryCache();
   }
 
   protected async loadEntities(session: SessionContext): Promise<AlbumBaseEntity[]> {
@@ -115,6 +120,7 @@ export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
       // https://blog.insiderattack.net/promises-next-ticks-and-immediates-nodejs-event-loop-part-3-9226cbe7a6aa
       await new Promise(setImmediate);
     }
+    this.resetMemoryCache();
   }
 
 }
