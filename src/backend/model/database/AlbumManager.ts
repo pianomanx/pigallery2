@@ -1,6 +1,5 @@
 import {SQLConnection} from './SQLConnection';
 import {AlbumBaseEntity} from './enitites/album/AlbumBaseEntity';
-import {AlbumBaseDTO} from '../../../common/entities/album/AlbumBaseDTO';
 import {ObjectManagers} from '../ObjectManagers';
 import {SearchQueryDTO} from '../../../common/entities/SearchQueryDTO';
 import {SavedSearchEntity} from './enitites/album/SavedSearchEntity';
@@ -41,13 +40,16 @@ export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
 
   public async deleteAlbum(id: number): Promise<void> {
     const connection = await SQLConnection.getConnection();
+    const albumCount = await connection
+      .getRepository(AlbumBaseEntity)
+      .countBy({id, locked: false});
 
-    if (
-      (await connection
-        .getRepository(AlbumBaseEntity)
-        .countBy({id, locked: false})) !== 1
-    ) {
-      throw new Error('Could not delete album, id:' + id);
+    if (albumCount !== 0) {
+      throw new Error(`Could not delete album, id: ${id}. Album id is not found or the album is locked.`);
+    }
+
+    if (albumCount > 1) {
+      throw new Error(`Could not delete album, id: ${id}. DB is inconsistent. More than one album is found with the given id.`);
     }
 
     await connection
@@ -55,6 +57,14 @@ export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
       .delete({id, locked: false});
   }
 
+  async deleteAll() {
+    const connection = await SQLConnection.getConnection();
+    await connection
+      .getRepository(AlbumBaseEntity)
+      .createQueryBuilder('album')
+      .delete()
+      .execute();
+  }
 
   protected async loadEntities(session: SessionContext): Promise<AlbumBaseEntity[]> {
     await this.updateAlbums(session);
@@ -80,15 +90,6 @@ export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
       .createQueryBuilder()
       .update()
       .set({valid: false})
-      .execute();
-  }
-
-  async deleteAll() {
-    const connection = await SQLConnection.getConnection();
-    await connection
-      .getRepository(AlbumBaseEntity)
-      .createQueryBuilder('album')
-      .delete()
       .execute();
   }
 
