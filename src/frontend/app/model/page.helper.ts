@@ -30,7 +30,7 @@ export class PageHelper {
 
   public static get MaxScrollY(): number {
     // Detect if there is no visible scrollbar, so nothing to scroll
-    if (document.documentElement.scrollHeight > document.documentElement.clientHeight) {
+    if (document.documentElement.scrollHeight <= document.documentElement.clientHeight) {
       return 0;
     }
     return (

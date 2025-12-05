@@ -96,12 +96,14 @@ export class GalleryGridComponent
       return;
     }
 
-    this.containerMinHeight = this.gridContainer.nativeElement.clientHeight; // reduce flickering
-    this.updateContainerDimensions();
-    this.mergeNewPhotos();
-    this.renderMinimalPhotos();
+    this.containerMinHeight = Math.min(PageHelper.ScrollY + window.innerHeight, this.gridContainer.nativeElement.clientHeight); // reduce flickering
     setTimeout(() => {
-      this.containerMinHeight = 0; // remove min height after new photos are rendered
+      this.updateContainerDimensions();
+      this.mergeNewPhotos();
+      this.renderMinimalPhotos();
+      setTimeout(() => {
+        this.containerMinHeight = 0; // remove min height after new photos are rendered
+      }, 0);
     }, 0);
   }
 
@@ -388,7 +390,7 @@ export class GalleryGridComponent
   }
 
   /*
-  Renders some photos. If nothing specified, this amount should be enough
+  Renders some photos. If nothing is specified, this amount should be enough
   * */
   private renderMinimalPhotos() {
     this.helperTime = window.setTimeout((): void => {
@@ -412,6 +414,7 @@ export class GalleryGridComponent
     }
     let groupIndex = -1;
     let mediaIndex = -1;
+
     for (let i = 0; i < this.mediaGroups.length; ++i) {
       mediaIndex = this.mediaGroups[i].media.findIndex(
         (p): boolean => this.queryService.getMediaStringId(p) === mediaStringId
@@ -425,12 +428,12 @@ export class GalleryGridComponent
       this.router.navigate([], {queryParams: this.queryService.getParams()});
       return;
     }
-    // Make sure that at leas one more row is rendered
-    // It is possible that only the last few pixels of a photo is visible,
-    // so not required to render more, but the scrollbar does not trigger more photos to render
+    // Make sure that at least one more row is rendered
+    // It is possible that only the last few pixels of a photo are visible,
+    // so not required to render more. However, the scrollbar does not trigger more photos to render
     // (on lightbox navigation)
     while (
-      (this.mediaToRender.length - 1 <= groupIndex ||
+      ((this.mediaToRender.length - 1 <= groupIndex && this.mediaGroups.length > 1) ||
         this.mediaToRender[this.mediaToRender.length - 1]?.media?.length < mediaIndex) &&
       this.renderARow() !== null
       // eslint-disable-next-line no-empty
@@ -470,7 +473,6 @@ export class GalleryGridComponent
     ) {
       return;
     }
-
     let renderedContentHeight = 0;
 
     while (
