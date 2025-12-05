@@ -1,14 +1,14 @@
 <button class="dropdown-item {{enabled? '' : 'disabled'}}" (click)="openModal(photoFrameModal)">
   <ng-icon name="ionImagesOutline"></ng-icon>
   <ng-container i18n>Photo frame link</ng-container>
-  </button>
+</button>
 
 
 <ng-template #photoFrameModal>
   <!-- sharing Modal-->
   <div class="modal-header">
     <h5 class="modal-title" i18n>Photo frame link creator</h5>
-    <button type="button"  class="btn-close"  (click)="hideModal()" data-dismiss="modal" aria-label="Close">
+    <button type="button" class="btn-close" (click)="hideModal()" data-dismiss="modal" aria-label="Close">
     </button>
   </div>
   <div class="modal-body">
@@ -37,9 +37,20 @@
           <label for="autoPollSwitch" class="mb-0" i18n>Auto update gallery</label>
         </div>
         <div class="col-auto">
-          <div class="form-check form-switch m-0">
-            <input class="form-check-input" type="checkbox" id="autoPollSwitch" [(ngModel)]="autoPoll" name="autoPoll" (change)="onOptionsChange()">
-          </div>
+          <select id="autoPollInterval" name="autoPollInterval" class="form-select"
+                  [(ngModel)]="autoPollInterval" (change)="onOptionsChange()">
+            <option [ngValue]="0">off</option>
+            <option [ngValue]="5">5s</option>
+            <option [ngValue]="10">10s</option>
+            <option [ngValue]="30">30s</option>
+            <option [ngValue]="60">1m</option>
+            <option [ngValue]="120">2m</option>
+            <option [ngValue]="300">5m</option>
+            <option [ngValue]="600">10m</option>
+            <option [ngValue]="1800">30m</option>
+            <option [ngValue]="3600">1h</option>
+            <option [ngValue]="7200">2h</option>
+          </select>
         </div>
       </div>
 
@@ -50,7 +61,8 @@
         </div>
         <div class="col-auto">
           <div class="form-check form-switch m-0">
-            <input class="form-check-input" type="checkbox" id="loopSlideshowSwitch" [(ngModel)]="loopSlideshow" name="loopSlideshow" (change)="onOptionsChange()">
+            <input class="form-check-input" type="checkbox" id="loopSlideshowSwitch" [(ngModel)]="loopSlideshow"
+                   name="loopSlideshow" (change)="onOptionsChange()">
           </div>
         </div>
       </div>
@@ -62,7 +74,8 @@
         </div>
         <div class="col-auto">
           <div class="form-check form-switch m-0">
-            <input class="form-check-input" type="checkbox" id="captionAlwaysOnSwitch" [(ngModel)]="captionAlwaysOn" name="captionAlwaysOn" (change)="onOptionsChange()">
+            <input class="form-check-input" type="checkbox" id="captionAlwaysOnSwitch" [(ngModel)]="captionAlwaysOn"
+                   name="captionAlwaysOn" (change)="onOptionsChange()">
           </div>
         </div>
       </div>

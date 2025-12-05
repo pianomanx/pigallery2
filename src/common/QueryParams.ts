@@ -28,6 +28,6 @@ export const QueryParams = {
       loopSlideshow: 'loopSlideshow',
       slideshowSpeed: 'slideshowSpeed' // in seconds
     },
-    autoPoll: 'autoUpdate',
+    autoPollInterval: 'autoUpdateInterval',
   },
 };

@@ -8,7 +8,7 @@ import {QueryParams} from '../../../../common/QueryParams';
   providedIn: 'root'
 })
 export class GalleryService {
-  public autoPollS = new BehaviorSubject(Config.Gallery.Lightbox.facesAlwaysOn);
+  public autoPollIntervalS = new BehaviorSubject(Config.Gallery.AutoUpdate.enable ? Config.Gallery.AutoUpdate.interval : 0);
   private subscription: Subscription;
 
   constructor(private route: ActivatedRoute,
@@ -17,24 +17,23 @@ export class GalleryService {
 
     this.subscription = this.route.queryParams.subscribe(
       (params: Params) => {
-        const autoPoll = params[QueryParams.gallery.autoPoll];
-        if (autoPoll !== undefined) {
-          this.autoPoll = autoPoll === 'true' || autoPoll === true;
+        const autoPollInterval = params[QueryParams.gallery.autoPollInterval];
+        if (autoPollInterval !== undefined) {
+          this.autoPollInterval = parseInt(autoPollInterval, 10) as number;
         }
       }
     );
   }
 
-  get autoPoll(): boolean {
-    return this.autoPollS.value;
+  get autoPollInterval(): number {
+    return this.autoPollIntervalS.value;
   }
 
-  set autoPoll(value: boolean) {
-    if (this.autoPollS.value != value) {
-      this.autoPollS.next(value);
-      return;
+  set autoPollInterval(value: number) {
+    if (this.autoPollIntervalS.value != value) {
+      this.autoPollIntervalS.next(value);
     }
-    this.updateQuery(QueryParams.gallery.autoPoll, Config.Gallery.AutoUpdate.enable, value);
+    this.updateQuery(QueryParams.gallery.autoPollInterval, Config.Gallery.AutoUpdate.enable ? Config.Gallery.AutoUpdate.interval : 0, value);
   }
 
 

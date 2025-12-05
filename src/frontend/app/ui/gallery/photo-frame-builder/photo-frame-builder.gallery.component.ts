@@ -25,11 +25,10 @@ export class PhotoFrameBuilderGalleryComponent implements OnInit, OnDestroy {
   enabled = true;
   url = '';
   // Options
-  autoPoll = true;
+  autoPollInterval = 5 * 60; // 5m
   loopSlideshow = true;
   captionAlwaysOn = true;
-  // slideshow speed in seconds (default 5 minutes)
-  slideshowSpeed = 300;
+  slideshowSpeed = 5 * 60; // 5m
 
   contentSubscription: Subscription = null;
 
@@ -60,10 +59,11 @@ export class PhotoFrameBuilderGalleryComponent implements OnInit, OnDestroy {
     u.searchParams.set(QueryParams.gallery.lightbox.playback, 'true');
 
     // Auto polling toggle
-    if (this.autoPoll) {
-      u.searchParams.set(QueryParams.gallery.autoPoll, 'true');
+    if (typeof this.autoPollInterval != 'undefined') {
+      u.searchParams.set(QueryParams.gallery.autoPollInterval,
+        String(parseInt(this.autoPollInterval as unknown as any, 10)));
     } else {
-      u.searchParams.delete(QueryParams.gallery.autoPoll);
+      u.searchParams.delete(QueryParams.gallery.autoPollInterval);
     }
 
     // Loop slideshow toggle

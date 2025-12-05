@@ -42,10 +42,9 @@ export class ContentLoaderService implements OnDestroy {
   }
 
   setupAutoUpdate() {
-    this.pollingSub = this.galleryService.autoPollS.pipe(
-      switchMap(ap => {
-        console.log('now poll settings', ap);
-        if (!ap) {
+    this.pollingSub = this.galleryService.autoPollIntervalS.pipe(
+      switchMap(interval => {
+        if (!interval) {
           return EMPTY; // stop polling
         }
 
@@ -54,8 +53,8 @@ export class ContentLoaderService implements OnDestroy {
           startWith(void 0),
           switchMap(() =>
             timer(
-              Config.Gallery.AutoUpdate.interval * 1000,
-              Config.Gallery.AutoUpdate.interval * 1000
+              interval * 1000,
+              interval * 1000
             ).pipe(
               filter(() => this.ongoingContentRequest === null),
               switchMap(i => from(this.reloadCurrentContent()))

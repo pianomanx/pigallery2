@@ -937,6 +937,8 @@ export class AutoUpdateConfig {
     tags: {
       name: $localize`Interval`,
       priority: ConfigPriority.advanced,
+      githubIssue: 1062,
+      unit:'s'
     },
     description: $localize`Frequency of the auto polling in seconds.`
   })
