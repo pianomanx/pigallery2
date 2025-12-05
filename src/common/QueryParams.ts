@@ -26,7 +26,7 @@ export const QueryParams = {
       facesAlwaysOn: 'facesAlwaysOn',
       loopVideos: 'loopVideos',
       loopSlideshow: 'loopSlideshow',
-      slideshowSpeed: 'slideshowSpeed'
+      slideshowSpeed: 'slideshowSpeed' // in seconds
     },
     autoPoll: 'autoUpdate',
   },
