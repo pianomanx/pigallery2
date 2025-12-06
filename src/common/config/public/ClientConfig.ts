@@ -885,40 +885,40 @@ export class NavBarConfig {
 export class ClientLightboxTitleConfig {
 
   @ConfigProperty({
-    type: LightBoxTitleTexts,
+    arrayType: LightBoxTitleTexts,
     tags: {
-      name: $localize`Top left title`,
+      name: $localize`Top left titles`,
       priority: ConfigPriority.advanced
     },
   })
-  topLeftTitle: LightBoxTitleTexts = LightBoxTitleTexts.title;
+  topLeftTitle: LightBoxTitleTexts[] = [LightBoxTitleTexts.title];
 
   @ConfigProperty({
-    type: LightBoxTitleTexts,
+    arrayType: LightBoxTitleTexts,
     tags: {
-      name: $localize`Top left subtitle`,
+      name: $localize`Top left subtitles`,
       priority: ConfigPriority.advanced
     },
   })
-  topLeftSubtitle: LightBoxTitleTexts = LightBoxTitleTexts.caption;
+  topLeftSubtitle: LightBoxTitleTexts[] = [LightBoxTitleTexts.caption];
 
   @ConfigProperty({
-    type: LightBoxTitleTexts,
+    arrayType: LightBoxTitleTexts,
     tags: {
-      name: $localize`Bottom left title`,
+      name: $localize`Bottom left titles`,
       priority: ConfigPriority.advanced
     },
   })
-  bottomLeftTitle: LightBoxTitleTexts = LightBoxTitleTexts.location;
+  bottomLeftTitle: LightBoxTitleTexts[] = [LightBoxTitleTexts.date, LightBoxTitleTexts.location];
 
   @ConfigProperty({
-    type: LightBoxTitleTexts,
+    arrayType: LightBoxTitleTexts,
     tags: {
-      name: $localize`Bottom right subtitle`,
+      name: $localize`Bottom left subtitles`,
       priority: ConfigPriority.advanced
     },
   })
-  bottomLeftSubtitle: LightBoxTitleTexts = LightBoxTitleTexts.persons;
+  bottomLeftSubtitle: LightBoxTitleTexts[] = [LightBoxTitleTexts.persons];
 }
 
 @SubConfigClass<TAGS>({tags: {client: true}, softReadonly: true})
@@ -938,7 +938,7 @@ export class AutoUpdateConfig {
       name: $localize`Interval`,
       priority: ConfigPriority.advanced,
       githubIssue: 1062,
-      unit:'s'
+      unit: 's'
     },
     description: $localize`Frequency of the auto polling in seconds.`
   })

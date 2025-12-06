@@ -10,7 +10,6 @@ import {Config} from '../../../../../../common/config/public/Config';
 import {SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes,} from '../../../../../../common/entities/SearchQueryDTO';
 import {AuthenticationService} from '../../../../model/network/authentication.service';
 import {LightboxService} from '../lightbox.service';
-import {GalleryCacheService} from '../../cache.gallery.service';
 import {Utils} from '../../../../../../common/Utils';
 import {FileSizePipe} from '../../../../pipes/FileSizePipe';
 import {DatePipe, NgFor, NgIf} from '@angular/common';
@@ -356,56 +355,75 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
     this.nextPhoto.emit();
   }
 
-  getText(type: LightBoxTitleTexts): string {
+  getText(type: LightBoxTitleTexts[]): string {
     if (!this.activePhoto?.gridMedia?.media) {
       return null;
     }
     const m = this.activePhoto.gridMedia.media as PhotoDTO;
-    switch (type) {
-      case LightBoxTitleTexts.file:
-        return Utils.concatUrls(
-          m.directory.path,
-          m.directory.name,
-          m.name
-        );
-      case LightBoxTitleTexts.resolution:
-        return `${m.metadata.size.width}x${m.metadata.size.height}`;
-      case LightBoxTitleTexts.size:
-        return this.fileSizePipe.transform(m.metadata.fileSize);
-      case LightBoxTitleTexts.title:
-        return m.metadata.title;
-      case LightBoxTitleTexts.caption:
-        return m.metadata.caption;
-      case LightBoxTitleTexts.keywords:
-        return m.metadata.keywords?.join(', ');
-      case LightBoxTitleTexts.persons:
-        return m.metadata?.faces?.map(f => f.name)?.join(', ');
-      case LightBoxTitleTexts.date:
-        return this.datePipe.transform(Utils.getTimeMS(m.metadata.creationDate, m.metadata.creationDateOffset, Config.Gallery.ignoreTimestampOffset), 'longDate', 'UTC');
-      case LightBoxTitleTexts.location:
-        if (!m.metadata?.positionData) {
-          return '';
-        }
-        return [
-          m.metadata.positionData.city,
-          m.metadata.positionData.state,
-          m.metadata.positionData.country
-        ].filter(elm => elm).join(', ').trim(); //Filter removes empty elements, join concats the values separated by ', '
-      case LightBoxTitleTexts.camera:
-        return m.metadata.cameraData?.model;
-      case LightBoxTitleTexts.lens:
-        return m.metadata.cameraData?.lens;
-      case LightBoxTitleTexts.iso:
-        return m.metadata.cameraData?.ISO?.toString();
-      case LightBoxTitleTexts.fstop:
-        if (m.metadata.cameraData?.fStop > 1) {
-          return m.metadata.cameraData?.fStop?.toString();
-        }
-        return '1/' + Math.round(1 / m.metadata.cameraData?.fStop);
-      case LightBoxTitleTexts.focal_length:
-        return m.metadata.cameraData?.focalLength?.toString();
+    let retTexts = [];
+    for (const t of type) {
+      switch (t) {
+        case LightBoxTitleTexts.file:
+          retTexts.push(Utils.concatUrls(
+            m.directory.path,
+            m.directory.name,
+            m.name
+          ));
+          break;
+        case LightBoxTitleTexts.resolution:
+          retTexts.push(`${m.metadata.size.width}x${m.metadata.size.height}`);
+          break;
+        case LightBoxTitleTexts.size:
+          retTexts.push(this.fileSizePipe.transform(m.metadata.fileSize));
+          break;
+        case LightBoxTitleTexts.title:
+          retTexts.push(m.metadata.title);
+          break;
+        case LightBoxTitleTexts.caption:
+          retTexts.push(m.metadata.caption);
+          break;
+        case LightBoxTitleTexts.keywords:
+          retTexts.push(m.metadata.keywords?.join(', '));
+          break;
+        case LightBoxTitleTexts.persons:
+          retTexts.push(m.metadata?.faces?.map(f => f.name)?.join(', '));
+          break;
+        case LightBoxTitleTexts.date:
+          const isThisYear = MediaDTOUtils.createdThisYear(m);
+          retTexts.push(this.datePipe.transform(Utils.getTimeMS(m.metadata.creationDate, m.metadata.creationDateOffset, Config.Gallery.ignoreTimestampOffset), isThisYear ? 'MMMM d' : 'longDate', 'UTC'));
+          break;
+        case LightBoxTitleTexts.location:
+          if (!m.metadata?.positionData) {
+            break;
+          }
+          retTexts.push([
+            m.metadata.positionData.city,
+            m.metadata.positionData.state,
+            m.metadata.positionData.country
+          ].filter(elm => elm).join(', ').trim()); //Filter removes empty elements, join concat the values separated by ', '
+          break;
+        case LightBoxTitleTexts.camera:
+          retTexts.push(m.metadata.cameraData?.model);
+          break;
+        case LightBoxTitleTexts.lens:
+          retTexts.push(m.metadata.cameraData?.lens);
+          break;
+        case LightBoxTitleTexts.iso:
+          retTexts.push(m.metadata.cameraData?.ISO?.toString());
+          break;
+        case LightBoxTitleTexts.fstop:
+          if (m.metadata.cameraData?.fStop > 1) {
+            retTexts.push(m.metadata.cameraData?.fStop?.toString());
+            break;
+          }
+          retTexts.push('1/' + Math.round(1 / m.metadata.cameraData?.fStop));
+          break;
+        case LightBoxTitleTexts.focal_length:
+          retTexts.push(m.metadata.cameraData?.focalLength?.toString());
+          break;
+      }
     }
-    return null;
+    return retTexts.map(s=>s?.trim()).filter(Boolean).join(' - ');
   }
 
   private showNextMedia = () => {
