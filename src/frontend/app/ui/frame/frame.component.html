@@ -73,6 +73,7 @@
                         class="navbar-badge badge text-bg-warning">{{ notificationService.numberOfNotifications }}</span>
                 </button>
                 <ul id="dropdown-frame-menu" *dropdownMenu
+                    #dropdownMenu
                     class="dropdown-menu dropdown-menu-right"
                     role="menu" aria-labelledby="button-frame-menu">
 
@@ -155,7 +156,9 @@
                       <ng-icon name="ionHammerOutline"></ng-icon>
                       <ng-container i18n>Tools</ng-container>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-start" *dropdownMenu role="menu">
+                    <ul class="dropdown-menu"
+                        [style.right.px]="-dropdownMenu.clientWidth"
+                        *dropdownMenu role="menu">
                       <ng-content select="[navbar-menu]"></ng-content>
                       <li role="menuitem" *ngIf="isAdmin()">
                         <a class="dropdown-item"
