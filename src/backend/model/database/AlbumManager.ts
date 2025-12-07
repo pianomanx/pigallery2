@@ -114,7 +114,8 @@ export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
       await ObjectManagers.getInstance().ProjectedCacheManager
         .setAndGetCacheForAlbum(connection, session, {
           id: a.id,
-          searchQuery: a.searchQuery
+          searchQuery: a.searchQuery,
+          name:a.name
         });
       // giving back the control to the main event loop (Macrotask queue)
       // https://blog.insiderattack.net/promises-next-ticks-and-immediates-nodejs-event-loop-part-3-9226cbe7a6aa

@@ -123,8 +123,9 @@ export class ContentLoaderService implements OnDestroy {
       return;
     }
 
-    this.galleryCacheService.setDirectory(cw); // save it before adding references
-
+    if(!!cw?.directory) {
+      this.galleryCacheService.setDirectory(cw); // save it before adding references
+    }
     this.setContent(ContentWrapperUtils.unpack(cw));
 
   }
