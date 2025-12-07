@@ -65,10 +65,10 @@ export type TAGS = {
   name?: string,
   relevant?: (c: any) => boolean,
   dockerSensitive?: boolean,
-  hint?: string,// UI hint
+  hint?: string, // UI hint
   githubIssue?: number,
   secret?: boolean, // these config properties should never travel out of the server
-  experimental?: boolean, //is it a beta feature
+  experimental?: boolean, // is it a beta feature?
   unit?: string, // Unit info to display on UI
   uiIcon?: string,
   uiType?: 'SearchQuery' | 'ThemeSelector' | 'SelectedThemeSettings' | 'SVGIconConfig', // Hint for the UI about the type
@@ -629,7 +629,7 @@ export class ClientMapConfig {
       name: $localize`Bend long path trigger`,
       priority: ConfigPriority.underTheHood
     } as TAGS,
-    description: $localize`Map will bend the path if two points are this far apart on latititude axes. This intended to bend flight if only the end and the start points are given.`,
+    description: $localize`Map will bend the path if two points are this far apart on latitude axes. This intended to bend flight if only the end and the start points are given.`,
   })
   bendLongPathsTrigger: number = 0.5;
 }
@@ -998,7 +998,7 @@ export class ClientLightboxConfig {
       name: $localize`Load full resolution image on zoom.`,
       priority: ConfigPriority.advanced
     },
-    description: $localize`Enables loading the full resolution image on zoom in the ligthbox (preview).`,
+    description: $localize`Enables loading the full resolution image on zoom in the lightbox (preview).`,
   })
   loadFullImageOnZoom: boolean = true;
 
@@ -1141,7 +1141,7 @@ export class ClientGalleryConfig {
     description: $localize`If enabled, timestamp offsets are ignored, meaning that the local times of pictures are used for searching, sorting and grouping. If disabled, global time is used and pictures with no timestamp are assumed to be in UTC (offset +00:00).`
   })
     //DEVELOPER NOTE: The Database model stores the timestamp (creationDate) as milliseconds since 1970-01-01 UTC (global time). And stores and offset (creationDateOffset) as minutes.
-    //Ignoring timestamp for the user is the opposite for the database. If the user wants to ignore the offset, we have to add the offset to the creationDate to give the user the right experience.
+    //Ignoring the timestamp for the user is the opposite for the database. If the user wants to ignore the offset, we have to add the offset to the creationDate to give the user the right experience.
   ignoreTimestampOffset: boolean = true;
 
 
@@ -1241,8 +1241,8 @@ export class ClientVideoConfig {
     description: $localize`Video formats that are supported after transcoding (with the built-in ffmpeg support).`
   })
   supportedFormatsWithTranscoding: string[] = ['avi', 'mkv', 'mov', 'wmv', 'flv', 'mts', 'm2ts', 'mpg', '3gp', 'm4v', 'mpeg', 'vob', 'divx', 'xvid', 'ts'];
-  // Browser supported video formats
-  // Read more:  https://www.w3schools.com/html/html5_video.asp
+  // Browser-supported video formats
+  // Read more: https://www.w3schools.com/html/html5_video.asp
   @ConfigProperty({
     arrayType: 'string',
     tags: {
