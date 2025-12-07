@@ -55,7 +55,10 @@ export enum LightBoxTitleTexts {
   lens,
   iso,
   fstop,
-  focal_length
+  focal_length,
+  directory,
+  titleOrCaption,
+  titleOrCaptionOrDirectory
 
 }
 

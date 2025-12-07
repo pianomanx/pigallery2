@@ -361,6 +361,19 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
     }
     const m = this.activePhoto.gridMedia.media as PhotoDTO;
     let retTexts = [];
+    const getDir = () => {
+      const p = Utils.concatUrls(
+        m.directory.path,
+        m.directory.name
+      );
+      if (p === '.') {
+        return $localize`Home`;
+      }
+      if (p.length > 25) {
+        return '...' + p.slice(-22);
+      }
+      return p;
+    };
     for (const t of type) {
       switch (t) {
         case LightBoxTitleTexts.file:
@@ -421,9 +434,18 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
         case LightBoxTitleTexts.focal_length:
           retTexts.push(m.metadata.cameraData?.focalLength?.toString());
           break;
+        case LightBoxTitleTexts.directory:
+          retTexts.push(getDir());
+          break;
+        case LightBoxTitleTexts.titleOrCaption:
+          retTexts.push(m.metadata.title || m.metadata.caption);
+          break;
+        case LightBoxTitleTexts.titleOrCaptionOrDirectory:
+          retTexts.push(m.metadata.title || m.metadata.caption || getDir());
+          break;
       }
     }
-    return retTexts.map(s=>s?.trim()).filter(Boolean).join(' - ');
+    return retTexts.map(s => s?.trim()).filter(Boolean).join(' - ');
   }
 
   private showNextMedia = () => {

@@ -1,5 +1,11 @@
 import {UserRoles} from '../../../common/entities/UserDTO';
-import {ConfigPriority, MapProviders, NavigationLinkTypes, ScrollUpModes} from '../../../common/config/public/ClientConfig';
+import {
+  ConfigPriority,
+  LightBoxTitleTexts,
+  MapProviders,
+  NavigationLinkTypes,
+  ScrollUpModes
+} from '../../../common/config/public/ClientConfig';
 import {ReIndexingSensitivity} from '../../../common/config/private/PrivateConfig';
 import {SearchQueryTypes} from '../../../common/entities/SearchQueryDTO';
 import {ConfigStyle} from './settings/settings.service';
@@ -67,6 +73,27 @@ EnumTranslations[NavigationLinkTypes[NavigationLinkTypes.search]] = $localize`Se
 EnumTranslations[NavigationLinkTypes[NavigationLinkTypes.gallery]] = $localize`Gallery`;
 EnumTranslations[NavigationLinkTypes[NavigationLinkTypes.albums]] = $localize`Albums`;
 EnumTranslations[NavigationLinkTypes[NavigationLinkTypes.faces]] = $localize`Faces`;
+
+
+// Lightbox title text options
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.NONE]] = $localize`None`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.file]] = $localize`File`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.resolution]] = $localize`Resolution`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.size]] = $localize`Size`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.caption]] = $localize`Caption`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.title]] = $localize`Title`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.keywords]] = $localize`Keywords`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.persons]] = $localize`Persons`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.location]] = $localize`Location`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.date]] = $localize`Date`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.camera]] = $localize`Camera`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.lens]] = $localize`Lens`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.iso]] = $localize`Iso`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.fstop]] = $localize`f-stop`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.focal_length]] = $localize`Focal length`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.directory]] = $localize`Directory`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.titleOrCaption]] = $localize`Title or Caption`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.titleOrCaptionOrDirectory]] = $localize`Title or Caption or Directory`;
 
 
 EnumTranslations[SearchQueryTypes[SearchQueryTypes.AND]] = $localize`And`;
