@@ -10,6 +10,10 @@ import {ContentLoaderService} from '../contentLoader.service';
 import { NgIconComponent } from '@ng-icons/core';
 import { FormsModule } from '@angular/forms';
 import { ClipboardModule } from 'ngx-clipboard';
+import { NgFor } from '@angular/common';
+import { StringifyEnum } from '../../../pipes/StringifyEnum';
+import { LightBoxTitleTexts } from '../../../../../common/config/public/ClientConfig';
+import {Utils} from '../../../../../common/Utils';
 
 @Component({
     selector: 'app-gallery-photo-frame-builder',
@@ -19,16 +23,26 @@ import { ClipboardModule } from 'ngx-clipboard';
         NgIconComponent,
         FormsModule,
         ClipboardModule,
+        NgFor,
+        StringifyEnum,
     ]
-})
-export class PhotoFrameBuilderGalleryComponent implements OnInit, OnDestroy {
-  enabled = true;
-  url = '';
-  // Options
-  autoPollInterval = 5 * 60; // 5m
-  loopSlideshow = true;
-  captionAlwaysOn = true;
-  slideshowSpeed = 5 * 60; // 5m
+  })
+  export class PhotoFrameBuilderGalleryComponent implements OnInit, OnDestroy {
+    enabled = true;
+    url = '';
+    // Options
+    autoPollInterval = 5 * 60; // 5m
+    loopSlideshow = true;
+    captionAlwaysOn = true;
+    slideshowSpeed = 5 * 60; // 5m
+    // Lightbox title overrides as arrays of enum names (strings)
+    topLeftTitle: string[] = [LightBoxTitleTexts[LightBoxTitleTexts.titleOrDirectory]];
+    topLeftSubtitle: string[] = [LightBoxTitleTexts[LightBoxTitleTexts.caption]];
+    bottomLeftTitle: string[] = [LightBoxTitleTexts[LightBoxTitleTexts.date], LightBoxTitleTexts[LightBoxTitleTexts.location]];
+    bottomLeftSubtitle: string[] = [LightBoxTitleTexts[LightBoxTitleTexts.persons]];
+
+    // Enum option names for selects
+    readonly LightBoxTitleTextsArr = Utils.enumToArray(LightBoxTitleTexts).map(v=>v.value);
 
   contentSubscription: Subscription = null;
 
@@ -90,12 +104,39 @@ export class PhotoFrameBuilderGalleryComponent implements OnInit, OnDestroy {
       u.searchParams.delete(QueryParams.gallery.lightbox.slideshowSpeed);
     }
 
+    // Lightbox title overrides (serialize arrays; omit NONE/empty)
+    const titles = QueryParams.gallery.lightbox.titles;
+    const setOrDelete = (key: string, parts: string[]) => {
+      const cleaned = (parts || [])
+        .map(v => (v || '').trim())
+        .filter(v => v && v !== 'NONE');
+      const val = cleaned.map(v => v.toLowerCase()).join(',');
+      if (val && val.length > 0) {
+        u.searchParams.set(key, val);
+      } else {
+        u.searchParams.delete(key);
+      }
+    };
+    const NONE = LightBoxTitleTexts[LightBoxTitleTexts.NONE];
+    this.topLeftTitle = [...this.topLeftTitle.filter(v => v !== NONE), NONE];
+    this.topLeftSubtitle =  [...this.topLeftSubtitle.filter(v => v !== NONE), NONE];
+    this.bottomLeftTitle = [...this.bottomLeftTitle.filter(v => v !== NONE), NONE];
+    this.bottomLeftSubtitle = [...this.bottomLeftSubtitle.filter(v => v !== NONE), NONE];
+    setOrDelete(titles.topLeftTitle, this.topLeftTitle);
+    setOrDelete(titles.topLeftSubTitle, this.topLeftSubtitle);
+    setOrDelete(titles.bottomLeftTitle, this.bottomLeftTitle);
+    setOrDelete(titles.bottomLeftSubTitle, this.bottomLeftSubtitle);
+
     this.url = u.href;
   }
 
   onOptionsChange(): void {
     this.buildUrl();
   }
+  trackByIndex(index: number): number {
+    return index;
+  }
+
 
   ngOnInit(): void {
     this.contentSubscription = this.contentLoaderService.content.subscribe(

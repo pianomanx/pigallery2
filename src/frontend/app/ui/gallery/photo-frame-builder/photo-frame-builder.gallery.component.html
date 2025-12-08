@@ -100,6 +100,76 @@
           </select>
         </div>
       </div>
+
+      <!-- Lightbox title overrides -->
+      <hr/>
+      <div class="row align-items-center mb-2">
+        <div class="col-auto">
+          <label for="topLeftTitle" class="mb-0" i18n>Top-left title(s)</label>
+        </div>
+        <div class="col">
+          <div *ngFor="let _ of topLeftTitle; let i = index; trackBy: trackByIndex">
+            <select class="form-select mb-1"
+                    [(ngModel)]="topLeftTitle[i]"
+                    name="topLeftTitle_{{i}}"
+                    id="pfb_topLeftTitle_{{i}}"
+                    (ngModelChange)="onOptionsChange()">
+              <option *ngFor="let opt of LightBoxTitleTextsArr" [ngValue]="opt">{{opt | stringifyEnum}}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="row align-items-center mb-2">
+        <div class="col-auto">
+          <label for="topLeftSubtitle" class="mb-0" i18n>Top-left subtitle(s)</label>
+        </div>
+        <div class="col">
+          <div *ngFor="let _ of topLeftSubtitle; let i = index; trackBy: trackByIndex">
+            <select class="form-select mb-1"
+                    [(ngModel)]="topLeftSubtitle[i]"
+                    name="topLeftSubtitle_{{i}}"
+                    id="pfb_topLeftSubtitle_{{i}}"
+                    (change)="onOptionsChange()">
+              <option *ngFor="let opt of LightBoxTitleTextsArr" [ngValue]="opt">{{opt | stringifyEnum}}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="row align-items-center mb-2">
+        <div class="col-auto">
+          <label for="bottomLeftTitle" class="mb-0" i18n>Bottom-left title(s)</label>
+        </div>
+        <div class="col">
+          <div *ngFor="let _ of bottomLeftTitle; let i = index; trackBy: trackByIndex">
+            <select class="form-select mb-1"
+                    [(ngModel)]="bottomLeftTitle[i]"
+                    name="bottomLeftTitle_{{i}}"
+                    id="pfb_bottomLeftTitle_{{i}}"
+                    (change)="onOptionsChange()">
+              <option *ngFor="let opt of LightBoxTitleTextsArr" [ngValue]="opt">{{opt | stringifyEnum}}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="row align-items-center mb-2">
+        <div class="col-auto">
+          <label for="bottomLeftSubtitle" class="mb-0" i18n>Bottom-left subtitle(s)</label>
+        </div>
+        <div class="col">
+          <div *ngFor="let _ of bottomLeftSubtitle; let i = index; trackBy: trackByIndex">
+            <select class="form-select mb-1"
+                    [(ngModel)]="bottomLeftSubtitle[i]"
+                    name="bottomLeftSubtitle_{{i}}"
+                    id="pfb_bottomLeftSubtitle_{{i}}"
+                    (change)="onOptionsChange()">
+              <option *ngFor="let opt of LightBoxTitleTextsArr" [ngValue]="opt">{{opt | stringifyEnum}}</option>
+            </select>
+          </div>
+        </div>
+      </div>
       <div class="form-text" i18n>Autoplay is always enabled for photo frames.</div>
     </form>
   </div>

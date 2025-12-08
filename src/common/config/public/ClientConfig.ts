@@ -58,6 +58,7 @@ export enum LightBoxTitleTexts {
   focal_length,
   directory,
   titleOrCaption,
+  titleOrDirectory,
   titleOrCaptionOrDirectory
 
 }

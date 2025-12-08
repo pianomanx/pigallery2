@@ -93,6 +93,7 @@ EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.fstop]] = $localize`f-sto
 EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.focal_length]] = $localize`Focal length`;
 EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.directory]] = $localize`Directory`;
 EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.titleOrCaption]] = $localize`Title or Caption`;
+EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.titleOrDirectory]] = $localize`Title or Directory`;
 EnumTranslations[LightBoxTitleTexts[LightBoxTitleTexts.titleOrCaptionOrDirectory]] = $localize`Title or Caption or Directory`;
 
 

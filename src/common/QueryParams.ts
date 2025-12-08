@@ -26,7 +26,13 @@ export const QueryParams = {
       facesAlwaysOn: 'facesAlwaysOn',
       loopVideos: 'loopVideos',
       loopSlideshow: 'loopSlideshow',
-      slideshowSpeed: 'slideshowSpeed' // in seconds
+      slideshowSpeed: 'slideshowSpeed', // in seconds
+      titles: {
+        topLeftTitle: 'tlt',
+        topLeftSubTitle: 'tlst',
+        bottomLeftTitle: 'blt',
+        bottomLeftSubTitle: 'blst',
+      }
     },
     autoPollInterval: 'autoUpdateInterval',
   },

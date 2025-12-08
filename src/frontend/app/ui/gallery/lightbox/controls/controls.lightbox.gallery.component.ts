@@ -104,19 +104,19 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
   }
 
   get TopLeftTitle(): string {
-    return this.getText(Config.Gallery.Lightbox.Titles.topLeftTitle);
+    return this.getText(this.lightboxService.topLeftTitle);
   }
 
   get TopLeftSubtitle(): string {
-    return this.getText(Config.Gallery.Lightbox.Titles.topLeftSubtitle);
+    return this.getText(this.lightboxService.topLeftSubtitle);
   }
 
   get BottomLeftTitle(): string {
-    return this.getText(Config.Gallery.Lightbox.Titles.bottomLeftTitle);
+    return this.getText(this.lightboxService.bottomLeftTitle);
   }
 
   get BottomLeftSubtitle(): string {
-    return this.getText(Config.Gallery.Lightbox.Titles.bottomLeftSubtitle);
+    return this.getText(this.lightboxService.bottomLeftSubtitle);
   }
 
   public containerWidth(): void {
@@ -439,6 +439,9 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
           break;
         case LightBoxTitleTexts.titleOrCaption:
           retTexts.push(m.metadata.title || m.metadata.caption);
+          break;
+        case LightBoxTitleTexts.titleOrDirectory:
+          retTexts.push(m.metadata.title || getDir());
           break;
         case LightBoxTitleTexts.titleOrCaptionOrDirectory:
           retTexts.push(m.metadata.title || m.metadata.caption || getDir());
