@@ -13,7 +13,7 @@
   </div>
   <div class="modal-body">
     <div class="row">
-      <div class="col-9 col-sm-10">
+      <div class="col">
         <input id="photoFrameLink"
                name="photoFrameLink"
                placeholder="link"
@@ -21,7 +21,7 @@
                type="text"
                [ngModel]="url">
       </div>
-      <div class="col-3 col-sm-2">
+      <div class="col-auto">
         <button id="copyButton" name="copyButton"
                 ngxClipboard [cbContent]="url"
                 (cbOnSuccess)="onCopy()"
@@ -29,8 +29,15 @@
         </button>
       </div>
     </div>
-    <hr/>
-    <form class="form-horizontal">
+    <div class="d-flex align-items-center mt-2 mb-2">
+      <button type="button" class="btn btn-link p-0 me-2 text-body" (click)="toggleSettings()">
+        <ng-container >settings</ng-container>
+        <ng-icon name="ionCaretForward" class="mb-2"  *ngIf="!showSettings"></ng-icon>
+        <ng-icon name="ionCaretDown" class="mb-2"  *ngIf="showSettings"></ng-icon>
+      </button>
+      <hr class="flex-grow-1 m-0" *ngIf="!showSettings" />
+    </div>
+    <form class="form-horizontal" *ngIf="showSettings">
       <!-- Auto update gallery -->
       <div class="row align-items-center mb-2">
         <div class="col-auto">

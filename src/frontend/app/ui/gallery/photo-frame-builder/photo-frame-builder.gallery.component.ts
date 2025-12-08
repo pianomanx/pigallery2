@@ -10,7 +10,7 @@ import {ContentLoaderService} from '../contentLoader.service';
 import { NgIconComponent } from '@ng-icons/core';
 import { FormsModule } from '@angular/forms';
 import { ClipboardModule } from 'ngx-clipboard';
-import { NgFor } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { StringifyEnum } from '../../../pipes/StringifyEnum';
 import { LightBoxTitleTexts } from '../../../../../common/config/public/ClientConfig';
 import {Utils} from '../../../../../common/Utils';
@@ -24,12 +24,14 @@ import {Utils} from '../../../../../common/Utils';
         FormsModule,
         ClipboardModule,
         NgFor,
+        NgIf,
         StringifyEnum,
     ]
   })
   export class PhotoFrameBuilderGalleryComponent implements OnInit, OnDestroy {
     enabled = true;
     url = '';
+    showSettings = false;
     // Options
     autoPollInterval = 5 * 60; // 5m
     loopSlideshow = true;
@@ -135,6 +137,10 @@ import {Utils} from '../../../../../common/Utils';
   }
   trackByIndex(index: number): number {
     return index;
+  }
+
+  toggleSettings(): void {
+    this.showSettings = !this.showSettings;
   }
 
 
