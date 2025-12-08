@@ -28,10 +28,11 @@ import {GallerySortingService, MediaGroup} from '../navigator/sorting.service';
 import {GroupByTypes} from '../../../../../common/entities/SortingMethods';
 import {GalleryNavigatorService} from '../navigator/navigator.service';
 import {GridSizes} from '../../../../../common/entities/GridSizes';
-import {NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault} from '@angular/common';
+import {AsyncPipe, NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault} from '@angular/common';
 import {NgIconComponent} from '@ng-icons/core';
 import {GalleryBlogComponent} from '../blog/blog.gallery.component';
 import {ParseIntPipe} from '../../../pipes/ParseIntPipe';
+import {BlogService} from '../blog/blog.service';
 
 @Component({
   selector: 'app-gallery-grid',
@@ -47,6 +48,7 @@ import {ParseIntPipe} from '../../../pipes/ParseIntPipe';
     GalleryBlogComponent,
     GalleryPhotoComponent,
     ParseIntPipe,
+    AsyncPipe,
   ]
 })
 export class GalleryGridComponent
@@ -87,7 +89,8 @@ export class GalleryGridComponent
     private router: Router,
     public sortingService: GallerySortingService,
     public navigatorService: GalleryNavigatorService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    public blogService: BlogService
   ) {
   }
 
