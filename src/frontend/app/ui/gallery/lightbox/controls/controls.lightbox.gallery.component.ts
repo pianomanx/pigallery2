@@ -369,8 +369,8 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
       if (p === '.') {
         return $localize`Home`;
       }
-      if (p.length > 25) {
-        return '...' + p.slice(-22);
+      if (p.length > 35) {
+        return '...' + p.slice(-32);
       }
       return p;
     };
