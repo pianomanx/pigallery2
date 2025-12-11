@@ -87,6 +87,19 @@
         </div>
       </div>
 
+      <!-- Hide controls -->
+      <div class="row align-items-center mb-2">
+        <div class="col-auto">
+          <label for="hideControlsSwitch" class="mb-0" i18n>Hide controls</label>
+        </div>
+        <div class="col-auto">
+          <div class="form-check form-switch m-0">
+            <input class="form-check-input" type="checkbox" id="hideControlsSwitch" [(ngModel)]="hideControls"
+                   name="hideControlsSwitch" (change)="onOptionsChange()">
+          </div>
+        </div>
+      </div>
+
       <!-- Slideshow speed -->
       <div class="row g-2 align-items-center mt-2">
         <div class="col-auto">

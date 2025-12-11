@@ -43,6 +43,11 @@ export class LightboxService {
           this.playback = pbValue === 'true' || pbValue === true;
         }
 
+        const cvValue = params[QueryParams.gallery.lightbox.controllersVisible];
+        if (cvValue !== undefined) {
+          this.controllersVisible = cvValue === 'true' || cvValue === true;
+        }
+
         // Dynamic Lightbox Titles override via query params
         const titles = QueryParams.gallery.lightbox.titles;
         const tlt = params[titles.topLeftTitle];
@@ -129,6 +134,16 @@ export class LightboxService {
   set captionAlwaysOn(value: boolean) {
     this._captionAlwaysOn = value;
     this.updateQuery(QueryParams.gallery.lightbox.captionAlwaysOn, Config.Gallery.Lightbox.captionAlwaysOn, value);
+  }
+  private _controllersVisible = true;
+
+  get controllersVisible(): boolean {
+    return this._controllersVisible;
+  }
+
+  set controllersVisible(value: boolean) {
+    this._controllersVisible = value;
+    this.updateQuery(QueryParams.gallery.lightbox.captionAlwaysOn, true, value);
   }
 
   // Lightbox title texts (dynamic overrides) with getter/setter pattern

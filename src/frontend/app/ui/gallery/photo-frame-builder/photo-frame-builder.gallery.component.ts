@@ -36,6 +36,7 @@ import {Utils} from '../../../../../common/Utils';
     autoPollInterval = 5 * 60; // 5m
     loopSlideshow = true;
     captionAlwaysOn = true;
+    hideControls = true;
     slideshowSpeed = 5 * 60; // 5m
     // Lightbox title overrides as arrays of enum names (strings)
     topLeftTitle: string[] = [LightBoxTitleTexts[LightBoxTitleTexts.titleOrDirectory]];
@@ -95,6 +96,14 @@ import {Utils} from '../../../../../common/Utils';
     } else {
       u.searchParams.delete(QueryParams.gallery.lightbox.captionAlwaysOn);
     }
+
+    // Hide controls
+    if (this.hideControls) {
+      u.searchParams.set(QueryParams.gallery.lightbox.controllersVisible, 'false');
+    } else {
+      u.searchParams.delete(QueryParams.gallery.lightbox.controllersVisible);
+    }
+
 
     // Slideshow speed (in seconds)
     if (this.slideshowSpeed && this.slideshowSpeed > 0) {

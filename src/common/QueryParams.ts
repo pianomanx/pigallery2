@@ -23,6 +23,7 @@ export const QueryParams = {
     lightbox: {
       playback: 'play',
       captionAlwaysOn: 'captionAlwaysOn',
+      controllersVisible:"cv",
       facesAlwaysOn: 'facesAlwaysOn',
       loopVideos: 'loopVideos',
       loopSlideshow: 'loopSlideshow',

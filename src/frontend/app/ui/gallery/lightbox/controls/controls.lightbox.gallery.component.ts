@@ -72,6 +72,7 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
     private fileSizePipe: FileSizePipe,
     private datePipe: DatePipe
   ) {
+    this.controllersVisible = this.lightboxService.controllersVisible;
     this.searchEnabled = this.authService.canSearch();
   }
 
