@@ -20,7 +20,7 @@
           </ng-container>
         </ng-container>
 
-        <ng-container *ngIf="group.date && (blogService.getMarkDowns(group.date) | async).length > 0">
+        <ng-container *ngIf="group.date && (blogService.getMarkDowns(group.date) | async)?.length > 0">
           <app-gallery-blog
             [date]="group.date"
             [open]="blogOpen">

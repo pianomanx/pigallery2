@@ -99,9 +99,9 @@ import {Utils} from '../../../../../common/Utils';
 
     // Hide controls
     if (this.hideControls) {
-      u.searchParams.set(QueryParams.gallery.lightbox.controllersVisible, 'false');
+      u.searchParams.set(QueryParams.gallery.lightbox.controllersDimmed, 'true');
     } else {
-      u.searchParams.delete(QueryParams.gallery.lightbox.controllersVisible);
+      u.searchParams.delete(QueryParams.gallery.lightbox.controllersDimmed);
     }
 
 

@@ -43,9 +43,9 @@ export class LightboxService {
           this.playback = pbValue === 'true' || pbValue === true;
         }
 
-        const cvValue = params[QueryParams.gallery.lightbox.controllersVisible];
-        if (cvValue !== undefined) {
-          this.controllersVisible = cvValue === 'true' || cvValue === true;
+        const cdValue = params[QueryParams.gallery.lightbox.controllersDimmed];
+        if (cdValue !== undefined) {
+          this.controllersDimmed = cdValue === 'true' || cdValue === true;
         }
 
         // Dynamic Lightbox Titles override via query params
@@ -135,22 +135,20 @@ export class LightboxService {
     this._captionAlwaysOn = value;
     this.updateQuery(QueryParams.gallery.lightbox.captionAlwaysOn, Config.Gallery.Lightbox.captionAlwaysOn, value);
   }
-  private _controllersVisible = true;
 
-  get controllersVisible(): boolean {
-    return this._controllersVisible;
+  private _controllersDimmed = false;
+
+  get controllersDimmed(): boolean {
+    return this._controllersDimmed;
   }
 
-  set controllersVisible(value: boolean) {
-    this._controllersVisible = value;
-    this.updateQuery(QueryParams.gallery.lightbox.captionAlwaysOn, true, value);
+  set controllersDimmed(value: boolean) {
+    this._controllersDimmed = value;
+    this.updateQuery(QueryParams.gallery.lightbox.controllersDimmed, false, value);
   }
 
   // Lightbox title texts (dynamic overrides) with getter/setter pattern
   private _topLeftTitle: LightBoxTitleTexts[] = [...Config.Gallery.Lightbox.Titles.topLeftTitle];
-  private _topLeftSubtitle: LightBoxTitleTexts[] = [...Config.Gallery.Lightbox.Titles.topLeftSubtitle];
-  private _bottomLeftTitle: LightBoxTitleTexts[] = [...Config.Gallery.Lightbox.Titles.bottomLeftTitle];
-  private _bottomLeftSubtitle: LightBoxTitleTexts[] = [...Config.Gallery.Lightbox.Titles.bottomLeftSubtitle];
 
   get topLeftTitle(): LightBoxTitleTexts[] {
     return this._topLeftTitle;
@@ -164,6 +162,8 @@ export class LightboxService {
     this.updateQuery(key, defStr, newStr);
   }
 
+  private _topLeftSubtitle: LightBoxTitleTexts[] = [...Config.Gallery.Lightbox.Titles.topLeftSubtitle];
+
   get topLeftSubtitle(): LightBoxTitleTexts[] {
     return this._topLeftSubtitle;
   }
@@ -176,6 +176,8 @@ export class LightboxService {
     this.updateQuery(key, defStr, newStr);
   }
 
+  private _bottomLeftTitle: LightBoxTitleTexts[] = [...Config.Gallery.Lightbox.Titles.bottomLeftTitle];
+
   get bottomLeftTitle(): LightBoxTitleTexts[] {
     return this._bottomLeftTitle;
   }
@@ -187,6 +189,8 @@ export class LightboxService {
     const newStr = this.serializeTitles(value);
     this.updateQuery(key, defStr, newStr);
   }
+
+  private _bottomLeftSubtitle: LightBoxTitleTexts[] = [...Config.Gallery.Lightbox.Titles.bottomLeftSubtitle];
 
   get bottomLeftSubtitle(): LightBoxTitleTexts[] {
     return this._bottomLeftSubtitle;
@@ -220,8 +224,8 @@ export class LightboxService {
     }).catch(console.error);
   }
 
-  private serializeTitles(values: number[]):string{
-    return Utils.serializeEnumNames(values,LightBoxTitleTexts);
+  private serializeTitles(values: number[]): string {
+    return Utils.serializeEnumNames(values, LightBoxTitleTexts);
   }
 
   private parseTitles(param: string | string[]): LightBoxTitleTexts[] {

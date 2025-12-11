@@ -54,7 +54,6 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
   public zoom = 1;
   public playBackDurations = [1, 2, 5, 10, 15, 20, 30, 60];
   public controllersDimmed = false;
-  public controllersVisible = true;
   public drag = {x: 0, y: 0};
   public SearchQueryTypes = SearchQueryTypes;
   public faceContainerDim = {width: 0, height: 0};
@@ -72,7 +71,7 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
     private fileSizePipe: FileSizePipe,
     private datePipe: DatePipe
   ) {
-    this.controllersVisible = this.lightboxService.controllersVisible;
+    this.controllersDimmed = this.lightboxService.controllersDimmed;
     this.searchEnabled = this.authService.canSearch();
   }
 
