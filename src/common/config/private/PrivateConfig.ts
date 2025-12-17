@@ -287,6 +287,7 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
       name: $localize`Issuer URL`,
       priority: ConfigPriority.advanced,
       uiResetNeeded: {server: true},
+      uiOptional:true,
       hint: 'https://auth.example.com/application/o/pigallery2/'
     } as TAGS,
     description: $localize`OIDC provider Issuer URL `
@@ -297,6 +298,7 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
     tags: {
       name: $localize`Client ID`,
       priority: ConfigPriority.advanced,
+      uiOptional:true,
       uiResetNeeded: {server: true}
     }
   })
@@ -307,6 +309,7 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
     tags: {
       name: $localize`Client secret`,
       priority: ConfigPriority.advanced,
+      uiOptional:true,
       uiResetNeeded: {server: true}
     } as TAGS
   })
@@ -317,6 +320,7 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
       name: $localize`Redirect URI`, priority:
       ConfigPriority.advanced,
       hint: 'https://host/pgapi/auth/oidc/callback',
+      uiOptional:true,
       uiResetNeeded: {server: true}
     },
     description: $localize`Full callback URL registered at the provider`
@@ -353,8 +357,8 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
     arrayType: 'string',
     tags: {
       name: $localize`Allowed email domains`,
+      uiOptional:true,
       priority: ConfigPriority.advanced,
-      uiOptional: true
     },
     description: $localize`If set, only identities with emails in these domains will be accepted.`
   })

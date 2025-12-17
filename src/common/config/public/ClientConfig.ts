@@ -1567,6 +1567,7 @@ export class ClientUserOIDCConfig {
     tags: {
       name: $localize`Display name`,
       priority: ConfigPriority.advanced,
+      uiOptional:true,
       hint: 'Authentik'
     },
     description: $localize`Shown on the login button (client-visible).`
