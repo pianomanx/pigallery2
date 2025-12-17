@@ -358,7 +358,7 @@ export class MapLayers {
     tags:
       {
         priority: ConfigPriority.advanced,
-        hint: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+        hint: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
       },
     description: $localize`Url of a map layer.`,
   })
@@ -1086,11 +1086,11 @@ export class ThemesConfig {
   @ConfigProperty({
     arrayType: ThemeConfig,
     tags: {
-      name: $localize`Selected theme css`, //this is a 'hack' to the UI settings. UI will only show the selected setting's css
+      name: $localize`Selected theme CSS`, //this is a 'hack' to the UI settings. UI will only show the selected setting's CSS
       uiDisabled: (sb: ThemesConfig) => !sb.enabled,
       relevant: (c: ThemesConfig) => c.selectedTheme !== 'default',
     } as TAGS,
-    description: $localize`Adds these css settings as it is to the end of the body tag of the page.`
+    description: $localize`Adds these CSS settings as it is to the end of the body tag of the page.`
   })
   availableThemes: ThemeConfig[] = [
     new ThemeConfig(
@@ -1487,7 +1487,7 @@ export class ClientServiceConfig {
   publicUrl: string = '';
 
   @ConfigProperty({
-    description: $localize`If you access the gallery under a sub url (like: http://mydomain.com/myGallery), set it here. If it is not working you might miss the '/' from the beginning of the url.`,
+    description: $localize`If you access the gallery under a sub url (like: https://mydomain.com/myGallery), set it here. If it is not working you might miss the '/' from the beginning of the url.`,
     tags: {
       name: $localize`Url Base`,
       hint: '/myGallery',
@@ -1550,6 +1550,30 @@ export class ClientServiceConfig {
   reloadClientOnServerUpdate: boolean = true;
 }
 
+
+@SubConfigClass({tags: {client: true}, softReadonly: true})
+export class ClientUserOIDCConfig {
+  @ConfigProperty({
+    tags: {
+      name: $localize`Enabled`,
+      priority: ConfigPriority.advanced,
+      uiResetNeeded: {server: true},
+      experimental: true,
+    }
+  })
+  enabled: boolean = false;
+
+  @ConfigProperty({
+    tags: {
+      name: $localize`Display name`,
+      priority: ConfigPriority.advanced,
+      hint: 'Authentik'
+    },
+    description: $localize`Shown on the login button (client-visible).`
+  })
+  displayName: string = '';
+}
+
 @SubConfigClass({tags: {client: true}, softReadonly: true})
 export class ClientUserConfig {
 
@@ -1577,7 +1601,21 @@ export class ClientUserConfig {
     description: $localize`Default user right when password protection is disabled.`,
   })
   unAuthenticatedUserRole: UserRoles = UserRoles.Admin;
+
+  @ConfigProperty({
+    tags: {
+      name: $localize`OpenID Connect`,
+      priority: ConfigPriority.underTheHood,
+      uiResetNeeded: {server: true},
+      uiIcon: 'ionFingerPrint',
+      experimental: true,
+      githubIssue: 1096
+    },
+    description:  $localize`Setup SSO with external authentication apps like Authentik or Authelia`,
+  })
+  oidc: ClientUserOIDCConfig = new ClientUserOIDCConfig();
 }
+
 
 @SubConfigClass({tags: {client: true}, softReadonly: true})
 export class ClientExtensionsConfig {

@@ -19,6 +19,7 @@ import {
   ClientSharingConfig,
   ClientSortingConfig,
   ClientUserConfig,
+  ClientUserOIDCConfig,
   ClientVideoConfig,
   ConfigPriority,
   TAGS
@@ -279,6 +280,98 @@ export class ServerDataBaseConfig {
 
 
 @SubConfigClass({softReadonly: true})
+export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
+
+  @ConfigProperty({
+    tags: {
+      name: $localize`Issuer URL`,
+      priority: ConfigPriority.advanced,
+      uiResetNeeded: {server: true},
+      hint: 'https://auth.example.com/application/o/pigallery2/'
+    } as TAGS,
+    description: $localize`OIDC provider Issuer URL `
+  })
+  issuerUrl: string = '';
+
+  @ConfigProperty({
+    tags: {
+      name: $localize`Client ID`,
+      priority: ConfigPriority.advanced,
+      uiResetNeeded: {server: true}
+    }
+  })
+  clientId: string = '';
+
+  @ConfigProperty({
+    type: 'password',
+    tags: {
+      name: $localize`Client secret`,
+      priority: ConfigPriority.advanced,
+      uiResetNeeded: {server: true}
+    } as TAGS
+  })
+  clientSecret: string = '';
+
+  @ConfigProperty({
+    tags: {
+      name: $localize`Redirect URI`, priority:
+      ConfigPriority.advanced,
+      hint: 'https://host/pgapi/auth/oidc/callback',
+      uiResetNeeded: {server: true}
+    },
+    description: $localize`Full callback URL registered at the provider`
+  })
+  redirectUri: string = '';
+
+  @ConfigProperty({
+    arrayType: 'string',
+    tags: {
+      name: $localize`Scopes`,
+      priority: ConfigPriority.advanced
+    }
+  })
+  scopes: string[] = ['openid', 'profile', 'email'];
+
+  @ConfigProperty({
+    tags: {
+      name: $localize`Username claim`,
+      priority: ConfigPriority.advanced
+    },
+    description: $localize`JWT claim to use for matching user name. Defaults to preferred_username; fallbacks to email if empty.`
+  })
+  usernameClaim: string = 'preferred_username';
+
+  @ConfigProperty({
+    tags: {
+      name: $localize`Email claim`,
+      priority: ConfigPriority.advanced
+    }
+  })
+  emailClaim: string = 'email';
+
+  @ConfigProperty({
+    arrayType: 'string',
+    tags: {
+      name: $localize`Allowed email domains`,
+      priority: ConfigPriority.advanced,
+      uiOptional: true
+    },
+    description: $localize`If set, only identities with emails in these domains will be accepted.`
+  })
+  allowedDomains: string[] = [];
+
+  @ConfigProperty({
+    tags: {
+      name: $localize`Auto-create users`,
+      priority: ConfigPriority.advanced
+    },
+    description: $localize`If enabled, unknown users will be created with Guest role on first login. If disabled, only existing app users can log in.`
+  })
+  autoCreateUser: boolean = false;
+}
+
+
+@SubConfigClass({softReadonly: true})
 export class ServerUserConfig extends ClientUserConfig {
   @ConfigProperty({
     arrayType: UserConfig,
@@ -334,6 +427,19 @@ export class ServerUserConfig extends ClientUserConfig {
     description: $localize`if true, the app won't show a warning for using the default user.`
   })
   suppressDefUserWarn: boolean = false;
+
+  @ConfigProperty({
+    tags: {
+      name: $localize`OpenID Connect`,
+      priority: ConfigPriority.underTheHood,
+      uiResetNeeded: {server: true},
+      uiIcon: 'ionFingerPrint',
+      experimental: true,
+      githubIssue: 1096
+    },
+    description:  $localize`Setup SSO with external authentication apps like Authentik or Authelia`,
+  })
+  oidc: ServerUserOIDCConfig = new ServerUserOIDCConfig();
 }
 
 

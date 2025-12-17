@@ -1,0 +1,104 @@
+import {Config} from '../../../common/config/private/Config';
+import {Request, Response} from 'express';
+import {Issuer, generators, Client, TokenSet} from 'openid-client';
+import {ObjectManagers} from '../ObjectManagers';
+import {UserDTO, UserRoles} from '../../../common/entities/UserDTO';
+import {ErrorDTO, ErrorCodes} from '../../../common/entities/Error';
+
+export class OIDCAuthService {
+  private static clientPromise: Promise<Client> | null = null;
+
+  private static async getClient(): Promise<Client> {
+    if (this.clientPromise) {
+      return this.clientPromise;
+    }
+    if (!Config.Users.oidc.enabled) {
+      throw new Error('OIDC is not enabled');
+    }
+    const issuerUrl = Config.Users.oidc.issuerUrl;
+    if (!issuerUrl) {
+      throw new Error('OIDC issuerUrl is not configured');
+    }
+    this.clientPromise = (async () => {
+      const issuer = await Issuer.discover(issuerUrl);
+      return new issuer.Client({
+        client_id: Config.Users.oidc.clientId,
+        client_secret: Config.Users.oidc.clientSecret,
+        redirect_uris: [Config.Users.oidc.redirectUri],
+        response_types: ['code']
+      });
+    })();
+    return this.clientPromise;
+  }
+
+  public static async login(req: Request, res: Response): Promise<void> {
+    const client = await this.getClient();
+    const state = generators.state();
+    const verifier = generators.codeVerifier();
+    const challenge = generators.codeChallenge(verifier);
+    req.session.oidc = {
+      state,
+      verifier
+    } as any;
+    const authUrl = client.authorizationUrl({
+      scope: Config.Users.oidc.scopes.join(' '),
+      state,
+      code_challenge: challenge,
+      code_challenge_method: 'S256'
+    });
+    res.redirect(authUrl);
+  }
+
+  public static async callback(req: Request, res: Response): Promise<void> {
+    const stored = (req.session as any).oidc || {};
+    const state = stored.state;
+    const verifier = stored.verifier;
+    const params = req.query as any; // code, state
+    if (!state || params.state !== state) {
+      throw new ErrorDTO(ErrorCodes.GENERAL_ERROR, 'Invalid OIDC state');
+    }
+    const client = await this.getClient();
+    const tokenSet: TokenSet = await client.callback(
+      Config.Users.oidc.redirectUri,
+      params,
+      {state, code_verifier: verifier}
+    );
+    const claims = tokenSet.claims();
+    const usernameClaim = (Config.Users.oidc.usernameClaim || 'preferred_username') as string;
+    const emailClaim = (Config.Users.oidc.emailClaim || 'email') as string;
+    const preferredUserName = (claims as any)[usernameClaim] || '';
+    const email = (claims as any)[emailClaim] || '';
+
+    const matchedName = (preferredUserName || (email ? String(email).split('@')[0] : '')).toString();
+    if (!matchedName) {
+      throw new ErrorDTO(ErrorCodes.CREDENTIAL_NOT_FOUND, 'OIDC: missing username/email');
+    }
+
+    // domain allow-list if configured
+    if (Config.Users.oidc.allowedDomains && Config.Users.oidc.allowedDomains.length > 0 && email) {
+      const domain = String(email).split('@')[1] || '';
+      const allowed = Config.Users.oidc.allowedDomains.some(d => d.toLowerCase() === domain.toLowerCase());
+      if (!allowed) {
+        throw new ErrorDTO(ErrorCodes.CREDENTIAL_NOT_FOUND, `Email domain not allowed: ${domain}`);
+      }
+    }
+
+    // try find user by name
+    let user = await ObjectManagers.getInstance().UserManager.findOne({name: matchedName});
+    if (!user && Config.Users.oidc.autoCreateUser) {
+      const rnd = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+      const newUser: UserDTO = {name: matchedName, password: rnd, role: UserRoles.Guest} as any;
+      user = await ObjectManagers.getInstance().UserManager.createUser(newUser);
+    }
+    if (!user) {
+      throw new ErrorDTO(ErrorCodes.CREDENTIAL_NOT_FOUND, 'User not found');
+    }
+
+    req.session.context = await ObjectManagers.getInstance().SessionManager.buildContext(user);
+    req.session.rememberMe = true;
+    // cleanup
+    delete (req.session as any).oidc;
+    // redirect to root or previously stored path
+    res.redirect('/');
+  }
+}

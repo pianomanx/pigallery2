@@ -122,7 +122,8 @@ import {
   ionVideocamOutline,
   ionVolumeMediumOutline,
   ionVolumeMuteOutline,
-  ionWarningOutline
+  ionWarningOutline,
+  ionFingerPrint
 } from '@ng-icons/ionicons';
 import {ClipboardModule} from 'ngx-clipboard';
 import {TooltipModule} from 'ngx-bootstrap/tooltip';
@@ -204,7 +205,8 @@ bootstrapApplication(AppComponent, {
         ionCloudOutline, ionChatboxOutline, ionServerOutline, ionFileTrayFullOutline, ionBrushOutline,
         ionBrowsersOutline, ionUnlinkOutline, ionSquareOutline, ionGridOutline,
         ionAppsOutline, ionOpenOutline, ionRefresh, ionExtensionPuzzleOutline, ionList, ionPencil, ionReload,
-        ionCaretForward, ionCaretDown
+        ionCaretForward, ionCaretDown,
+        ionFingerPrint
       }), ClipboardModule, TooltipModule.forRoot(), ToastrModule.forRoot(),
       ModalModule.forRoot(), CollapseModule.forRoot(), PopoverModule.forRoot(),
       BsDropdownModule.forRoot(), BsDatepickerModule.forRoot(), TimepickerModule.forRoot(),

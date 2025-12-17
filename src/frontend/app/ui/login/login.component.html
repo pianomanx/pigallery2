@@ -15,6 +15,15 @@
           Wrong username or password
         </div>
 
+        <!-- OIDC login option -->
+        <div class="d-grid gap-2 mb-3" *ngIf="oidcEnabled">
+          <button type="button" class="btn btn-outline-secondary btn-lg" (click)="onLoginWithOIDC()">
+            <ng-icon name="ionLogInOutline" class="me-1"></ng-icon>
+            <span i18n>Login with</span> {{oidcDisplayName}}
+          </button>
+          <div class="text-center text-muted" i18n>or</div>
+        </div>
+
         <div class="input-group mb-3">
           <div class="input-group-text"><ng-icon name="ionPersonOutline"></ng-icon></div>
           <input type="text"

@@ -11,6 +11,7 @@ import {ErrorRouter} from './ErrorRouter';
 import {AlbumRouter} from './AlbumRouter';
 import {ExtensionRouter} from './admin/ExtensionRouter';
 import {VersionMWs} from '../middlewares/VersionMWs';
+import {OIDCRouter} from './OIDCRouter';
 
 export class Router {
   public static route(app: Express): void {
@@ -19,6 +20,7 @@ export class Router {
 
     AdminRouter.route(app);
     ExtensionRouter.route(app);
+    OIDCRouter.route(app);
     AlbumRouter.route(app);
     GalleryRouter.route(app);
     NotificationRouter.route(app);
