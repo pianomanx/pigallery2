@@ -611,8 +611,8 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
     const session = DBTestHelper.defaultSession;
 
     const parent = TestHelper.getRandomizedDirectoryEntry();
-    const p1 = TestHelper.getRandomizedPhotoEntry(parent, 'Photo1');
-    const p2 = TestHelper.getRandomizedPhotoEntry(parent, 'Photo2');
+    const p1 = TestHelper.getRandomizedPhotoEntry(parent, 'Photo1', 2, 3);
+    const p2 = TestHelper.getRandomizedPhotoEntry(parent, 'Photo2', 2, 4);
 
     DirectoryDTOUtils.removeReferences(parent);
     await im.saveToDB(Utils.clone(parent) as ParentDirectoryDTO);
