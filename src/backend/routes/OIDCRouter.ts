@@ -6,11 +6,11 @@ export class OIDCRouter {
   private static BASE = Config.Server.apiPath + '/auth/oidc';
 
   public static route(app: Express): void {
-
-
+    this.addLogin(app);
+    this.addCallback(app);
   }
 
-  private static AddLogin(app: Express): void {
+  private static addLogin(app: Express): void {
     app.get(OIDCRouter.BASE + '/login', async (req: Request, res: Response, next: NextFunction) => {
       try {
         if (!Config.Users.oidc.enabled) {
@@ -24,7 +24,7 @@ export class OIDCRouter {
     });
   }
 
-  private static AddCallback(app: Express): void {
+  private static addCallback(app: Express): void {
     app.get(OIDCRouter.BASE + '/callback', async (req: Request, res: Response, next: NextFunction) => {
       try {
         if (!Config.Users.oidc.enabled) {
