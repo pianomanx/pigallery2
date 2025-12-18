@@ -1,35 +1,12 @@
 import {Config} from '../../../common/config/private/Config';
 import {Request, Response} from 'express';
-import {Issuer, generators, Client, TokenSet} from 'openid-client';
-import {ObjectManagers} from '../ObjectManagers';
+import {Client, generators, Issuer, TokenSet} from 'openid-client';
 import {UserDTO, UserRoles} from '../../../common/entities/UserDTO';
-import {ErrorDTO, ErrorCodes} from '../../../common/entities/Error';
+import {ErrorCodes, ErrorDTO} from '../../../common/entities/Error';
+import {ObjectManagers} from '../../model/ObjectManagers';
 
 export class OIDCAuthService {
   private static clientPromise: Promise<Client> | null = null;
-
-  private static async getClient(): Promise<Client> {
-    if (this.clientPromise) {
-      return this.clientPromise;
-    }
-    if (!Config.Users.oidc.enabled) {
-      throw new Error('OIDC is not enabled');
-    }
-    const issuerUrl = Config.Users.oidc.issuerUrl;
-    if (!issuerUrl) {
-      throw new Error('OIDC issuerUrl is not configured');
-    }
-    this.clientPromise = (async () => {
-      const issuer = await Issuer.discover(issuerUrl);
-      return new issuer.Client({
-        client_id: Config.Users.oidc.clientId,
-        client_secret: Config.Users.oidc.clientSecret,
-        redirect_uris: [Config.Users.oidc.redirectUri],
-        response_types: ['code']
-      });
-    })();
-    return this.clientPromise;
-  }
 
   public static async login(req: Request, res: Response): Promise<void> {
     const client = await this.getClient();
@@ -50,24 +27,25 @@ export class OIDCAuthService {
   }
 
   public static async callback(req: Request, res: Response): Promise<void> {
-    const stored = (req.session as any).oidc || {};
-    const state = stored.state;
-    const verifier = stored.verifier;
-    const params = req.query as any; // code, state
-    if (!state || params.state !== state) {
+    const storedOidc = req.session.oidc;
+    const params = req.query; // code, state
+    if (!storedOidc?.state || params.state !== storedOidc?.state) {
       throw new ErrorDTO(ErrorCodes.GENERAL_ERROR, 'Invalid OIDC state');
     }
     const client = await this.getClient();
     const tokenSet: TokenSet = await client.callback(
       Config.Users.oidc.redirectUri,
       params,
-      {state, code_verifier: verifier}
+      {
+        state: storedOidc?.state,
+        code_verifier: storedOidc?.verifier
+      }
     );
     const claims = tokenSet.claims();
-    const usernameClaim = (Config.Users.oidc.usernameClaim || 'preferred_username') as string;
-    const emailClaim = (Config.Users.oidc.emailClaim || 'email') as string;
-    const preferredUserName = (claims as any)[usernameClaim] || '';
-    const email = (claims as any)[emailClaim] || '';
+    const usernameClaim = Config.Users.oidc.usernameClaim || 'preferred_username';
+    const emailClaim = Config.Users.oidc.emailClaim || 'email';
+    const preferredUserName = claims[usernameClaim] || '';
+    const email = claims[emailClaim] || '';
 
     const matchedName = (preferredUserName || (email ? String(email).split('@')[0] : '')).toString();
     if (!matchedName) {
@@ -100,5 +78,28 @@ export class OIDCAuthService {
     delete (req.session as any).oidc;
     // redirect to root or previously stored path
     res.redirect('/');
+  }
+
+  private static async getClient(): Promise<Client> {
+    if (this.clientPromise) {
+      return this.clientPromise;
+    }
+    if (!Config.Users.oidc.enabled) {
+      throw new Error('OIDC is not enabled');
+    }
+    const issuerUrl = Config.Users.oidc.issuerUrl;
+    if (!issuerUrl) {
+      throw new Error('OIDC issuerUrl is not configured');
+    }
+    this.clientPromise = (async () => {
+      const issuer = await Issuer.discover(issuerUrl);
+      return new issuer.Client({
+        client_id: Config.Users.oidc.clientId,
+        client_secret: Config.Users.oidc.clientSecret,
+        redirect_uris: [Config.Users.oidc.redirectUri],
+        response_types: ['code']
+      });
+    })();
+    return this.clientPromise;
   }
 }

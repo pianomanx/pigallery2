@@ -65,8 +65,7 @@ export class LoginComponent implements OnInit {
     if (!this.oidcEnabled) {
       return;
     }
-    const url = `${Config.Server.apiPath}/auth/oidc/login`;
-    window.location.href = url;
+    window.location.href = `${Config.Server.apiPath}/auth/oidc/login`;
   }
 }
 

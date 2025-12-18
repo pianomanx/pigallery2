@@ -1,31 +1,41 @@
-import {Express, Request, Response, NextFunction} from 'express';
+import {Express, NextFunction, Request, Response} from 'express';
 import {Config} from '../../common/config/private/Config';
-import {OIDCAuthService} from '../model/auth/OIDCAuthService';
+import {OIDCAuthService} from '../middlewares/user/OIDCAuthService';
 
 export class OIDCRouter {
-  public static route(app: Express): void {
-    const base = Config.Server.apiPath + '/auth/oidc';
+  private static BASE = Config.Server.apiPath + '/auth/oidc';
 
-    app.get(base + '/login', async (req: Request, res: Response, next: NextFunction) => {
+  public static route(app: Express): void {
+
+
+  }
+
+  private static AddLogin(app: Express): void {
+    app.get(OIDCRouter.BASE + '/login', async (req: Request, res: Response, next: NextFunction) => {
       try {
         if (!Config.Users.oidc.enabled) {
           return res.status(404).end();
         }
         await OIDCAuthService.login(req, res);
+        return next();
       } catch (err) {
         return next(err);
       }
     });
+  }
 
-    app.get(base + '/callback', async (req: Request, res: Response, next: NextFunction) => {
+  private static AddCallback(app: Express): void {
+    app.get(OIDCRouter.BASE + '/callback', async (req: Request, res: Response, next: NextFunction) => {
       try {
         if (!Config.Users.oidc.enabled) {
           return res.status(404).end();
         }
         await OIDCAuthService.callback(req, res);
+        return next();
       } catch (err) {
         return next(err);
       }
     });
+
   }
 }
