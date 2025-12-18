@@ -17,7 +17,7 @@
 
         <!-- OIDC login option -->
         <div class="d-grid gap-2 mb-3" *ngIf="oidcEnabled">
-          <button type="button" class="btn btn-outline-secondary btn-lg" (click)="onLoginWithOIDC()">
+          <button type="button" class="btn btn-primary btn-lg" (click)="onLoginWithOIDC()">
             <ng-icon name="ionLogInOutline" class="me-1"></ng-icon>
             <span i18n>Login with</span> {{oidcDisplayName}}
           </button>
