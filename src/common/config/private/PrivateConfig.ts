@@ -21,7 +21,7 @@ import {
   ClientUserConfig,
   ClientUserOIDCConfig,
   ClientVideoConfig,
-  ConfigPriority,
+  ConfigPriority, MapProviders,
   TAGS
 } from '../public/ClientConfig';
 import {ConfigProperty, SubConfigClass} from 'typeconfig/common';
@@ -288,9 +288,10 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
       priority: ConfigPriority.advanced,
       uiResetNeeded: {server: true},
       uiOptional:true,
+      relevant: (c: any) => c.enabled,
       hint: 'https://auth.example.com/application/o/pigallery2/'
     } as TAGS,
-    description: $localize`OIDC provider Issuer URL `
+    description: $localize`OIDC provider Issuer URL`
   })
   issuerUrl: string = '';
 
@@ -299,6 +300,7 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
       name: $localize`Client ID`,
       priority: ConfigPriority.advanced,
       uiOptional:true,
+      relevant: (c: any) => c.enabled,
       uiResetNeeded: {server: true}
     }
   })
@@ -310,6 +312,7 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
       name: $localize`Client secret`,
       priority: ConfigPriority.advanced,
       uiOptional:true,
+      relevant: (c: any) => c.enabled,
       uiResetNeeded: {server: true}
     } as TAGS
   })
@@ -321,9 +324,10 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
       ConfigPriority.advanced,
       hint: 'https://host/pgapi/auth/oidc/callback',
       uiOptional:true,
+      relevant: (c: any) => c.enabled,
       uiResetNeeded: {server: true}
     },
-    description: $localize`Full callback URL registered at the provider`
+    description: $localize`Full callback URL registered at the provider (e.g.: https://example.com/pgapi/auth/oidc/callback)`
   })
   redirectUri: string = '';
 
@@ -331,6 +335,7 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
     arrayType: 'string',
     tags: {
       name: $localize`Scopes`,
+      relevant: (c: any) => c.enabled,
       priority: ConfigPriority.advanced
     }
   })
@@ -339,6 +344,7 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
   @ConfigProperty({
     tags: {
       name: $localize`Username claim`,
+      relevant: (c: any) => c.enabled,
       priority: ConfigPriority.advanced
     },
     description: $localize`JWT claim to use for matching user name. Defaults to preferred_username; fallbacks to email if empty.`
@@ -348,6 +354,7 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
   @ConfigProperty({
     tags: {
       name: $localize`Email claim`,
+      relevant: (c: any) => c.enabled,
       priority: ConfigPriority.advanced
     }
   })
@@ -358,6 +365,7 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
     tags: {
       name: $localize`Allowed email domains`,
       uiOptional:true,
+      relevant: (c: any) => c.enabled,
       priority: ConfigPriority.advanced,
     },
     description: $localize`If set, only identities with emails in these domains will be accepted.`
@@ -367,6 +375,7 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
   @ConfigProperty({
     tags: {
       name: $localize`Auto-create users`,
+      relevant: (c: any) => c.enabled,
       priority: ConfigPriority.advanced
     },
     description: $localize`If enabled, unknown users will be created with Guest role on first login. If disabled, only existing app users can log in.`
@@ -435,10 +444,9 @@ export class ServerUserConfig extends ClientUserConfig {
   @ConfigProperty({
     tags: {
       name: $localize`OpenID Connect`,
-      priority: ConfigPriority.underTheHood,
+      priority: ConfigPriority.advanced,
       uiResetNeeded: {server: true},
       uiIcon: 'ionFingerPrint',
-      experimental: true,
       githubIssue: 1096
     },
     description:  $localize`Setup SSO with external authentication apps like Authentik or Authelia`,

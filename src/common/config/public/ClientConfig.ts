@@ -1568,8 +1568,9 @@ export class ClientUserOIDCConfig {
       name: $localize`Display name`,
       priority: ConfigPriority.advanced,
       uiOptional:true,
+      relevant: (c: any) => c.enabled,
       hint: 'Authentik'
-    },
+    } as TAGS,
     description: $localize`Shown on the login button (client-visible).`
   })
   displayName: string = '';
@@ -1606,10 +1607,9 @@ export class ClientUserConfig {
   @ConfigProperty({
     tags: {
       name: $localize`OpenID Connect`,
-      priority: ConfigPriority.underTheHood,
+      priority: ConfigPriority.advanced,
       uiResetNeeded: {server: true},
       uiIcon: 'ionFingerPrint',
-      experimental: true,
       githubIssue: 1096
     },
     description:  $localize`Setup SSO with external authentication apps like Authentik or Authelia`,
