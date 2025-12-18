@@ -322,7 +322,7 @@ export class ServerUserOIDCConfig extends ClientUserOIDCConfig {
     tags: {
       name: $localize`Redirect URI`, priority:
       ConfigPriority.advanced,
-      hint: 'https://host/pgapi/auth/oidc/callback',
+      hint: 'https://example.com/pgapi/auth/oidc/callback',
       uiOptional:true,
       relevant: (c: any) => c.enabled,
       uiResetNeeded: {server: true}
