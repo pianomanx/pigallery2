@@ -60,7 +60,9 @@
 
         <!-- Button -->
         <div class="col-sm-12 controls d-grid gap-2">
-          <button class="btn btn-primary btn-lg"
+          <button class="btn  btn-lg"
+                  [class.btn-outline-secondary]="oidcEnabled"
+                  [class.btn-primary]="!oidcEnabled"
                   [disabled]="!LoginForm.form.valid || inProgress"
                   type="submit"
                   name="action" i18n>Login

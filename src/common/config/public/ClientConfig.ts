@@ -1558,7 +1558,6 @@ export class ClientUserOIDCConfig {
       name: $localize`Enabled`,
       priority: ConfigPriority.advanced,
       uiResetNeeded: {server: true},
-      experimental: true,
     }
   })
   enabled: boolean = false;
