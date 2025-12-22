@@ -181,12 +181,13 @@ export const SearchQueryUtils = {
       return '';
     }
     query=SearchQueryUtils.stripFalseNegate(query);
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shorten = (obj: any): any => {
       if (Array.isArray(obj)) {
         return obj.map(shorten);
       }
       if (obj && typeof obj === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const res: any = {};
         for (const key of Object.keys(obj)) {
           if (key === 'negate' && obj[key] === false) {
@@ -214,12 +215,13 @@ export const SearchQueryUtils = {
     Object.keys(SearchQueryUtils.URLMap).forEach(key => {
       map[SearchQueryUtils.URLMap[key]] = key;
     });
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const unshorten = (obj: any): any => {
       if (Array.isArray(obj)) {
         return obj.map(unshorten);
       }
       if (obj && typeof obj === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const res: any = {};
         for (const key of Object.keys(obj)) {
           let unshortenedKey = map[key] || key;
