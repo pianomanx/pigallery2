@@ -70,9 +70,9 @@ export class GallerySearchComponent implements OnDestroy {
       if (!params[QueryParams.gallery.search.query]) {
         return;
       }
-      const searchQuery = JSON.parse(params[QueryParams.gallery.search.query]);
+      const searchQuery: string = params[QueryParams.gallery.search.query];
       if (searchQuery) {
-        this.searchQueryDTO = searchQuery;
+        this.searchQueryDTO = SearchQueryUtils.parseURLifiedQuery(searchQuery);
         this.onQueryChange();
       }
     });

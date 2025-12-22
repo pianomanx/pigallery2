@@ -18,6 +18,7 @@ import {NgIconComponent} from '@ng-icons/core';
 import {BsDropdownDirective, BsDropdownMenuDirective, BsDropdownToggleDirective} from 'ngx-bootstrap/dropdown';
 import {FormsModule} from '@angular/forms';
 import {RouterLink} from '@angular/router';
+import {SearchQueryUtils} from '../../../../../../common/SearchQueryUtils';
 
 
 @Component({
@@ -343,7 +344,7 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
   }
 
   getPersonSearchQuery(name: string): string {
-    return JSON.stringify({
+    return SearchQueryUtils.urlify({
       type: SearchQueryTypes.person,
       matchType: TextSearchQueryMatchTypes.exact_match,
       value: name,

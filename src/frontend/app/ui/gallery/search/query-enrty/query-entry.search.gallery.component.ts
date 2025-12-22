@@ -3,7 +3,7 @@ import {
   DatePatternFrequency,
   DatePatternSearch,
   DistanceSearch,
-  ListSearchQueryTypes,
+  ListSearchQueryTypes, MaxRangeSearchQueryTypes, MinRangeSearchQueryTypes,
   OrientationSearch,
   RangeSearch,
   SearchListQuery,
@@ -76,7 +76,12 @@ export class GallerySearchQueryEntryComponent
 
   get IsListQuery(): boolean {
     return (
-        this.queryEntry && ListSearchQueryTypes.includes(this.queryEntry.type)
+      this.queryEntry && ListSearchQueryTypes.includes(this.queryEntry.type)
+    );
+  }
+  get IsRangeQuery(): boolean {
+    return (
+      this.queryEntry && (MinRangeSearchQueryTypes.includes(this.queryEntry.type) || MaxRangeSearchQueryTypes.includes(this.queryEntry.type) )
     );
   }
 
@@ -184,6 +189,10 @@ export class GallerySearchQueryEntryComponent
     } else {
       delete this.AsDistanceQuery.from;
       delete this.AsDistanceQuery.distance;
+    }
+
+    if(this.IsRangeQuery){
+      this.AsRangeQuery.value = isNaN(this.AsRangeQuery.value) ? 0 : this.AsRangeQuery.value ;
     }
 
     if (this.queryEntry.type === SearchQueryTypes.orientation) {

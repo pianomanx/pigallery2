@@ -17,6 +17,7 @@ import {DurationPipe} from '../../../../pipes/DurationPipe';
 import {SafeHtmlPipe} from '../../../../pipes/SafeHTMLPipe';
 import {IClientMediaButtonConfig} from '../../../../../../common/entities/extension/IClientUIConfig';
 import {Utils} from '../../../../../../common/Utils';
+import {SearchQueryUtils} from '../../../../../../common/SearchQueryUtils';
 
 export interface IClientMediaButtonConfigWithBaseApiPath extends IClientMediaButtonConfig {
   extensionBasePath: string;
@@ -218,7 +219,7 @@ export class GalleryPhotoComponent implements IRenderable, OnInit, OnDestroy {
   }
 
   getPositionSearchQuery(): string {
-    return JSON.stringify({
+    return SearchQueryUtils.urlify({
       type: SearchQueryTypes.position,
       matchType: TextSearchQueryMatchTypes.exact_match,
       value: this.getPositionText(),
@@ -226,7 +227,7 @@ export class GalleryPhotoComponent implements IRenderable, OnInit, OnDestroy {
   }
 
   getTextSearchQuery(name: string, type: SearchQueryTypes): string {
-    return JSON.stringify({
+    return SearchQueryUtils.urlify({
       type,
       matchType: TextSearchQueryMatchTypes.exact_match,
       value: name,

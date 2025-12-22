@@ -15,6 +15,7 @@ import { NgIconComponent } from '@ng-icons/core';
 import { FormsModule } from '@angular/forms';
 import { ClipboardModule } from 'ngx-clipboard';
 import { GallerySearchQueryBuilderComponent } from '../search/query-builder/query-bulder.gallery.component';
+import {SearchQueryUtils} from '../../../../../common/SearchQueryUtils';
 
 @Component({
     selector: 'app-gallery-random-query-builder',
@@ -61,7 +62,7 @@ export class RandomQueryBuilderGalleryComponent implements OnInit, OnDestroy {
   }
 
   get HTMLSearchQuery(): string {
-    return JSON.stringify(this.searchQueryDTO);
+    return SearchQueryUtils.urlify(this.searchQueryDTO);
   }
 
   onQueryChange(): void {
