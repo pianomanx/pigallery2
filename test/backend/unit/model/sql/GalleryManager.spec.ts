@@ -435,9 +435,9 @@ describe('GalleryManager', (sqlHelper: DBTestHelper) => {
       it('returns false for non-existent file under projection', async () => {
         const searchQuery = {
           type: SearchQueryTypes.file_name,
-          text: 'photo1',
+          value: 'photo1',
           matchType: TextSearchQueryMatchTypes.like,
-        };
+        } as TextSearch;
         const session = await ObjectManagers.getInstance().SessionManager.buildContext({
           allowQuery: searchQuery,
           overrideAllowBlockList: true,

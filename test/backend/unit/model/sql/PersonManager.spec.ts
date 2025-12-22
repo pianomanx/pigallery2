@@ -232,9 +232,9 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       // Create projection session that filters by filename
       const projectionSession = await createProjectionSession({
         type: SearchQueryTypes.file_name,
-        text: 'photo1',
+        value: 'photo1',
         matchType: TextSearchQueryMatchTypes.like
-      });
+      } as TextSearch);
 
       const personsWithProjection = await pm.getAll(projectionSession);
       const personsWithDefault = await pm.getAll(DBTestHelper.defaultSession);
@@ -260,9 +260,9 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       // Create projection session
       const projectionSession = await createProjectionSession({
         type: SearchQueryTypes.file_name,
-        text: 'photo1',
+        value: 'photo1',
         matchType: TextSearchQueryMatchTypes.like
-      });
+      } as TextSearch);
 
       // Trigger cache filling
       await pm.getAll(projectionSession);

@@ -191,9 +191,9 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       // Create projection session that filters by filename
       const projectionSession = await createProjectionSession({
         type: SearchQueryTypes.file_name,
-        text: 'sw1',
+        value: 'sw1',
         matchType: TextSearchQueryMatchTypes.like
-      });
+      } as TextSearch);
 
       const albumsWithProjection = await am.getAll(projectionSession);
       const albumsWithDefault = await am.getAll(DBTestHelper.defaultSession);
@@ -239,9 +239,9 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       // Create projection session that will also match content
       const projectionSession = await createProjectionSession({
         type: SearchQueryTypes.file_name,
-        text: 'photo',
+        value: 'photo',
         matchType: TextSearchQueryMatchTypes.like
-      });
+      } as TextSearch);
 
       // Trigger cache filling for projection
       const albumsProjected = await am.getAll(projectionSession);
@@ -269,7 +269,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.file_name,
         value: 'nonexistent',
         matchType: TextSearchQueryMatchTypes.like
-      });
+      } as TextSearch);
 
       const albumsWithProjection = await am.getAll(projectionSession);
 
@@ -303,9 +303,9 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       // Test with different projections
       const projectionSW1 = await createProjectionSession({
         type: SearchQueryTypes.file_name,
-        text: 'sw1',
+        value: 'sw1',
         matchType: TextSearchQueryMatchTypes.like
-      });
+      } as TextSearch);
 
       const albumsDefault = await am.getAll(DBTestHelper.defaultSession);
       const albumsSW1 = await am.getAll(projectionSW1);
