@@ -19,15 +19,14 @@ export const QueryParams = {
     directory: 'directory',
     knownLastModified: 'klm',
     knownLastScanned: 'kls',
-    fullscreen: 'fullscreen',
     lightbox: {
       playback: 'play',
-      captionAlwaysOn: 'captionAlwaysOn',
+      captionAlwaysOn: 'cAO',
       controllersDimmed:"cd",
-      facesAlwaysOn: 'facesAlwaysOn',
-      loopVideos: 'loopVideos',
-      loopSlideshow: 'loopSlideshow',
-      slideshowSpeed: 'slideshowSpeed', // in seconds
+      facesAlwaysOn: 'fAO',
+      loopVideos: 'lv',
+      loopSlideshow: 'ls',
+      slideshowSpeed: 'ssp', // in seconds
       titles: {
         topLeftTitle: 'tlt',
         topLeftSubTitle: 'tlst',
@@ -35,6 +34,6 @@ export const QueryParams = {
         bottomLeftSubTitle: 'blst',
       }
     },
-    autoPollInterval: 'autoUpdateInterval',
+    autoPollInterval: 'auInt',
   },
 };
