@@ -867,7 +867,7 @@ describe('IndexingManager', (sqlHelper: DBTestHelper) => {
           },
           searchQuery: {
             type: SearchQueryTypes.person,
-            text: 'Alvin',
+            value: 'Alvin',
             matchType: TextSearchQueryMatchTypes.like
           } as TextSearch
         }

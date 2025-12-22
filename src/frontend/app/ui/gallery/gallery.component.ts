@@ -30,6 +30,7 @@ import { GalleryMapComponent } from './map/map.gallery.component';
 import { PhotoFilterPipe } from '../../pipes/PhotoFilterPipe';
 import { MediaButtonModalComponent } from './grid/photo/media-button-modal/media-button-modal.component';
 import {ContentWrapperWithError} from '../../../../common/entities/ContentWrapper';
+import {SearchQueryUtils} from '../../../../common/SearchQueryUtils';
 
 @Component({
     selector: 'app-gallery',
@@ -170,7 +171,7 @@ export class GalleryComponent implements OnInit, OnDestroy {
   }
 
   private onRoute = async (params: Params): Promise<void> => {
-    const searchQuery = params[QueryParams.gallery.search.query];
+    const searchQuery = SearchQueryUtils.parseURLifiedQuery(params[QueryParams.gallery.search.query]);
     if (searchQuery) {
       this.contentLoader.search(searchQuery).catch(console.error);
       this.piTitleService.setSearchTitle(searchQuery);

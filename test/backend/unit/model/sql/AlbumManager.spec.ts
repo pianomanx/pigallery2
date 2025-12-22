@@ -86,7 +86,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       const am = new AlbumManager();
       const connection = await SQLConnection.getConnection();
 
-      const query: TextSearch = {text: 'test', type: SearchQueryTypes.any_text};
+      const query: TextSearch = {value: 'test', type: SearchQueryTypes.any_text};
 
       expect(await connection.getRepository(AlbumBaseEntity).find()).to.deep.equalInAnyOrder([]);
 
@@ -104,7 +104,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       const am = new AlbumManager();
       const connection = await SQLConnection.getConnection();
 
-      const query: TextSearch = {text: 'test', type: SearchQueryTypes.any_text};
+      const query: TextSearch = {value: 'test', type: SearchQueryTypes.any_text};
 
 
       await am.addSavedSearch('Test Album', Utils.clone(query));
@@ -150,7 +150,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
   it('should list album', async () => {
     const am = new AlbumManager();
 
-    const query: TextSearch = {text: 'photo1', type: SearchQueryTypes.any_text};
+    const query: TextSearch = {value: 'photo1', type: SearchQueryTypes.any_text};
 
     await am.addSavedSearch('Test Album', Utils.clone(query));
 
@@ -182,8 +182,8 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       const am = new AlbumManager();
 
       // Create albums with different search queries
-      const query1: TextSearch = {text: 'photo1', type: SearchQueryTypes.any_text};
-      const query2: TextSearch = {text: 'sw1', type: SearchQueryTypes.any_text};
+      const query1: TextSearch = {value: 'photo1', type: SearchQueryTypes.any_text};
+      const query2: TextSearch = {value: 'sw1', type: SearchQueryTypes.any_text};
 
       await am.addSavedSearch('Album Photo1', Utils.clone(query1));
       await am.addSavedSearch('Album SW1', Utils.clone(query2));
@@ -229,7 +229,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       const connection = await SQLConnection.getConnection();
 
       // Create album that will match the projection
-      const query: TextSearch = {text: 'photo', type: SearchQueryTypes.any_text};
+      const query: TextSearch = {value: 'photo', type: SearchQueryTypes.any_text};
       await am.addSavedSearch('Test Album Cache', Utils.clone(query));
 
       // Get albums with default session first
@@ -261,13 +261,13 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       const am = new AlbumManager();
 
       // Create album that searches for content that won't match projection
-      const query: TextSearch = {text: 'photo1', type: SearchQueryTypes.any_text};
+      const query: TextSearch = {value: 'photo1', type: SearchQueryTypes.any_text};
       await am.addSavedSearch('No Match Album', Utils.clone(query));
 
       // Create projection session that filters to non-existent content
       const projectionSession = await createProjectionSession({
         type: SearchQueryTypes.file_name,
-        text: 'nonexistent',
+        value: 'nonexistent',
         matchType: TextSearchQueryMatchTypes.like
       });
 
@@ -291,9 +291,9 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
 
       // Create multiple albums with different search criteria
       const queries = [
-        {name: 'Album All Photos', query: {text: 'photo', type: SearchQueryTypes.any_text} as TextSearch},
-        {name: 'Album SW1', query: {text: 'sw1', type: SearchQueryTypes.any_text} as TextSearch},
-        {name: 'Album Boba', query: {text: 'Boba', type: SearchQueryTypes.any_text} as TextSearch}
+        {name: 'Album All Photos', query: {value: 'photo', type: SearchQueryTypes.any_text} as TextSearch},
+        {name: 'Album SW1', query: {value: 'sw1', type: SearchQueryTypes.any_text} as TextSearch},
+        {name: 'Album Boba', query: {value: 'Boba', type: SearchQueryTypes.any_text} as TextSearch}
       ];
 
       for (const {name, query} of queries) {
@@ -328,7 +328,7 @@ describe('AlbumManager', (sqlHelper: DBTestHelper) => {
       const connection = await SQLConnection.getConnection();
 
       // Create album
-      const query: TextSearch = {text: 'photo1', type: SearchQueryTypes.any_text};
+      const query: TextSearch = {value: 'photo1', type: SearchQueryTypes.any_text};
       await am.addSavedSearch('Cache Test Album', Utils.clone(query));
 
       // Build cache for default session

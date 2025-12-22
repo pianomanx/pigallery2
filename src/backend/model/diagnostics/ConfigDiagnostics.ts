@@ -505,7 +505,7 @@ export class ConfigDiagnostics {
       );
       Config.AlbumCover.SearchQuery = {
         type: SearchQueryTypes.any_text,
-        text: '',
+        value: '',
       } as TextSearch;
     }
 

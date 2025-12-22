@@ -12,6 +12,7 @@ import {filter, map, startWith, switchMap} from 'rxjs/operators';
 import {MediaDTO} from '../../../../common/entities/MediaDTO';
 import {FileDTO} from '../../../../common/entities/FileDTO';
 import {GalleryService} from './gallery.service';
+import {SearchQueryDTO} from '../../../../common/entities/SearchQueryDTO';
 
 @Injectable()
 export class ContentLoaderService implements OnDestroy {
@@ -130,19 +131,19 @@ export class ContentLoaderService implements OnDestroy {
 
   }
 
-  public async search(query: string, forceReload = false): Promise<void> {
-
-    this.ongoingContentRequest = query;
-    this.lastContentRequest = {type: 'search', value: query};
+  public async search(query: SearchQueryDTO, forceReload = false): Promise<void> {
+    const queryStr = JSON.stringify(query);
+    this.ongoingContentRequest = queryStr;
+    this.lastContentRequest = {type: 'search', value: queryStr};
 
     if (!forceReload) {
       this.setContent({} as PackedContentWrapperWithError); // don't empty the page when its just a reload
     }
 
-    let cw = this.galleryCacheService.getSearch(JSON.parse(query));
+    let cw = this.galleryCacheService.getSearch(query);
     if (forceReload || (!cw || cw.searchResult == null)) {
       try {
-        cw = await this.networkService.getJson<PackedContentWrapperWithError>('/search/' + encodeURIComponent(query));
+        cw = await this.networkService.getJson<PackedContentWrapperWithError>('/search/' + encodeURIComponent(queryStr));
         this.galleryCacheService.setSearch(cw);
       } catch (e) {
         cw = cw || {
@@ -157,7 +158,7 @@ export class ContentLoaderService implements OnDestroy {
       }
     }
 
-    if (this.ongoingContentRequest !== query) {
+    if (this.ongoingContentRequest !== queryStr) {
       return;
     }
     this.ongoingContentRequest = null;
@@ -178,7 +179,7 @@ export class ContentLoaderService implements OnDestroy {
     if (this.lastContentRequest.type === 'directory') {
       await this.loadDirectory(this.lastContentRequest.value, true);
     } else if (this.lastContentRequest.type === 'search') {
-      await this.search(this.lastContentRequest.value, true);
+      await this.search(JSON.parse(this.lastContentRequest.value), true);
     }
   }
 

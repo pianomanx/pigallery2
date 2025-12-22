@@ -38,7 +38,7 @@ import {SearchQueryUtils} from '../../../../../common/SearchQueryUtils';
 export class GallerySearchComponent implements OnDestroy {
   public searchQueryDTO: SearchQueryDTO = {
     type: SearchQueryTypes.any_text,
-    text: '',
+    value: '',
   } as TextSearch;
   public rawSearchText = '';
   mouseOverAutoComplete = false;
@@ -86,7 +86,7 @@ export class GallerySearchComponent implements OnDestroy {
   }
 
   get HTMLSearchQuery(): string {
-    return JSON.stringify(SearchQueryUtils.stripFalseNegate(this.searchQueryDTO));
+    return SearchQueryUtils.urlify(this.searchQueryDTO);
   }
 
   ngOnDestroy(): void {

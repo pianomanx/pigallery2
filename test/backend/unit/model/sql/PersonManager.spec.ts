@@ -11,7 +11,7 @@ import {PersonEntry} from '../../../../../src/backend/model/database/enitites/pe
 import {PersonJunctionTable} from '../../../../../src/backend/model/database/enitites/person/PersonJunctionTable';
 import {ProjectedPersonCacheEntity} from '../../../../../src/backend/model/database/enitites/person/ProjectedPersonCacheEntity';
 import {ObjectManagers} from '../../../../../src/backend/model/ObjectManagers';
-import {SearchQueryTypes, TextSearchQueryMatchTypes} from '../../../../../src/common/entities/SearchQueryDTO';
+import {SearchQueryTypes, TextSearch, TextSearchQueryMatchTypes} from '../../../../../src/common/entities/SearchQueryDTO';
 import {SessionContext} from '../../../../../src/backend/model/SessionContext';
 
 
@@ -283,9 +283,9 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       // Create projection session
       const projectionSession = await createProjectionSession({
         type: SearchQueryTypes.file_name,
-        text: 'sw1',
+        value: 'sw1',
         matchType: TextSearchQueryMatchTypes.like
-      });
+      } as TextSearch);
 
       const personWithProjection = await pm.get(projectionSession, 'Unkle Ben');
       const personWithDefault = await pm.get(DBTestHelper.defaultSession, 'Unkle Ben');

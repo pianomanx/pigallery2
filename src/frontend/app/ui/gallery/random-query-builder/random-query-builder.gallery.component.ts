@@ -30,7 +30,7 @@ import { GallerySearchQueryBuilderComponent } from '../search/query-builder/quer
 export class RandomQueryBuilderGalleryComponent implements OnInit, OnDestroy {
   public searchQueryDTO: SearchQueryDTO = {
     type: SearchQueryTypes.any_text,
-    text: '',
+    value: '',
   } as TextSearch;
   enabled = true;
   url = '';

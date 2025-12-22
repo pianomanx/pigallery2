@@ -158,10 +158,10 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     const sm = new SearchManager();
 
     const cmp = (a: AutoCompleteItem, b: AutoCompleteItem) => {
-      if (a.text === b.text) {
+      if (a.value === b.value) {
         return a.type - b.type;
       }
-      return a.text.localeCompare(b.text);
+      return a.value.localeCompare(b.value);
     };
 
     expect((await sm.autocomplete(DBTestHelper.defaultSession, 'tat', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
@@ -267,14 +267,14 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       const sm = new SearchManager();
 
       const projQ = ({
-        text: 'wookiees',
+        value: 'wookiees',
         matchType: TextSearchQueryMatchTypes.exact_match,
         type: SearchQueryTypes.keyword
       } as TextSearch);
       const session = Utils.clone(DBTestHelper.defaultSession);
       session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
 
-      const searchQ = {text: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
+      const searchQ = {value: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
 
       // validate projection less count
       expect(await sm.getCount(DBTestHelper.defaultSession, projQ)).to.equal(1);
@@ -289,14 +289,14 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       const sm = new SearchManager();
 
       const projQ = ({
-        text: 'wookiees',
+        value: 'wookiees',
         matchType: TextSearchQueryMatchTypes.exact_match,
         type: SearchQueryTypes.keyword
       } as TextSearch);
       const session = Utils.clone(DBTestHelper.defaultSession);
       session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
 
-      const searchQ = {text: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
+      const searchQ = {value: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
 
       const media = await sm.getNMedia(session, searchQ, [{
         method: SortByTypes.Random,
@@ -314,7 +314,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         const sm = new SearchManager();
 
         const projQ = ({
-          text: 'wookiees',
+          value: 'wookiees',
           matchType: TextSearchQueryMatchTypes.exact_match,
           type: SearchQueryTypes.keyword
         } as TextSearch);
@@ -329,7 +329,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         // test
         expect((await sm.autocomplete(session, 'star', SearchQueryTypes.any_text)).length).to.equal(1);
         expect(await sm.autocomplete(session, 'star', SearchQueryTypes.any_text)).to.deep.equal([{
-          text: 'star wars',
+          value: 'star wars',
           type: SearchQueryTypes.keyword,
         }]);
       });
@@ -337,7 +337,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       it('autocomplete should apply directory projection to directory suggestions', async () => {
         const sm = new SearchManager();
         const projQ = ({
-          text: 'The Phantom Menace',
+          value: 'The Phantom Menace',
           matchType: TextSearchQueryMatchTypes.exact_match,
           type: SearchQueryTypes.directory
         } as TextSearch);
@@ -361,7 +361,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       it('autocomplete should apply directory projection to keyword suggestions', async () => {
         const sm = new SearchManager();
         const projQ = ({
-          text: 'The Phantom Menace',
+          value: 'The Phantom Menace',
           matchType: TextSearchQueryMatchTypes.exact_match,
           type: SearchQueryTypes.directory
         } as TextSearch);
@@ -384,7 +384,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         const sm = new SearchManager();
         // Project to photos with keyword "wookiees" which earlier narrowed results to pFaceLess
         const projQ = ({
-          text: 'wookiees',
+          value: 'wookiees',
           matchType: TextSearchQueryMatchTypes.exact_match,
           type: SearchQueryTypes.keyword
         } as TextSearch);
@@ -410,7 +410,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         // Project to photos with "Boba Fett" person, which should include only p (sw1.jpg)
         // p contains: Boba Fett, Luke Skywalker, Han Solo, Unkle Ben, R2-D2
         const projQ = ({
-          text: 'Boba Fett',
+          value: 'Boba Fett',
           matchType: TextSearchQueryMatchTypes.exact_match,
           type: SearchQueryTypes.person
         } as TextSearch);
@@ -442,7 +442,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         // Project to photos with keyword "wookiees" which only matches pFaceLess (sw3.jpg)
         // but pFaceLess has no faces, so all persons should have count=0
         const projQ = ({
-          text: 'wookiees',
+          value: 'wookiees',
           matchType: TextSearchQueryMatchTypes.exact_match,
           type: SearchQueryTypes.keyword
         } as TextSearch);
@@ -468,14 +468,14 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       const sm = new SearchManager();
 
       const projQ = ({
-        text: 'wookiees',
+        value: 'wookiees',
         matchType: TextSearchQueryMatchTypes.exact_match,
         type: SearchQueryTypes.keyword
       } as TextSearch);
       const session = Utils.clone(DBTestHelper.defaultSession);
       session.projectionQuery = await sm.prepareAndBuildWhereQuery(projQ);
 
-      const searchQ = {text: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
+      const searchQ = {value: 'star wars', matchType: TextSearchQueryMatchTypes.exact_match, type: SearchQueryTypes.keyword} as TextSearch;
 
       Config.Search.listDirectories = false;
       Config.Search.listMetafiles = false;
@@ -503,8 +503,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       let query: SearchQueryDTO = {
         type: SearchQueryTypes.AND,
-        list: [{text: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
-          {text: p2.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
+        list: [{value: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
+          {value: p2.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
       } as ANDSearchQuery;
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
@@ -516,8 +516,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
       query = ({
         type: SearchQueryTypes.AND,
-        list: [{text: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
-          {text: p.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
+        list: [{value: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
+          {value: p.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
       } as ANDSearchQuery);
       expect(await sm.search(DBTestHelper.defaultSession, query)).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -528,7 +528,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       // make sure that this shows both photos. We need this the the rest of the tests
-      query = ({text: 'a', type: SearchQueryTypes.person} as TextSearch);
+      query = ({value: 'a', type: SearchQueryTypes.person} as TextSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -541,10 +541,10 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.AND,
         list: [{
           type: SearchQueryTypes.AND,
-          list: [{text: 'a', type: SearchQueryTypes.person} as TextSearch,
-            {text: p.metadata.keywords[0], type: SearchQueryTypes.keyword} as TextSearch]
+          list: [{value: 'a', type: SearchQueryTypes.person} as TextSearch,
+            {value: p.metadata.keywords[0], type: SearchQueryTypes.keyword} as TextSearch]
         } as ANDSearchQuery,
-          {text: p.metadata.caption, type: SearchQueryTypes.caption} as TextSearch
+          {value: p.metadata.caption, type: SearchQueryTypes.caption} as TextSearch
         ]
       } as ANDSearchQuery);
 
@@ -563,8 +563,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       let query: SearchQueryDTO = {
         type: SearchQueryTypes.OR,
-        list: [{text: 'Not a person', type: SearchQueryTypes.person} as TextSearch,
-          {text: 'Not a caption', type: SearchQueryTypes.caption} as TextSearch]
+        list: [{value: 'Not a person', type: SearchQueryTypes.person} as TextSearch,
+          {value: 'Not a caption', type: SearchQueryTypes.caption} as TextSearch]
       } as ORSearchQuery;
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
@@ -576,8 +576,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
       query = ({
         type: SearchQueryTypes.OR,
-        list: [{text: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
-          {text: p2.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
+        list: [{value: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
+          {value: p2.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
       } as ORSearchQuery);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -589,8 +589,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       query = ({
         type: SearchQueryTypes.OR,
-        list: [{text: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
-          {text: p.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
+        list: [{value: p.metadata.faces[0].name, type: SearchQueryTypes.person} as TextSearch,
+          {value: p.metadata.caption, type: SearchQueryTypes.caption} as TextSearch]
       } as ORSearchQuery);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -601,7 +601,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       // make sure that this shows both photos. We need this the the rest of the tests
-      query = ({text: 'a', type: SearchQueryTypes.person} as TextSearch);
+      query = ({value: 'a', type: SearchQueryTypes.person} as TextSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
         directories: [],
@@ -614,10 +614,10 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.OR,
         list: [{
           type: SearchQueryTypes.OR,
-          list: [{text: 'a', type: SearchQueryTypes.person} as TextSearch,
-            {text: p.metadata.keywords[0], type: SearchQueryTypes.keyword} as TextSearch]
+          list: [{value: 'a', type: SearchQueryTypes.person} as TextSearch,
+            {value: p.metadata.keywords[0], type: SearchQueryTypes.keyword} as TextSearch]
         } as ORSearchQuery,
-          {text: p.metadata.caption, type: SearchQueryTypes.caption} as TextSearch
+          {value: p.metadata.caption, type: SearchQueryTypes.caption} as TextSearch
         ]
       } as ORSearchQuery);
 
@@ -634,10 +634,10 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         type: SearchQueryTypes.OR,
         list: [{
           type: SearchQueryTypes.OR,
-          list: [{text: p.metadata.keywords[0], type: SearchQueryTypes.keyword} as TextSearch,
-            {text: p2.metadata.keywords[0], type: SearchQueryTypes.keyword} as TextSearch]
+          list: [{value: p.metadata.keywords[0], type: SearchQueryTypes.keyword} as TextSearch,
+            {value: p2.metadata.keywords[0], type: SearchQueryTypes.keyword} as TextSearch]
         } as ORSearchQuery,
-          {text: pFaceLess.metadata.caption, type: SearchQueryTypes.caption} as TextSearch
+          {value: pFaceLess.metadata.caption, type: SearchQueryTypes.caption} as TextSearch
         ]
       } as ORSearchQuery);
 
@@ -656,8 +656,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       let query: SomeOfSearchQuery = {
         type: SearchQueryTypes.SOME_OF,
-        list: [{text: 'jpg', type: SearchQueryTypes.file_name} as TextSearch,
-          {text: 'mp4', type: SearchQueryTypes.file_name} as TextSearch]
+        list: [{value: 'jpg', type: SearchQueryTypes.file_name} as TextSearch,
+          {value: 'mp4', type: SearchQueryTypes.file_name} as TextSearch]
       } as SomeOfSearchQuery;
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
@@ -670,10 +670,10 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
       query = ({
         type: SearchQueryTypes.SOME_OF,
-        list: [{text: 'R2', type: SearchQueryTypes.person} as TextSearch,
-          {text: 'Anakin', type: SearchQueryTypes.person} as TextSearch,
-          {text: 'Luke', type: SearchQueryTypes.person} as TextSearch,
-          {text: 'Non-Existing', type: SearchQueryTypes.person} as TextSearch]
+        list: [{value: 'R2', type: SearchQueryTypes.person} as TextSearch,
+          {value: 'Anakin', type: SearchQueryTypes.person} as TextSearch,
+          {value: 'Luke', type: SearchQueryTypes.person} as TextSearch,
+          {value: 'Non-Existing', type: SearchQueryTypes.person} as TextSearch]
       } as SomeOfSearchQuery);
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
@@ -718,10 +718,10 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       query = ({
         type: SearchQueryTypes.SOME_OF,
         min: 3,
-        list: [{text: 'sw', type: SearchQueryTypes.file_name} as TextSearch,
-          {text: 'R2', type: SearchQueryTypes.person} as TextSearch,
-          {text: 'Kamino', type: SearchQueryTypes.position} as TextSearch,
-          {text: 'Han', type: SearchQueryTypes.person} as TextSearch]
+        list: [{value: 'sw', type: SearchQueryTypes.file_name} as TextSearch,
+          {value: 'R2', type: SearchQueryTypes.person} as TextSearch,
+          {value: 'Kamino', type: SearchQueryTypes.position} as TextSearch,
+          {value: 'Han', type: SearchQueryTypes.person} as TextSearch]
       } as SomeOfSearchQuery);
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
@@ -1029,7 +1029,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       };
 
       let query = {
-        from: {text: 'Tatooine'},
+        from: {value: 'Tatooine'},
         distance: 1,
         type: SearchQueryTypes.distance
       } as DistanceSearch;
@@ -1150,7 +1150,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           //
           list: alphabet.split('').map(t => ({
             type: SearchQueryTypes.file_name,
-            text: t
+            value: t
           } as TextSearch))
         };
         const q = sm.flattenSameOfQueries(query);
@@ -1168,7 +1168,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         //
         list: 'abcdefghijklmnopqrstu'.split('').map(t => ({
           type: SearchQueryTypes.file_name,
-          text: t
+          value: t
         } as TextSearch))
       };
       expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
@@ -1195,7 +1195,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         name: pFaceLess.name
       } as any;
       const query = {
-        text: subDir.name,
+        value: subDir.name,
         type: SearchQueryTypes.any_text
       } as TextSearch;
       expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
@@ -1213,12 +1213,12 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       Config.Search.listDirectories = true;
       const sm = new SearchManager();
       const session = await ObjectManagers.getInstance().SessionManager.buildContext({
-        allowQuery: {text: 'YOU WONT FIND IT', type: SearchQueryTypes.keyword} as TextSearch,
+        allowQuery: {value: 'YOU WONT FIND IT', type: SearchQueryTypes.keyword} as TextSearch,
         overrideAllowBlockList: true
       } as any);
 
       let query = {
-        text: subDir.name,
+        value: subDir.name,
         type: SearchQueryTypes.any_text
       } as TextSearch;
       expect(removeDir(await sm.search(session, query)))
@@ -1232,7 +1232,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
 
       query = {
-        text: dir.name,
+        value: dir.name,
         type: SearchQueryTypes.any_text
       } as TextSearch;
       expect(removeDir(await sm.search(session, query)))
@@ -1250,7 +1250,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       const sm = new SearchManager();
 
       const query = {
-        text: dir.name,
+        value: dir.name,
         type: SearchQueryTypes.any_text,
         matchType: TextSearchQueryMatchTypes.exact_match
       } as TextSearch;
@@ -1268,8 +1268,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       it('as any', async () => {
         const sm = new SearchManager();
 
-        let query = {text: 'sw', type: SearchQueryTypes.any_text} as TextSearch;
-        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, {text: 'sw', type: SearchQueryTypes.any_text} as TextSearch)))
+        let query = {value: 'sw', type: SearchQueryTypes.any_text} as TextSearch;
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, {value: 'sw', type: SearchQueryTypes.any_text} as TextSearch)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
@@ -1278,7 +1278,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           resultOverflow: false
         } as SearchResultDTO), JSON.stringify(query));
 
-        query = ({text: 'sw', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
+        query = ({value: 'sw', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
 
         expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
@@ -1289,7 +1289,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           resultOverflow: false
         } as SearchResultDTO), JSON.stringify(query));
 
-        query = ({text: 'Boba', type: SearchQueryTypes.any_text} as TextSearch);
+        query = ({value: 'Boba', type: SearchQueryTypes.any_text} as TextSearch);
 
         expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
@@ -1300,7 +1300,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           resultOverflow: false
         } as SearchResultDTO), JSON.stringify(query));
 
-        query = ({text: 'Boba', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
+        query = ({value: 'Boba', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
         expect(removeDir(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
@@ -1310,7 +1310,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           resultOverflow: false
         } as SearchResultDTO), JSON.stringify(query));
 
-        query = ({text: 'Boba', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
+        query = ({value: 'Boba', negate: true, type: SearchQueryTypes.any_text} as TextSearch);
         // all should have faces
         const sRet = await sm.search(DBTestHelper.defaultSession, query);
         for (const item of sRet.media) {
@@ -1324,7 +1324,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
 
         query = ({
-          text: 'Boba',
+          value: 'Boba',
           type: SearchQueryTypes.any_text,
           matchType: TextSearchQueryMatchTypes.exact_match
         } as TextSearch);
@@ -1338,7 +1338,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO), JSON.stringify(query));
 
         query = ({
-          text: 'Boba Fett',
+          value: 'Boba Fett',
           type: SearchQueryTypes.any_text,
           matchType: TextSearchQueryMatchTypes.exact_match
         } as TextSearch);
@@ -1358,7 +1358,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         const sm = new SearchManager();
 
 
-        const query = {text: 'Tatooine', type: SearchQueryTypes.position} as TextSearch;
+        const query = {value: 'Tatooine', type: SearchQueryTypes.position} as TextSearch;
         expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
           .to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
@@ -1376,7 +1376,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
 
         let query = {
-          text: 'kie',
+          value: 'kie',
           type: SearchQueryTypes.keyword
         } as TextSearch;
         expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
@@ -1388,7 +1388,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO));
 
         query = ({
-          text: 'wa',
+          value: 'wa',
           type: SearchQueryTypes.keyword
         } as TextSearch);
 
@@ -1401,7 +1401,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO));
 
         query = ({
-          text: 'han s',
+          value: 'han s',
           type: SearchQueryTypes.keyword
         } as TextSearch);
 
@@ -1414,7 +1414,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO));
 
         query = ({
-          text: 'star wars',
+          value: 'star wars',
           matchType: TextSearchQueryMatchTypes.exact_match,
           type: SearchQueryTypes.keyword
         } as TextSearch);
@@ -1428,7 +1428,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO));
 
         query = ({
-          text: 'wookiees',
+          value: 'wookiees',
           matchType: TextSearchQueryMatchTypes.exact_match,
           type: SearchQueryTypes.keyword
         } as TextSearch);
@@ -1449,7 +1449,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
 
         const query = {
-          text: 'han',
+          value: 'han',
           type: SearchQueryTypes.caption
         } as TextSearch;
 
@@ -1466,7 +1466,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         const sm = new SearchManager();
 
         let query = {
-          text: 'sw',
+          value: 'sw',
           type: SearchQueryTypes.file_name
         } as TextSearch;
 
@@ -1480,12 +1480,12 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO));
 
         query = ({
-          text: 'sw4',
+          value: 'sw4',
           type: SearchQueryTypes.file_name
         } as TextSearch);
 
         expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, {
-          text: 'sw4',
+          value: 'sw4',
           type: SearchQueryTypes.file_name
         } as TextSearch))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
@@ -1501,7 +1501,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         const sm = new SearchManager();
 
         let query = {
-          text: 'of the J',
+          value: 'of the J',
           type: SearchQueryTypes.directory
         } as TextSearch;
 
@@ -1514,7 +1514,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO), JSON.stringify(query));
 
         query = ({
-          text: '.',
+          value: '.',
           type: SearchQueryTypes.directory
         } as TextSearch);
 
@@ -1527,7 +1527,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO), JSON.stringify(query));
 
         query = ({
-          text: '.',
+          value: '.',
           matchType: TextSearchQueryMatchTypes.exact_match,
           type: SearchQueryTypes.directory
         } as TextSearch);
@@ -1543,7 +1543,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
 
         query = ({
-          text: '/Return of the Jedi',
+          value: '/Return of the Jedi',
           //    matchType: TextSearchQueryMatchTypes.like,
           type: SearchQueryTypes.directory
         } as TextSearch);
@@ -1557,7 +1557,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO), JSON.stringify(query));
 
         query = ({
-          text: '/Return of the Jedi',
+          value: '/Return of the Jedi',
           matchType: TextSearchQueryMatchTypes.exact_match,
           type: SearchQueryTypes.directory
         } as TextSearch);
@@ -1577,7 +1577,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         const sm = new SearchManager();
 
         let query = {
-          text: 'Boba',
+          value: 'Boba',
           type: SearchQueryTypes.person
         } as TextSearch;
 
@@ -1590,7 +1590,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO));
 
         query = ({
-          text: 'Boba',
+          value: 'Boba',
           type: SearchQueryTypes.person,
           matchType: TextSearchQueryMatchTypes.exact_match
         } as TextSearch);
@@ -1604,13 +1604,13 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         } as SearchResultDTO));
 
         query = ({
-          text: 'Boba Fett',
+          value: 'Boba Fett',
           type: SearchQueryTypes.person,
           matchType: TextSearchQueryMatchTypes.exact_match
         } as TextSearch);
 
         expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, {
-          text: 'Boba Fett',
+          value: 'Boba Fett',
           type: SearchQueryTypes.person,
           matchType: TextSearchQueryMatchTypes.exact_match
         } as TextSearch))).to.deep.equalInAnyOrder(removeDir({
@@ -1968,7 +1968,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     const sm = new SearchManager();
 
     let query = {
-      text: 'xyz',
+      value: 'xyz',
       type: SearchQueryTypes.keyword
     } as TextSearch;
 
@@ -1979,7 +1979,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     }], 1, true)).to.deep.equalInAnyOrder([]);
 
     query = ({
-      text: 'wookiees',
+      value: 'wookiees',
       matchType: TextSearchQueryMatchTypes.exact_match,
       type: SearchQueryTypes.keyword
     } as TextSearch);

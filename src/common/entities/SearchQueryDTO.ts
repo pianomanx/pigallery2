@@ -115,13 +115,13 @@ export interface TextSearch extends NegatableSearchQuery {
       | SearchQueryTypes.file_name
       | SearchQueryTypes.directory;
   matchType?: TextSearchQueryMatchTypes;
-  text: string;
+  value: string;
 }
 
 export interface DistanceSearch extends NegatableSearchQuery {
   type: SearchQueryTypes.distance;
   from: {
-    text?: string;
+    value?: string;
     GPSData?: GPSMetadata;
   };
   distance: number; // in kms

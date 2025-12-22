@@ -109,7 +109,7 @@ export class SearchManager {
 
   async autocomplete(
     session: SessionContext,
-    text: string,
+    value: string,
     type: SearchQueryTypes
   ): Promise<AutoCompleteItem[]> {
     const connection = await SQLConnection.getConnection();
@@ -129,8 +129,8 @@ export class SearchManager {
       const q = photoRepository
         .createQueryBuilder('media')
         .select('DISTINCT(media.metadata.keywords)')
-        .where('media.metadata.keywords LIKE :textKW COLLATE ' + SQL_COLLATE, {
-          textKW: '%' + text + '%',
+        .where('media.metadata.keywords LIKE :valueKW COLLATE ' + SQL_COLLATE, {
+          valueKW: '%' + value + '%',
         });
 
       if (session.projectionQuery) {
@@ -151,7 +151,7 @@ export class SearchManager {
             ...this.encapsulateAutoComplete(
               keywords.filter(
                 (k): boolean =>
-                  k.toLowerCase().indexOf(text.toLowerCase()) !== -1
+                  k.toLowerCase().indexOf(value.toLowerCase()) !== -1
               ),
               SearchQueryTypes.keyword
             )
@@ -173,8 +173,8 @@ export class SearchManager {
               .createQueryBuilder('person')
               .select('DISTINCT(person.name), cache.count')
               .leftJoin('person.cache', 'cache', 'cache.projectionKey = :pk', {pk: session.user.projectionKey})
-              .where('person.name LIKE :text COLLATE ' + SQL_COLLATE, {
-                text: '%' + text + '%',
+              .where('person.name LIKE :value COLLATE ' + SQL_COLLATE, {
+                value: '%' + value + '%',
               })
               .andWhere('cache.count > 0 AND cache.valid = 1')
               .limit(
@@ -202,17 +202,17 @@ export class SearchManager {
         );
       const b = new Brackets((q) => {
         q.where(
-          'media.metadata.positionData.country LIKE :text COLLATE ' +
+          'media.metadata.positionData.country LIKE :value COLLATE ' +
           SQL_COLLATE,
-          {text: '%' + text + '%'}
+          {value: '%' + value + '%'}
         ).orWhere(
-          'media.metadata.positionData.state LIKE :text COLLATE ' +
+          'media.metadata.positionData.state LIKE :value COLLATE ' +
           SQL_COLLATE,
-          {text: '%' + text + '%'}
+          {value: '%' + value + '%'}
         ).orWhere(
-          'media.metadata.positionData.city LIKE :text COLLATE ' +
+          'media.metadata.positionData.city LIKE :value COLLATE ' +
           SQL_COLLATE,
-          {text: '%' + text + '%'}
+          {value: '%' + value + '%'}
         );
       });
       q.where(b);
@@ -242,7 +242,7 @@ export class SearchManager {
             ...this.encapsulateAutoComplete(
               positions.filter(
                 (p): boolean =>
-                  p.toLowerCase().indexOf(text.toLowerCase()) !== -1
+                  p.toLowerCase().indexOf(value.toLowerCase()) !== -1
               ),
               type === SearchQueryTypes.distance
                 ? type
@@ -260,8 +260,8 @@ export class SearchManager {
       const q = mediaRepository
         .createQueryBuilder('media')
         .select('DISTINCT(media.name)')
-        .where('media.name LIKE :text COLLATE ' + SQL_COLLATE, {
-          text: '%' + text + '%',
+        .where('media.name LIKE :value COLLATE ' + SQL_COLLATE, {
+          value: '%' + value + '%',
         });
 
 
@@ -292,8 +292,8 @@ export class SearchManager {
         .createQueryBuilder('media')
         .select('DISTINCT(media.metadata.caption) as caption')
         .where(
-          'media.metadata.caption LIKE :text COLLATE ' + SQL_COLLATE,
-          {text: '%' + text + '%'}
+          'media.metadata.caption LIKE :value COLLATE ' + SQL_COLLATE,
+          {value: '%' + value + '%'}
         );
 
       if (session.projectionQuery) {
@@ -322,8 +322,8 @@ export class SearchManager {
       const dirs = await directoryRepository
         .createQueryBuilder('directory')
         .leftJoinAndSelect('directory.cache', 'cache', 'cache.projectionKey = :pk AND cache.valid = 1', {pk: session.user.projectionKey})
-        .where('directory.name LIKE :text COLLATE ' + SQL_COLLATE, {
-          text: '%' + text + '%',
+        .where('directory.name LIKE :value COLLATE ' + SQL_COLLATE, {
+          value: '%' + value + '%',
         })
         .andWhere('(cache.recursiveMediaCount > 0 OR cache.id is NULL)')
         .limit(
@@ -1039,14 +1039,14 @@ export class SearchManager {
 
       const textParam: { [key: string]: unknown } = {};
       textParam['text' + queryId] = createMatchString(
-        (query as TextSearch).text
+        (query as TextSearch).value
       );
 
       if (
         query.type === SearchQueryTypes.any_text ||
         query.type === SearchQueryTypes.directory
       ) {
-        const dirPathStr = (query as TextSearch).text.replace(
+        const dirPathStr = (query as TextSearch).value.replace(
           new RegExp('\\\\', 'g'),
           '/'
         );
@@ -1133,16 +1133,16 @@ export class SearchManager {
               qbr[whereFN](
                 new Brackets((qb): void => {
                   textParam['CtextC' + queryId] = `%,${
-                    (query as TextSearch).text
+                    (query as TextSearch).value
                   },%`;
                   textParam['Ctext' + queryId] = `%,${
-                    (query as TextSearch).text
+                    (query as TextSearch).value
                   }`;
                   textParam['textC' + queryId] = `${
-                    (query as TextSearch).text
+                    (query as TextSearch).value
                   },%`;
                   textParam['text_exact' + queryId] = `${
-                    (query as TextSearch).text
+                    (query as TextSearch).value
                   }`;
 
                   qb[whereFN](
@@ -1376,11 +1376,11 @@ export class SearchManager {
     }
     if (
       query.type === SearchQueryTypes.distance &&
-      (query as DistanceSearch).from.text
+      (query as DistanceSearch).from.value
     ) {
       (query as DistanceSearch).from.GPSData =
         await ObjectManagers.getInstance().LocationManager.getGPSData(
-          (query as DistanceSearch).from.text
+          (query as DistanceSearch).from.value
         );
     }
     return query;

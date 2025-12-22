@@ -159,16 +159,16 @@ export class GallerySearchQueryEntryComponent
     }
     this.AsListQuery.list.push({
       type: SearchQueryTypes.any_text,
-      text: '',
+      value: '',
     } as TextSearch);
   }
 
   onChangeType(): void {
     if (this.IsListQuery) {
-      delete this.AsTextQuery.text;
+      delete this.AsTextQuery.value;
       this.AsListQuery.list = this.AsListQuery.list || [
-        {type: SearchQueryTypes.any_text, text: ''} as TextSearch,
-        {type: SearchQueryTypes.any_text, text: ''} as TextSearch,
+        {type: SearchQueryTypes.any_text, value: ''} as TextSearch,
+        {type: SearchQueryTypes.any_text, value: ''} as TextSearch,
       ];
     } else {
       delete this.AsListQuery.list;
@@ -179,7 +179,7 @@ export class GallerySearchQueryEntryComponent
       if (this.AsDistanceQuery.from?.GPSData) {
         this.locationInputText = `${this.AsDistanceQuery.from.GPSData.latitude}, ${this.AsDistanceQuery.from.GPSData.longitude}`;
       } else {
-        this.locationInputText = this.AsDistanceQuery.from?.text || '';
+        this.locationInputText = this.AsDistanceQuery.from?.value || '';
       }
     } else {
       delete this.AsDistanceQuery.from;
@@ -222,11 +222,11 @@ export class GallerySearchQueryEntryComponent
         };
       } else {
         // Invalid coordinates, treat as text
-        this.AsDistanceQuery.from = { text: value };
+        this.AsDistanceQuery.from = { value: value };
       }
     } else {
       // It's a location name
-      this.AsDistanceQuery.from = { text: value };
+      this.AsDistanceQuery.from = { value: value };
     }
 
     this.locationInputText = value;
@@ -255,7 +255,7 @@ export class GallerySearchQueryEntryComponent
       if (distanceSearch.from?.GPSData) {
         this.locationInputText = `${distanceSearch.from.GPSData.latitude}, ${distanceSearch.from.GPSData.longitude}`;
       } else {
-        this.locationInputText = distanceSearch.from?.text || '';
+        this.locationInputText = distanceSearch.from?.value || '';
       }
     }
   }

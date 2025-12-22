@@ -46,7 +46,7 @@ export class FaceComponent implements OnInit, OnDestroy {
     this.thumbnail = this.thumbnailService.getPersonThumbnail(this.person);
     this.searchQueryDTOstr = JSON.stringify({
       type: SearchQueryTypes.person,
-      text: this.person.name,
+      value: this.person.name,
       matchType: TextSearchQueryMatchTypes.exact_match,
     } as TextSearch);
   }

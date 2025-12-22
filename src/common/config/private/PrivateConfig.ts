@@ -413,7 +413,7 @@ export class ServerUserConfig extends ClientUserConfig {
   })
   allowQuery: SearchQueryDTO = {
     type: SearchQueryTypes.any_text,
-    text: '',
+    value: '',
   } as TextSearch;
 
   @ConfigProperty({
@@ -428,7 +428,7 @@ export class ServerUserConfig extends ClientUserConfig {
   })
   blockQuery: SearchQueryDTO = {
     type: SearchQueryTypes.any_text,
-    text: '',
+    value: '',
   } as TextSearch;
 
   @ConfigProperty({
@@ -1023,7 +1023,7 @@ export class ServerAlbumCoverConfig {
   })
   SearchQuery: SearchQueryDTO = {
     type: SearchQueryTypes.any_text,
-    text: '',
+    value: '',
   } as TextSearch;
 
   @ConfigProperty({

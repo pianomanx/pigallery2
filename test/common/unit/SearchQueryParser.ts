@@ -33,33 +33,33 @@ describe('SearchQueryParser', () => {
 
   describe('should serialize and deserialize', () => {
     it('Text search', () => {
-      check({type: SearchQueryTypes.any_text, text: 'test'} as TextSearch);
-      check({type: SearchQueryTypes.person, text: 'person_test'} as TextSearch);
-      check({type: SearchQueryTypes.directory, text: 'directory'} as TextSearch);
-      check({type: SearchQueryTypes.directory, text: '2000.10.15 (Some event)'} as TextSearch);
+      check({type: SearchQueryTypes.any_text, value: 'test'} as TextSearch);
+      check({type: SearchQueryTypes.person, value: 'person_test'} as TextSearch);
+      check({type: SearchQueryTypes.directory, value: 'directory'} as TextSearch);
+      check({type: SearchQueryTypes.directory, value: '2000.10.15 (Some event)'} as TextSearch);
       check({
         type: SearchQueryTypes.directory,
-        text: '2000.10.15 (Some event)',
+        value: '2000.10.15 (Some event)',
         matchType: TextSearchQueryMatchTypes.exact_match
       } as TextSearch);
-      check({type: SearchQueryTypes.directory, text: '2000.10.15 (Some event) '} as TextSearch);
-      check({type: SearchQueryTypes.keyword, text: 'big boom'} as TextSearch);
-      check({type: SearchQueryTypes.caption, text: 'caption'} as TextSearch);
-      check({type: SearchQueryTypes.file_name, text: 'filename'} as TextSearch);
-      check({type: SearchQueryTypes.position, text: 'New York'} as TextSearch);
+      check({type: SearchQueryTypes.directory, value: '2000.10.15 (Some event) '} as TextSearch);
+      check({type: SearchQueryTypes.keyword, value: 'big boom'} as TextSearch);
+      check({type: SearchQueryTypes.caption, value: 'caption'} as TextSearch);
+      check({type: SearchQueryTypes.file_name, value: 'filename'} as TextSearch);
+      check({type: SearchQueryTypes.position, value: 'New York'} as TextSearch);
       check({
         type: SearchQueryTypes.position,
         matchType: TextSearchQueryMatchTypes.exact_match,
-        text: 'New York'
+        value: 'New York'
       } as TextSearch);
       check({
         type: SearchQueryTypes.position,
         matchType: TextSearchQueryMatchTypes.exact_match,
         negate: true,
-        text: 'New York'
+        value: 'New York'
       } as TextSearch);
 
-      check({type: SearchQueryTypes.any_text, text: 'test', negate: true} as TextSearch);
+      check({type: SearchQueryTypes.any_text, value: 'test', negate: true} as TextSearch);
     });
 
     it('Date search', () => {
@@ -113,8 +113,8 @@ describe('SearchQueryParser', () => {
     });
     it('Distance search', () => {
       // Test location-based distance search
-      check({type: SearchQueryTypes.distance, distance: 10, from: {text: 'New York'}} as DistanceSearch);
-      check({type: SearchQueryTypes.distance, distance: 10, from: {text: 'New York'}, negate: true} as DistanceSearch);
+      check({type: SearchQueryTypes.distance, distance: 10, from: {value: 'New York'}} as DistanceSearch);
+      check({type: SearchQueryTypes.distance, distance: 10, from: {value: 'New York'}, negate: true} as DistanceSearch);
 
       // Test coordinate-based distance search
       check({
@@ -270,8 +270,8 @@ describe('SearchQueryParser', () => {
       expect(parser.parse('a b')).to.deep.equals({
         type: SearchQueryTypes.AND,
         list: [
-          {type: SearchQueryTypes.any_text, text: 'a'} as TextSearch,
-          {type: SearchQueryTypes.any_text, text: 'b'} as TextSearch
+          {type: SearchQueryTypes.any_text, value: 'a'} as TextSearch,
+          {type: SearchQueryTypes.any_text, value: 'b'} as TextSearch
         ]
       } as ANDSearchQuery);
     });
@@ -279,28 +279,28 @@ describe('SearchQueryParser', () => {
       check({
         type: SearchQueryTypes.AND,
         list: [
-          {type: SearchQueryTypes.keyword, text: 'big boom'} as TextSearch,
-          {type: SearchQueryTypes.position, text: 'New York'} as TextSearch
+          {type: SearchQueryTypes.keyword, value: 'big boom'} as TextSearch,
+          {type: SearchQueryTypes.position, value: 'New York'} as TextSearch
         ]
       } as ANDSearchQuery);
 
       check({
         type: SearchQueryTypes.AND,
         list: [
-          {type: SearchQueryTypes.keyword, text: 'big boom'} as TextSearch,
+          {type: SearchQueryTypes.keyword, value: 'big boom'} as TextSearch,
           {
             type: SearchQueryTypes.position,
             matchType: TextSearchQueryMatchTypes.exact_match,
-            text: 'New York'
+            value: 'New York'
           } as TextSearch
         ]
       } as ANDSearchQuery);
       check({
         type: SearchQueryTypes.AND,
         list: [
-          {type: SearchQueryTypes.keyword, text: 'big boom'} as TextSearch,
-          {type: SearchQueryTypes.caption, text: 'caption'} as TextSearch,
-          {type: SearchQueryTypes.position, text: 'New York'} as TextSearch
+          {type: SearchQueryTypes.keyword, value: 'big boom'} as TextSearch,
+          {type: SearchQueryTypes.caption, value: 'caption'} as TextSearch,
+          {type: SearchQueryTypes.position, value: 'New York'} as TextSearch
         ]
       } as ANDSearchQuery);
       check({
@@ -310,12 +310,12 @@ describe('SearchQueryParser', () => {
             type: SearchQueryTypes.SOME_OF,
             min: 2,
             list: [
-              {type: SearchQueryTypes.keyword, text: 'big boom'} as TextSearch,
-              {type: SearchQueryTypes.position, text: 'New York'} as TextSearch,
-              {type: SearchQueryTypes.caption, text: 'caption test'} as TextSearch
+              {type: SearchQueryTypes.keyword, value: 'big boom'} as TextSearch,
+              {type: SearchQueryTypes.position, value: 'New York'} as TextSearch,
+              {type: SearchQueryTypes.caption, value: 'caption test'} as TextSearch
             ]
           } as SomeOfSearchQuery,
-          {type: SearchQueryTypes.position, text: 'New York'} as TextSearch
+          {type: SearchQueryTypes.position, value: 'New York'} as TextSearch
         ]
       } as ANDSearchQuery);
     });
@@ -323,16 +323,16 @@ describe('SearchQueryParser', () => {
       check({
         type: SearchQueryTypes.OR,
         list: [
-          {type: SearchQueryTypes.keyword, text: 'big boom'} as TextSearch,
-          {type: SearchQueryTypes.position, text: 'New York'} as TextSearch
+          {type: SearchQueryTypes.keyword, value: 'big boom'} as TextSearch,
+          {type: SearchQueryTypes.position, value: 'New York'} as TextSearch
         ]
       } as ORSearchQuery);
       check({
         type: SearchQueryTypes.OR,
         list: [
-          {type: SearchQueryTypes.keyword, text: 'big boom'} as TextSearch,
-          {type: SearchQueryTypes.person, text: 'person_test'} as TextSearch,
-          {type: SearchQueryTypes.position, text: 'New York'} as TextSearch
+          {type: SearchQueryTypes.keyword, value: 'big boom'} as TextSearch,
+          {type: SearchQueryTypes.person, value: 'person_test'} as TextSearch,
+          {type: SearchQueryTypes.position, value: 'New York'} as TextSearch
         ]
       } as ORSearchQuery);
     });
@@ -340,8 +340,8 @@ describe('SearchQueryParser', () => {
       check({
         type: SearchQueryTypes.SOME_OF,
         list: [
-          {type: SearchQueryTypes.keyword, text: 'big boom'} as TextSearch,
-          {type: SearchQueryTypes.position, text: 'New York'} as TextSearch
+          {type: SearchQueryTypes.keyword, value: 'big boom'} as TextSearch,
+          {type: SearchQueryTypes.position, value: 'New York'} as TextSearch
         ]
       } as SomeOfSearchQuery);
       check({
@@ -350,12 +350,12 @@ describe('SearchQueryParser', () => {
           {
             type: SearchQueryTypes.keyword,
             matchType: TextSearchQueryMatchTypes.exact_match,
-            text: 'big boom'
+            value: 'big boom'
           } as TextSearch,
           {
             type: SearchQueryTypes.position,
             matchType: TextSearchQueryMatchTypes.exact_match,
-            text: 'New York'
+            value: 'New York'
           } as TextSearch,
         ]
       } as SomeOfSearchQuery);
@@ -363,22 +363,22 @@ describe('SearchQueryParser', () => {
         type: SearchQueryTypes.SOME_OF,
         min: 2,
         list: [
-          {type: SearchQueryTypes.keyword, text: 'big boom'} as TextSearch,
-          {type: SearchQueryTypes.position, text: 'New York'} as TextSearch,
-          {type: SearchQueryTypes.caption, text: 'caption test'} as TextSearch
+          {type: SearchQueryTypes.keyword, value: 'big boom'} as TextSearch,
+          {type: SearchQueryTypes.position, value: 'New York'} as TextSearch,
+          {type: SearchQueryTypes.caption, value: 'caption test'} as TextSearch
         ]
       } as SomeOfSearchQuery);
       check({
         type: SearchQueryTypes.SOME_OF,
         min: 2,
         list: [
-          {type: SearchQueryTypes.keyword, text: 'big boom'} as TextSearch,
-          {type: SearchQueryTypes.person, text: 'person_test'} as TextSearch,
+          {type: SearchQueryTypes.keyword, value: 'big boom'} as TextSearch,
+          {type: SearchQueryTypes.person, value: 'person_test'} as TextSearch,
           {
             type: SearchQueryTypes.AND,
             list: [
-              {type: SearchQueryTypes.caption, text: 'caption'} as TextSearch,
-              {type: SearchQueryTypes.position, text: 'New York'} as TextSearch
+              {type: SearchQueryTypes.caption, value: 'caption'} as TextSearch,
+              {type: SearchQueryTypes.position, value: 'New York'} as TextSearch
             ]
           } as ANDSearchQuery
         ]

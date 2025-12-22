@@ -346,7 +346,7 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
     return JSON.stringify({
       type: SearchQueryTypes.person,
       matchType: TextSearchQueryMatchTypes.exact_match,
-      text: name,
+      value: name,
     } as TextSearch);
   }
 

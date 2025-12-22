@@ -221,7 +221,7 @@ export class GalleryPhotoComponent implements IRenderable, OnInit, OnDestroy {
     return JSON.stringify({
       type: SearchQueryTypes.position,
       matchType: TextSearchQueryMatchTypes.exact_match,
-      text: this.getPositionText(),
+      value: this.getPositionText(),
     } as TextSearch);
   }
 
@@ -229,7 +229,7 @@ export class GalleryPhotoComponent implements IRenderable, OnInit, OnDestroy {
     return JSON.stringify({
       type,
       matchType: TextSearchQueryMatchTypes.exact_match,
-      text: name,
+      value: name,
     } as TextSearch);
   }
 

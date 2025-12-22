@@ -207,7 +207,7 @@ export class AutoCompleteService {
       searchToken: string
   ): RenderableAutoCompleteItem {
     if (!item.type) {
-      return {text: item.text, queryHint: item.text};
+      return {value: item.value, queryHint: item.value};
     }
     if (
         (TextSearchQueryTypes.includes(item.type) ||
@@ -219,7 +219,7 @@ export class AutoCompleteService {
               SearchQueryTypes[item.type]
               ] +
           ':"' +
-          item.text +
+          item.value +
           '"';
 
       // if its a distance search, change hint text
@@ -230,19 +230,19 @@ export class AutoCompleteService {
               '^\\d*-' + this.searchQueryParserService.keywords.kmFrom
           ).test(tokens[0])
       ) {
-        queryHint = tokens[0] + ':"' + item.text + '"';
+        queryHint = tokens[0] + ':"' + item.value + '"';
       }
 
       return {
-        text: item.text,
+        value: item.value,
         type: item.type,
         queryHint,
       };
     }
     return {
-      text: item.text,
+      value: item.value,
       type: item.type,
-      queryHint: item.text,
+      queryHint: item.value,
     };
   }
 
@@ -254,8 +254,8 @@ export class AutoCompleteService {
     // Source: https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
     const isStartRgx = new RegExp('(\\s|^)' + textLC.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
     return items.sort((a, b) => {
-      const aLC = a.text.toLowerCase();
-      const bLC = b.text.toLowerCase();
+      const aLC = a.value.toLowerCase();
+      const bLC = b.value.toLowerCase();
 
       const basicCompare = () => {
         // prioritize persons higher
@@ -300,7 +300,7 @@ export class AutoCompleteService {
       if (text.prev !== this.searchQueryParserService.keywords.and) {
         return [
           {
-            text: this.searchQueryParserService.keywords.and,
+            value: this.searchQueryParserService.keywords.and,
             queryHint: this.searchQueryParserService.keywords.and,
             notSearchable: true,
           },
@@ -310,7 +310,7 @@ export class AutoCompleteService {
       }
     }
     const generateMatch = (key: string) => ({
-      text: key,
+      value: key,
       queryHint: key,
       notSearchable: true,
     });

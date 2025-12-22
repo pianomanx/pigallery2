@@ -66,7 +66,7 @@ export class CoverManager {
       Config.AlbumCover.SearchQuery &&
       !Utils.equalsFilter(Config.AlbumCover.SearchQuery, {
         type: SearchQueryTypes.any_text,
-        text: '',
+        value: '',
       } as TextSearch)
     ) {
       try {
@@ -165,7 +165,7 @@ export class CoverManager {
       Config.AlbumCover.SearchQuery &&
       !Utils.equalsFilter(Config.AlbumCover.SearchQuery, {
         type: SearchQueryTypes.any_text,
-        text: '',
+        value: '',
       } as TextSearch)
     ) {
       coverMedia = await coverQuery()

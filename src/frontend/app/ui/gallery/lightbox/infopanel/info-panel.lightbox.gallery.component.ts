@@ -210,7 +210,7 @@ export class InfoPanelLightboxComponent implements OnInit, OnChanges {
     return JSON.stringify({
       type,
       matchType: TextSearchQueryMatchTypes.exact_match,
-      text: name,
+      value: name,
     } as TextSearch);
   }
 

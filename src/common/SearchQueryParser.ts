@@ -367,7 +367,7 @@ export class SearchQueryParser {
       return {
         type: SearchQueryTypes.distance,
         distance: intFromRegexp(str),
-        from: {text: from},
+        from: {value: from},
         // only add negate if the value is true
         ...(new RegExp('^\\d*-' + this.keywords.kmFrom + '!:').test(str) && {
           negate: true,
@@ -428,11 +428,11 @@ export class SearchQueryParser {
     // parse text search
     const tmp = TextSearchQueryTypes.map((type) => ({
       key: (this.keywords as never)[SearchQueryTypes[type]] + ':',
-      queryTemplate: {type, text: ''} as TextSearch,
+      queryTemplate: {type, value: ''} as TextSearch,
     })).concat(
         TextSearchQueryTypes.map((type) => ({
           key: (this.keywords as never)[SearchQueryTypes[type]] + '!:',
-          queryTemplate: {type, text: '', negate: true} as TextSearch,
+          queryTemplate: {type, value: '', negate: true} as TextSearch,
         }))
     );
     for (const typeTmp of tmp) {
@@ -443,22 +443,22 @@ export class SearchQueryParser {
             str.charAt(typeTmp.key.length) === '"' &&
             str.charAt(str.length - 1) === '"'
         ) {
-          ret.text = str.slice(typeTmp.key.length + 1, str.length - 1);
+          ret.value = str.slice(typeTmp.key.length + 1, str.length - 1);
           ret.matchType = TextSearchQueryMatchTypes.exact_match;
           // like match
         } else if (
             str.charAt(typeTmp.key.length) === '(' &&
             str.charAt(str.length - 1) === ')'
         ) {
-          ret.text = str.slice(typeTmp.key.length + 1, str.length - 1);
+          ret.value = str.slice(typeTmp.key.length + 1, str.length - 1);
         } else {
-          ret.text = str.slice(typeTmp.key.length);
+          ret.value = str.slice(typeTmp.key.length);
         }
         return ret;
       }
     }
 
-    return {type: SearchQueryTypes.any_text, text: str} as TextSearch;
+    return {type: SearchQueryTypes.any_text, value: str} as TextSearch;
   }
 
   public stringify(query: SearchQueryDTO): string {
@@ -584,13 +584,13 @@ export class SearchQueryParser {
         );
       case SearchQueryTypes.distance: {
         const distanceQuery = query as DistanceSearch;
-        const text = distanceQuery.from.text;
+        const value = distanceQuery.from.value;
         const coords = distanceQuery.from.GPSData;
 
         let locationStr = '';
-        if (text) {
+        if (value) {
           // If we have location text, use that
-          locationStr = text;
+          locationStr = value;
         } else if (coords && coords.latitude != null && coords.longitude != null) {
           // If we only have coordinates, use them
           locationStr = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
@@ -653,7 +653,7 @@ export class SearchQueryParser {
       case SearchQueryTypes.any_text:
         if (!(query as TextSearch).negate) {
           return SearchQueryParser.stringifyText(
-              (query as TextSearch).text,
+              (query as TextSearch).value,
               (query as TextSearch).matchType
           );
         } else {
@@ -661,7 +661,7 @@ export class SearchQueryParser {
               (this.keywords as never)[SearchQueryTypes[query.type]] +
               colon +
               SearchQueryParser.stringifyText(
-                  (query as TextSearch).text,
+                  (query as TextSearch).value,
                   (query as TextSearch).matchType
               )
           );
@@ -673,14 +673,14 @@ export class SearchQueryParser {
       case SearchQueryTypes.caption:
       case SearchQueryTypes.file_name:
       case SearchQueryTypes.directory:
-        if (!(query as TextSearch).text) {
+        if (!(query as TextSearch).value) {
           return '';
         }
         return (
             (this.keywords as never)[SearchQueryTypes[query.type]] +
             colon +
             SearchQueryParser.stringifyText(
-                (query as TextSearch).text,
+                (query as TextSearch).value,
                 (query as TextSearch).matchType
             )
         );
