@@ -3,22 +3,19 @@ import {
   ANDSearchQuery,
   DatePatternFrequency,
   DatePatternSearch,
+  DateSearch,
   DistanceSearch,
-  FromDateSearch,
-  MaxPersonCountSearch,
-  MaxRatingSearch,
-  MaxResolutionSearch, MinPersonCountSearch,
-  MinRatingSearch,
-  MinResolutionSearch,
   OrientationSearch,
   ORSearchQuery,
+  PersonCountSearch,
   RangeSearch,
+  RatingSearch,
+  ResolutionSearch,
   SearchQueryDTO,
   SearchQueryTypes,
   SomeOfSearchQuery,
   TextSearch,
-  TextSearchQueryMatchTypes,
-  ToDateSearch
+  TextSearchQueryMatchTypes
 } from '../../../src/common/entities/SearchQueryDTO';
 import {defaultQueryKeywords, SearchQueryParser} from '../../../src/common/SearchQueryParser';
 
@@ -63,53 +60,144 @@ describe('SearchQueryParser', () => {
     });
 
     it('Date search', () => {
-      check({type: SearchQueryTypes.from_date, value: (Date.UTC(2020, 1, 10))} as FromDateSearch);
-      check({type: SearchQueryTypes.from_date, value: (Date.UTC(2020, 1, 1))} as FromDateSearch);
-      check({type: SearchQueryTypes.to_date, value: (Date.UTC(2020, 1, 20))} as ToDateSearch);
-      check({type: SearchQueryTypes.to_date, value: (Date.UTC(2020, 1, 1))} as ToDateSearch);
-      check({type: SearchQueryTypes.from_date, value: (Date.UTC(2020, 1, 1)), negate: true} as FromDateSearch);
-      check({type: SearchQueryTypes.to_date, value: (Date.UTC(2020, 1, 1)), negate: true} as ToDateSearch);
+      check({type: SearchQueryTypes.date, min: (Date.UTC(2020, 1, 10))} as DateSearch);
+      check({type: SearchQueryTypes.date, min: (Date.UTC(2020, 1, 1))} as DateSearch);
+      check({type: SearchQueryTypes.date, max: (Date.UTC(2020, 1, 20))} as DateSearch);
+      check({type: SearchQueryTypes.date, max: (Date.UTC(2020, 1, 1))} as DateSearch);
+      check({type: SearchQueryTypes.date, min: (Date.UTC(2020, 1, 1)), max: (Date.UTC(2020, 6, 9))} as DateSearch);
+      check({type: SearchQueryTypes.date, min: (Date.UTC(2020, 1, 1)), max: (Date.UTC(2020, 6, 9)), negate: true} as DateSearch);
+      check({type: SearchQueryTypes.date, min: (Date.UTC(2020, 1, 1)), negate: true} as DateSearch);
+      check({type: SearchQueryTypes.date, max: (Date.UTC(2020, 1, 1)), negate: true} as DateSearch);
 
       const parser = new SearchQueryParser(defaultQueryKeywords);
 
-      let query: RangeSearch = ({type: SearchQueryTypes.from_date, value: (Date.UTC(2020, 1, 4))} as FromDateSearch);
-      expect(parser.parse(defaultQueryKeywords.from + ':' + '2020-02-04'))
+      let query: RangeSearch = ({type: SearchQueryTypes.date, min: (Date.UTC(2020, 1, 4))} as DateSearch);
+      expect(parser.parse(defaultQueryKeywords.date + '>=' + '2020-02-04'))
         .to.deep.equals(query, parser.stringify(query));
 
-      expect(parser.parse(defaultQueryKeywords.from + ':' + '2020-2-4'))
+      expect(parser.parse(defaultQueryKeywords.date + '>=' + '2020-2-4'))
         .to.deep.equals(query, parser.stringify(query));
 
-      query = ({type: SearchQueryTypes.from_date, value: (Date.UTC(2020, 1, 1))} as FromDateSearch);
-      expect(parser.parse(defaultQueryKeywords.from + ':' + (new Date(query.value)).getFullYear() + '-' + '02'))
+      query = ({type: SearchQueryTypes.date, min: (Date.UTC(2020, 1, 1))} as DateSearch);
+      expect(parser.parse(defaultQueryKeywords.date + '>=' + (new Date(query.min)).getFullYear() + '-' + '02'))
         .to.deep.equals(query, parser.stringify(query));
 
       // test if date gets simplified on 1st of Jan.
-      query = {type: SearchQueryTypes.to_date, value: (Date.UTC(2020, 0, 1))} as ToDateSearch;
-      expect(parser.parse(defaultQueryKeywords.to + ':' + (new Date(query.value)).getFullYear()))
+      query = {type: SearchQueryTypes.date, max: (Date.UTC(2020, 0, 1))} as DateSearch;
+      expect(parser.parse(defaultQueryKeywords.date + '<=' + (new Date(query.max)).getFullYear()))
         .to.deep.equals(query, parser.stringify(query));
 
-      query = ({type: SearchQueryTypes.from_date, value: (Date.UTC(2020, 0, 1))} as FromDateSearch);
-      expect(parser.parse(defaultQueryKeywords.from + ':' + (new Date(query.value)).getFullYear()))
+      query = ({type: SearchQueryTypes.date, min: (Date.UTC(2020, 0, 1))} as DateSearch);
+      expect(parser.parse(defaultQueryKeywords.date + '>=' + (new Date(query.min)).getFullYear()))
         .to.deep.equals(query, parser.stringify(query));
 
+      query = ({type: SearchQueryTypes.date, min: (Date.UTC(2020, 0, 1)), max: (Date.UTC(2021, 0, 1))} as DateSearch);
+      expect(parser.parse(defaultQueryKeywords.date + ':' + (new Date(query.min)).getFullYear() + '..' + (new Date(query.max)).getFullYear()))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.date, min: (Date.UTC(2020, 0, 1)), max: (Date.UTC(2021, 0, 1)), negate: true} as DateSearch);
+      expect(parser.parse(defaultQueryKeywords.date + '!:' + (new Date(query.min)).getFullYear() + '..' + (new Date(query.max)).getFullYear()))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.date, min: (Date.UTC(2020, 0, 1))} as DateSearch);
+      expect(parser.parse(defaultQueryKeywords.date + '>=' + (new Date(query.min)).getFullYear()))
+        .to.deep.equals(query, parser.stringify(query));
+
+
+      query = ({type: SearchQueryTypes.date, min: (Date.UTC(2020, 0, 1)), max: (Date.UTC(2020, 0, 1))} as DateSearch);
+      expect(parser.parse(defaultQueryKeywords.date + '=' + (new Date(query.min)).getFullYear()))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.date, min: (Date.UTC(2020, 0, 1)), max: (Date.UTC(2020, 0, 1)), negate: true} as DateSearch);
+      expect(parser.parse(defaultQueryKeywords.date + '!=' + (new Date(query.min)).getFullYear()))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.date, max: (Date.UTC(2020, 0, 1))} as DateSearch);
+      expect(parser.parse(defaultQueryKeywords.date + '<=' + (new Date(query.max)).getFullYear()))
+        .to.deep.equals(query, parser.stringify(query));
+
+
+      query = ({type: SearchQueryTypes.date, max: (Date.UTC(2019, 11, 31))} as DateSearch);
+      expect(parser.parse(defaultQueryKeywords.date + '<' + (new Date(Date.UTC(2020, 0, 1))).getFullYear()))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.date, min: (Date.UTC(2020, 0, 1))} as DateSearch);
+      expect(parser.parse(defaultQueryKeywords.date + '>' + '2019-12-31'))
+        .to.deep.equals(query, parser.stringify(query));
     });
     it('Rating search', () => {
-      check({type: SearchQueryTypes.min_rating, value: 10} as MinRatingSearch);
-      check({type: SearchQueryTypes.max_rating, value: 1} as MaxRatingSearch);
-      check({type: SearchQueryTypes.min_rating, value: 10, negate: true} as MinRatingSearch);
-      check({type: SearchQueryTypes.max_rating, value: 1, negate: true} as MaxRatingSearch);
+      const parser = new SearchQueryParser(defaultQueryKeywords);
+      check({type: SearchQueryTypes.rating, min: 10} as RatingSearch);
+      check({type: SearchQueryTypes.rating, max: 1} as RatingSearch);
+      check({type: SearchQueryTypes.rating, min: 10, max: 144} as RatingSearch);
+      check({type: SearchQueryTypes.rating, min: 10, negate: true} as RatingSearch);
+      check({type: SearchQueryTypes.rating, max: 1, negate: true} as RatingSearch);
+
+
+      let query: RangeSearch = ({type: SearchQueryTypes.rating, max: 1} as RatingSearch);
+      expect(parser.parse(defaultQueryKeywords.rating + '<=1'))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.rating, min: 1} as RatingSearch);
+      expect(parser.parse(defaultQueryKeywords.rating + '>=1'))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.rating, min: 1, negate: true} as RatingSearch);
+      expect(parser.parse(defaultQueryKeywords.rating + '!>=1'))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.rating, min: 2} as RatingSearch);
+      expect(parser.parse(defaultQueryKeywords.rating + '>1'))
+        .to.deep.equals(query, parser.stringify(query));
+
+
+      query = ({type: SearchQueryTypes.rating, min: 2, max: 5} as RatingSearch);
+      expect(parser.parse(defaultQueryKeywords.rating + ':2..5'))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.rating, min: 2, max: 2} as RatingSearch);
+      expect(parser.parse(defaultQueryKeywords.rating + '=2'))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.rating, min: 2, max: 2} as RatingSearch);
+      expect(parser.parse(defaultQueryKeywords.rating + ':2'))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.rating, min: 2, max: 2, negate: true} as RatingSearch);
+      expect(parser.parse(defaultQueryKeywords.rating + '!=2'))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.rating, max: 2} as RatingSearch);
+      expect(parser.parse(defaultQueryKeywords.rating + '<3'))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.rating, max: 2, negate: true} as RatingSearch);
+      expect(parser.parse(defaultQueryKeywords.rating + '!<3'))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.rating, min: 4, negate: true} as RatingSearch);
+      expect(parser.parse(defaultQueryKeywords.rating + '!>3'))
+        .to.deep.equals(query, parser.stringify(query));
+
+      query = ({type: SearchQueryTypes.rating, min: 4, negate: true} as RatingSearch);
+      expect(parser.parse(defaultQueryKeywords.rating + '!>3'))
+        .to.deep.equals(query, parser.stringify(query));
     });
     it('Person count search', () => {
-      check({type: SearchQueryTypes.min_person_count, value: 10} as MinPersonCountSearch);
-      check({type: SearchQueryTypes.max_person_count, value: 1} as MaxPersonCountSearch);
-      check({type: SearchQueryTypes.min_person_count, value: 10, negate: true} as MinPersonCountSearch);
-      check({type: SearchQueryTypes.max_person_count, value: 1, negate: true} as MaxPersonCountSearch);
+      check({type: SearchQueryTypes.person_count, min: 10} as PersonCountSearch);
+      check({type: SearchQueryTypes.person_count, min: 3, max: 3} as PersonCountSearch);
+      check({type: SearchQueryTypes.person_count, min: 3, max: 10} as PersonCountSearch);
+      check({type: SearchQueryTypes.person_count, max: 1} as PersonCountSearch);
+      check({type: SearchQueryTypes.person_count, min: 3, max: 3, negate: true} as PersonCountSearch);
+      check({type: SearchQueryTypes.person_count, min: 3, max: 10, negate: true} as PersonCountSearch);
+      check({type: SearchQueryTypes.person_count, min: 10, negate: true} as PersonCountSearch);
+      check({type: SearchQueryTypes.person_count, max: 1, negate: true} as PersonCountSearch);
     });
     it('Resolution search', () => {
-      check({type: SearchQueryTypes.min_resolution, value: 10} as MinResolutionSearch);
-      check({type: SearchQueryTypes.max_resolution, value: 5} as MaxResolutionSearch);
-      check({type: SearchQueryTypes.min_resolution, value: 10, negate: true} as MinResolutionSearch);
-      check({type: SearchQueryTypes.max_resolution, value: 5, negate: true} as MaxResolutionSearch);
+      check({type: SearchQueryTypes.resolution, min: 10} as ResolutionSearch);
+      check({type: SearchQueryTypes.resolution, max: 5} as ResolutionSearch);
+      check({type: SearchQueryTypes.resolution, min: 10, negate: true} as ResolutionSearch);
+      check({type: SearchQueryTypes.resolution, max: 5, negate: true} as ResolutionSearch);
     });
     it('Distance search', () => {
       // Test location-based distance search
