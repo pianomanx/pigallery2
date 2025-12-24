@@ -56,7 +56,7 @@ export const defaultQueryKeywords: QueryKeywords = {
   date: 'date',
 
   rating: 'rating',
-  personCount: 'persons',
+  personCount: 'person-count',
   resolution: 'resolution',
 
   kmFrom: 'km-from',
@@ -590,7 +590,7 @@ export class SearchQueryParser {
           maxStr = SearchQueryParser.stringifyDate(dq.max);
         }
 
-        if (!dq.min && !dq.max) {
+        if (isNaN(dq.min) && isNaN(dq.max)) {
           return '';
         }
         if (dq.min == dq.max) {
@@ -600,7 +600,7 @@ export class SearchQueryParser {
             '=' +
             minStr
           );
-        } else if (dq.min && dq.max) {
+        } else if (!isNaN(dq.min) && !isNaN(dq.max)) {
           return (
             kw +
             negateSign +
@@ -609,7 +609,7 @@ export class SearchQueryParser {
             '..' +
             maxStr
           );
-        } else if (dq.min) {
+        } else if (!isNaN(dq.min)) {
           return (
             kw +
             negateSign +

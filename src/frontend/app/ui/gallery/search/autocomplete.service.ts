@@ -80,6 +80,22 @@ export class AutoCompleteService {
         SearchQueryParser.stringifyDate(Date.now())
       )
     );
+    this.keywords.push(
+      defaultQueryKeywords.date +
+      ':' +
+      SearchQueryParser.stringifyText((new Date().getFullYear() - 1).toString()) +
+      '..' +
+      SearchQueryParser.stringifyText(new Date().getFullYear().toString())
+    );
+
+
+    this.keywords.push(
+      defaultQueryKeywords.date +
+      ':' +
+      SearchQueryParser.stringifyText(SearchQueryParser.stringifyDate(Date.now() - 60 * 60 * 24 * 1000 * 365)) +
+      '..' +
+      SearchQueryParser.stringifyText(SearchQueryParser.stringifyDate(Date.now()))
+    );
 
     TextSearchQueryTypes.forEach((t) => {
       this.textSearchKeywordsMap[
@@ -302,37 +318,54 @@ export class AutoCompleteService {
         return [];
       }
     }
-    const generateMatch = (key: string) => ({
+    const generateMatch = (key: string, hint?: string): RenderableAutoCompleteItem => ({
       value: key,
-      queryHint: key,
+      queryHint: hint ?? key,
       notSearchable: true,
     });
 
-    const ret = this.keywords
+
+    const ret: Record<string, RenderableAutoCompleteItem> = {};
+
+    const addItem = (item: RenderableAutoCompleteItem) => {
+      ret[JSON.stringify(item)] = item;
+    };
+
+    this.keywords
       .filter((key) => key.startsWith(text.current.toLowerCase()))
-      .map(generateMatch);
+      .map(v => generateMatch(v)).forEach(addItem);
 
     // make KmFrom sensitive to all positive distances
     const starterNum = parseInt(text.current);
     if (starterNum > 0) {
       const key = starterNum + '-' + defaultQueryKeywords.kmFrom + ':';
       if (key.startsWith(text.current.toLowerCase())) {
-        ret.push(generateMatch(key));
+        addItem(generateMatch(key));
       }
     }
 
 
     const addRangeAutoComp = (kw: string, minRange: number, maxRange: number) => {
-      // only showing rating recommendations of the full query is typed
-      const mrKeys = [kw + '>=', kw + '<=', kw + '=', kw + ':' + minRange + '..' + maxRange];
-      for (const mrKey of mrKeys) {
-        if (text.current.toLowerCase().startsWith(mrKey)) {
+      const textLC = text.current.toLowerCase();
+      const operators = ['>=', '>', '<', '<=', '=', ':'];
+
+      for (const op of operators) {
+        if (textLC.startsWith(kw + op)) {
           for (let i = minRange; i <= maxRange; ++i) {
-            ret.push(generateMatch(mrKey + i));
+            addItem(generateMatch(kw + op + i));
           }
-        } else if (mrKey.startsWith(text.current.toLowerCase())) {
-          ret.push(generateMatch(mrKey));
+          if (op === ':') {
+            addItem(generateMatch(kw + ':' + minRange + '..' + maxRange));
+          }
+          return;
         }
+      }
+
+      if (kw.startsWith(textLC)) {
+        addItem(generateMatch(kw + '<=' + maxRange));
+        addItem(generateMatch(kw + '=' + Math.floor((minRange + maxRange) / 2)));
+        addItem(generateMatch(kw + '>=' + minRange));
+        addItem(generateMatch(kw + ':' + minRange + '..' + maxRange));
       }
     };
     addRangeAutoComp(defaultQueryKeywords.rating, 1, 5);
@@ -345,18 +378,18 @@ export class AutoCompleteService {
         .test(text.current) ||
       new RegExp('^' + defaultQueryKeywords.sameDay + '!?:$', 'i')
         .test(text.current)) {
-      ret.push(generateMatch(text.current + defaultQueryKeywords.every_week));
-      ret.push(generateMatch(text.current + defaultQueryKeywords.every_month));
-      ret.push(generateMatch(text.current + defaultQueryKeywords.every_year));
+      addItem(generateMatch(text.current + defaultQueryKeywords.every_week));
+      addItem(generateMatch(text.current + defaultQueryKeywords.every_month));
+      addItem(generateMatch(text.current + defaultQueryKeywords.every_year));
 
-      ret.push(generateMatch(text.current + defaultQueryKeywords.days_ago.replace(/%d/g, '2')));
-      ret.push(generateMatch(text.current + defaultQueryKeywords.weeks_ago.replace(/%d/g, '2')));
-      ret.push(generateMatch(text.current + defaultQueryKeywords.months_ago.replace(/%d/g, '2')));
-      ret.push(generateMatch(text.current + defaultQueryKeywords.years_ago.replace(/%d/g, '2')));
+      addItem(generateMatch(text.current + defaultQueryKeywords.days_ago.replace(/%d/g, '2')));
+      addItem(generateMatch(text.current + defaultQueryKeywords.weeks_ago.replace(/%d/g, '2')));
+      addItem(generateMatch(text.current + defaultQueryKeywords.months_ago.replace(/%d/g, '2')));
+      addItem(generateMatch(text.current + defaultQueryKeywords.years_ago.replace(/%d/g, '2')));
 
     }
 
-    return ret;
+    return Object.values(ret);
   }
 }
 
