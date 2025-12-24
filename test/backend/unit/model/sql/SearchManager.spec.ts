@@ -6,24 +6,16 @@ import {DBTestHelper} from '../../../DBTestHelper';
 import {
   ANDSearchQuery,
   DatePatternFrequency,
-  DatePatternSearch,
+  DatePatternSearch, DateSearch,
   DistanceSearch,
-  FromDateSearch,
-  MaxPersonCountSearch,
-  MaxRatingSearch,
-  MaxResolutionSearch,
-  MinPersonCountSearch,
-  MinRatingSearch,
-  MinResolutionSearch,
   OrientationSearch,
-  ORSearchQuery,
+  ORSearchQuery, PersonCountSearch, RatingSearch, ResolutionSearch,
   SearchListQuery,
   SearchQueryDTO,
   SearchQueryTypes,
   SomeOfSearchQuery,
   TextSearch,
   TextSearchQueryMatchTypes,
-  ToDateSearch
 } from '../../../../../src/common/entities/SearchQueryDTO';
 import {DirectoryBaseDTO, ParentDirectoryDTO, SubDirectoryDTO} from '../../../../../src/common/entities/DirectoryDTO';
 import {TestHelper} from '../../../../TestHelper';
@@ -737,7 +729,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     it('should search date', async () => {
       const sm = new SearchManager();
 
-      let query: any = {value: 0, type: SearchQueryTypes.to_date} as ToDateSearch;
+      let query: DateSearch = {max: 0, type: SearchQueryTypes.date} as DateSearch;
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
@@ -749,8 +741,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({
-        value: p2.metadata.creationDate, type: SearchQueryTypes.from_date
-      } as FromDateSearch);
+        min: p2.metadata.creationDate, type: SearchQueryTypes.date
+      } as DateSearch);
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
@@ -762,10 +754,10 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({
-        value: p.metadata.creationDate,
+        min: p.metadata.creationDate,
         negate: true,
-        type: SearchQueryTypes.from_date
-      } as FromDateSearch);
+        type: SearchQueryTypes.date
+      } as DateSearch);
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
@@ -777,9 +769,9 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
       query = ({
-        value: p.metadata.creationDate + 1000000000,
-        type: SearchQueryTypes.to_date
-      } as ToDateSearch);
+        max: p.metadata.creationDate + 1000000000,
+        type: SearchQueryTypes.date
+      } as DateSearch);
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
@@ -795,7 +787,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     it('should search rating', async () => {
       const sm = new SearchManager();
 
-      let query: MinRatingSearch | MaxRatingSearch = {value: 0, type: SearchQueryTypes.max_rating} as MaxRatingSearch;
+      let query: RatingSearch = {max: 0, type: SearchQueryTypes.rating} as RatingSearch;
 
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
@@ -807,7 +799,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
 
-      query = ({value: 5, type: SearchQueryTypes.max_rating} as MaxRatingSearch);
+      query = ({max: 5, type: SearchQueryTypes.rating} as RatingSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -817,7 +809,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
 
-      query = ({value: 5, negate: true, type: SearchQueryTypes.max_rating} as MaxRatingSearch);
+      query = ({max: 5, negate: true, type: SearchQueryTypes.rating} as RatingSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -827,7 +819,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
 
-      query = ({value: 2, type: SearchQueryTypes.min_rating} as MinRatingSearch);
+      query = ({min: 2, type: SearchQueryTypes.rating} as RatingSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -837,7 +829,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
 
-      query = ({value: 2, negate: true, type: SearchQueryTypes.min_rating} as MinRatingSearch);
+      query = ({min: 2, negate: true, type: SearchQueryTypes.rating} as RatingSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -852,8 +844,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     it('should search person count', async () => {
       const sm = new SearchManager();
 
-      let query: MinPersonCountSearch | MaxPersonCountSearch = {value: 0, type: SearchQueryTypes.max_person_count} as MaxPersonCountSearch;
-
+      let query: PersonCountSearch = {max: 0, type: SearchQueryTypes.person_count} as PersonCountSearch;
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
@@ -864,7 +855,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
 
-      query = ({value: 20, type: SearchQueryTypes.max_person_count} as MaxPersonCountSearch);
+      query = ({max: 20, type: SearchQueryTypes.person_count} as PersonCountSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -874,7 +865,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
 
-      query = ({value: 20, negate: true, type: SearchQueryTypes.max_person_count} as MaxPersonCountSearch);
+      query = ({max: 20, negate: true, type: SearchQueryTypes.person_count} as PersonCountSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -885,7 +876,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
 
-      query = ({value: 4, type: SearchQueryTypes.max_person_count} as MaxPersonCountSearch);
+      query = ({max: 4, type: SearchQueryTypes.person_count} as PersonCountSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -895,7 +886,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
 
-      query = ({value: 2, type: SearchQueryTypes.min_person_count} as MinPersonCountSearch);
+      query = ({min: 2, type: SearchQueryTypes.person_count} as PersonCountSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -905,7 +896,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
 
-      query = ({value: 5, type: SearchQueryTypes.min_person_count} as MinPersonCountSearch);
+      query = ({min: 5, type: SearchQueryTypes.person_count} as PersonCountSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -915,7 +906,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
 
-      query = ({value: 2, negate: true, type: SearchQueryTypes.min_person_count} as MinPersonCountSearch);
+      query = ({min: 2, negate: true, type: SearchQueryTypes.person_count} as PersonCountSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -929,8 +920,8 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     it('should search resolution', async () => {
       const sm = new SearchManager();
 
-      let query: MinResolutionSearch | MaxResolutionSearch =
-        {value: 0, type: SearchQueryTypes.max_resolution} as MaxResolutionSearch;
+      let query: ResolutionSearch =
+        {max: 0, type: SearchQueryTypes.resolution} as ResolutionSearch;
 
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
@@ -941,7 +932,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
 
-      query = ({value: 1, type: SearchQueryTypes.max_resolution} as MaxResolutionSearch);
+      query = ({max: 1, type: SearchQueryTypes.resolution} as ResolutionSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -951,7 +942,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
 
-      query = ({value: 3, type: SearchQueryTypes.min_resolution} as MinResolutionSearch);
+      query = ({min: 3, type: SearchQueryTypes.resolution} as ResolutionSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -962,7 +953,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
       } as SearchResultDTO));
 
 
-      query = ({value: 3, negate: true, type: SearchQueryTypes.min_resolution} as MinResolutionSearch);
+      query = ({min: 3, negate: true, type: SearchQueryTypes.resolution} as ResolutionSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,
@@ -972,7 +963,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
         resultOverflow: false
       } as SearchResultDTO));
 
-      query = ({value: 3, negate: true, type: SearchQueryTypes.max_resolution} as MaxResolutionSearch);
+      query = ({max: 3, negate: true, type: SearchQueryTypes.resolution} as ResolutionSearch);
       expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query)))
         .to.deep.equalInAnyOrder(removeDir({
         searchQuery: query,

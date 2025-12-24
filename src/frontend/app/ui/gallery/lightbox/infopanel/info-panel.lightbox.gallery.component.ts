@@ -8,10 +8,10 @@ import {QueryService} from '../../../../model/query.service';
 import {MapService} from '../../map/map.service';
 import {
   ANDSearchQuery,
-  DistanceSearch, FromDateSearch,
+  DistanceSearch, DateSearch,
   SearchQueryTypes,
   TextSearch,
-  TextSearchQueryMatchTypes, ToDateSearch,
+  TextSearchQueryMatchTypes,
 } from '../../../../../../common/entities/SearchQueryDTO';
 import {AuthenticationService} from '../../../../model/network/authentication.service';
 import {LatLngLiteral, marker, Marker, TileLayer, tileLayer} from 'leaflet';
@@ -243,18 +243,10 @@ export class InfoPanelLightboxComponent implements OnInit, OnChanges {
     endOfDay.setHours(23, 59, 59, 999);
 
     return SearchQueryUtils.urlify({
-      type: SearchQueryTypes.AND,
-      list: [
-        {
-          type: SearchQueryTypes.from_date,
-          value: startOfDay.getTime()
-        } as FromDateSearch,
-        {
-          type: SearchQueryTypes.to_date,
-          value: endOfDay.getTime()
-        } as ToDateSearch
-      ]
-    } as ANDSearchQuery);
+      type: SearchQueryTypes.date,
+      min: startOfDay.getTime(),
+      max: endOfDay.getTime()
+    } as DateSearch);
   }
 
 }

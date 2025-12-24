@@ -3,9 +3,10 @@ import {
   DatePatternFrequency,
   DatePatternSearch,
   DistanceSearch,
-  ListSearchQueryTypes, MaxRangeSearchQueryTypes, MinRangeSearchQueryTypes,
+  ListSearchQueryTypes,
   OrientationSearch,
   RangeSearch,
+  RangeSearchQueryTypes,
   SearchListQuery,
   SearchQueryDTO,
   SearchQueryTypes,
@@ -15,41 +16,49 @@ import {
   TextSearchQueryTypes,
 } from '../../../../../../common/entities/SearchQueryDTO';
 import {Utils} from '../../../../../../common/Utils';
-import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, UntypedFormControl, ValidationErrors, Validator, FormsModule } from '@angular/forms';
-import { NgIf, NgFor, NgClass, NgSwitch, NgSwitchCase, DatePipe } from '@angular/common';
-import { NgIconComponent } from '@ng-icons/core';
-import { StringifySearchType } from '../../../../pipes/StringifySearchType';
+import {
+  ControlValueAccessor,
+  FormsModule,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  UntypedFormControl,
+  ValidationErrors,
+  Validator
+} from '@angular/forms';
+import {DatePipe, NgClass, NgFor, NgIf, NgSwitch, NgSwitchCase} from '@angular/common';
+import {NgIconComponent} from '@ng-icons/core';
+import {StringifySearchType} from '../../../../pipes/StringifySearchType';
 
 @Component({
-    selector: 'app-gallery-search-query-entry',
-    templateUrl: './query-entry.search.gallery.component.html',
-    styleUrls: ['./query-entry.search.gallery.component.css'],
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => GallerySearchQueryEntryComponent),
-            multi: true,
-        },
-        {
-            provide: NG_VALIDATORS,
-            useExisting: forwardRef(() => GallerySearchQueryEntryComponent),
-            multi: true,
-        },
-    ],
-    imports: [
-        NgIf,
-        FormsModule,
-        NgFor,
-        NgClass,
-        NgIconComponent,
-        NgSwitch,
-        NgSwitchCase,
-        DatePipe,
-        StringifySearchType,
-    ]
+  selector: 'app-gallery-search-query-entry',
+  templateUrl: './query-entry.search.gallery.component.html',
+  styleUrls: ['./query-entry.search.gallery.component.css'],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => GallerySearchQueryEntryComponent),
+      multi: true,
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => GallerySearchQueryEntryComponent),
+      multi: true,
+    },
+  ],
+  imports: [
+    NgIf,
+    FormsModule,
+    NgFor,
+    NgClass,
+    NgIconComponent,
+    NgSwitch,
+    NgSwitchCase,
+    DatePipe,
+    StringifySearchType,
+  ]
 })
 export class GallerySearchQueryEntryComponent
-    implements ControlValueAccessor, Validator {
+  implements ControlValueAccessor, Validator {
   public queryEntry: SearchQueryDTO;
   public SearchQueryTypesEnum: { value: string; key: SearchQueryTypes }[];
   public SearchQueryTypes = SearchQueryTypes;
@@ -64,13 +73,13 @@ export class GallerySearchQueryEntryComponent
     this.SearchQueryTypesEnum = Utils.enumToArray(SearchQueryTypes);
     // Range queries need to be added as AND with min and max sub entry
     this.SearchQueryTypesEnum = this.SearchQueryTypesEnum.filter(
-        (e): boolean => e.key !== SearchQueryTypes.UNKNOWN_RELATION
+      (e): boolean => e.key !== SearchQueryTypes.UNKNOWN_RELATION
     );
   }
 
   get IsTextQuery(): boolean {
     return (
-        this.queryEntry && TextSearchQueryTypes.includes(this.queryEntry.type)
+      this.queryEntry && TextSearchQueryTypes.includes(this.queryEntry.type)
     );
   }
 
@@ -79,9 +88,10 @@ export class GallerySearchQueryEntryComponent
       this.queryEntry && ListSearchQueryTypes.includes(this.queryEntry.type)
     );
   }
+
   get IsRangeQuery(): boolean {
     return (
-      this.queryEntry && (MinRangeSearchQueryTypes.includes(this.queryEntry.type) || MaxRangeSearchQueryTypes.includes(this.queryEntry.type) )
+      this.queryEntry && (RangeSearchQueryTypes.includes(this.queryEntry.type))
     );
   }
 
@@ -111,10 +121,6 @@ export class GallerySearchQueryEntryComponent
 
   get AsTextQuery(): TextSearch {
     return this.queryEntry as TextSearch;
-  }
-
-  validate(control: UntypedFormControl): ValidationErrors {
-    return {required: true};
   }
 
   get MatchingTypes(): string[] {
@@ -158,6 +164,10 @@ export class GallerySearchQueryEntryComponent
     }
   }
 
+  validate(control: UntypedFormControl): ValidationErrors {
+    return {required: true};
+  }
+
   addQuery(): void {
     if (!this.IsListQuery) {
       return;
@@ -191,8 +201,14 @@ export class GallerySearchQueryEntryComponent
       delete this.AsDistanceQuery.distance;
     }
 
-    if(this.IsRangeQuery){
-      this.AsRangeQuery.value = isNaN(this.AsRangeQuery.value) ? 0 : this.AsRangeQuery.value ;
+    if (this.IsRangeQuery) {
+      if (this.AsRangeQuery.min !== undefined) {
+        this.AsRangeQuery.min = isNaN(this.AsRangeQuery.min) ? 0 : this.AsRangeQuery.min;
+      }
+      if (this.AsRangeQuery.max !== undefined) {
+        this.AsRangeQuery.max = isNaN(this.AsRangeQuery.max) ? 0 : this.AsRangeQuery.max;
+      }
+
     }
 
     if (this.queryEntry.type === SearchQueryTypes.orientation) {
@@ -231,11 +247,11 @@ export class GallerySearchQueryEntryComponent
         };
       } else {
         // Invalid coordinates, treat as text
-        this.AsDistanceQuery.from = { value: value };
+        this.AsDistanceQuery.from = {value: value};
       }
     } else {
       // It's a location name
-      this.AsDistanceQuery.from = { value: value };
+      this.AsDistanceQuery.from = {value: value};
     }
 
     this.locationInputText = value;

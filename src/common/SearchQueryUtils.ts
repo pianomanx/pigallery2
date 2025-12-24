@@ -31,12 +31,10 @@ export const SearchQueryUtils = {
       case SearchQueryTypes.orientation:
         (query as OrientationSearch).landscape = !(query as OrientationSearch).landscape;
         return query;
-      case SearchQueryTypes.from_date:
-      case SearchQueryTypes.to_date:
-      case SearchQueryTypes.min_rating:
-      case SearchQueryTypes.max_rating:
-      case SearchQueryTypes.min_resolution:
-      case SearchQueryTypes.max_resolution:
+      case SearchQueryTypes.date:
+      case SearchQueryTypes.rating:
+      case SearchQueryTypes.resolution:
+      case SearchQueryTypes.person_count:
       case SearchQueryTypes.distance:
       case SearchQueryTypes.any_text:
       case SearchQueryTypes.person:
