@@ -12,23 +12,18 @@ import {
   ANDSearchQuery,
   DatePatternFrequency,
   DatePatternSearch,
+  DateSearch,
   DistanceSearch,
-  FromDateSearch,
-  MaxPersonCountSearch,
-  MaxRatingSearch,
-  MaxResolutionSearch,
-  MinPersonCountSearch,
-  MinRatingSearch,
-  MinResolutionSearch,
+  NegatableSearchQuery,
   OrientationSearch,
   ORSearchQuery,
+  RangeSearch,
   SearchListQuery,
   SearchQueryDTO,
   SearchQueryTypes,
   SomeOfSearchQuery,
   TextSearch,
   TextSearchQueryMatchTypes,
-  ToDateSearch,
 } from '../../../common/entities/SearchQueryDTO';
 import {GalleryManager} from './GalleryManager';
 import {ObjectManagers} from '../ObjectManagers';
@@ -620,201 +615,79 @@ export class SearchManager {
           return q;
         });
 
-      case SearchQueryTypes.from_date:
+      case SearchQueryTypes.rating:
+      case SearchQueryTypes.date:
+      case SearchQueryTypes.person_count:
+      case SearchQueryTypes.resolution:
         if (directoryOnly) {
           throw new Error('not supported in directoryOnly mode');
         }
-        return new Brackets((q): unknown => {
-          if (typeof (query as FromDateSearch).value === 'undefined') {
-            throw new Error(
-              'Invalid search query: Date Query should contain from value'
-            );
-          }
-          const relation = (query as TextSearch).negate ? '<' : '>=';
-
-          const textParam: { [key: string]: unknown } = {};
-          textParam['from' + queryId] = (query as FromDateSearch).value;
-          if (Config.Gallery.ignoreTimestampOffset === true) {
-            q.where(
-              `(media.metadata.creationDate + (coalesce(media.metadata.creationDateOffset,0) * 60000)) ${relation} :from${queryId}`,
-              textParam
-            );
-          } else {
-            q.where(
-              `media.metadata.creationDate ${relation} :from${queryId}`,
-              textParam
-            );
-          }
-
-          return q;
-        });
-
-      case SearchQueryTypes.to_date:
-        if (directoryOnly) {
-          throw new Error('not supported in directoryOnly mode');
-        }
-        return new Brackets((q): unknown => {
-          if (typeof (query as ToDateSearch).value === 'undefined') {
-            throw new Error(
-              'Invalid search query: Date Query should contain to value'
-            );
-          }
-          const relation = (query as TextSearch).negate ? '>' : '<=';
-
-          const textParam: { [key: string]: unknown } = {};
-          textParam['to' + queryId] = (query as ToDateSearch).value;
-          if (Config.Gallery.ignoreTimestampOffset === true) {
-            q.where(
-              `(media.metadata.creationDate + (coalesce(media.metadata.creationDateOffset,0) * 60000)) ${relation} :to${queryId}`,
-              textParam
-            );
-          } else {
-            q.where(
-              `media.metadata.creationDate ${relation} :to${queryId}`,
-              textParam
-            );
-
-          }
-
-          return q;
-        });
-
-      case SearchQueryTypes.min_rating:
-        if (directoryOnly) {
-          throw new Error('not supported in directoryOnly mode');
-        }
-        return new Brackets((q): unknown => {
-          if (typeof (query as MinRatingSearch).value === 'undefined') {
-            throw new Error(
-              'Invalid search query: Rating Query should contain minvalue'
-            );
-          }
-
-          const relation = (query as TextSearch).negate ? '<' : '>=';
-
-          const textParam: { [key: string]: unknown } = {};
-          textParam['min' + queryId] = (query as MinRatingSearch).value;
-          q.where(
-            `media.metadata.rating ${relation}  :min${queryId}`,
-            textParam
+        if (typeof (query as RangeSearch).min === 'undefined' && typeof (query as RangeSearch).max === 'undefined') {
+          throw new Error(
+            'Invalid search query: Date Query should contain min or max value'
           );
-
-          return q;
-        });
-      case SearchQueryTypes.max_rating:
-        if (directoryOnly) {
-          throw new Error('not supported in directoryOnly mode');
         }
+
+        let field = '';
+        let timeOffset = '';
+        let min = (query as RangeSearch).min;
+        let max = (query as RangeSearch).max;
+
+        switch (query.type) {
+          case SearchQueryTypes.date:
+            timeOffset = Config.Gallery.ignoreTimestampOffset === true ? ' + (coalesce(media.metadata.creationDateOffset,0) * 60000)' : '';
+            field = 'media.metadata.creationDate';
+            break;
+
+          case SearchQueryTypes.rating:
+            field = 'media.metadata.rating';
+            break;
+
+          case SearchQueryTypes.person_count:
+            field = 'media.metadata.personsLength';
+            break;
+
+          case SearchQueryTypes.resolution:
+            field = 'media.metadata.size.width * media.metadata.size.height';
+            if (min) {
+              min *= 1000 * 1000;
+            }
+            if (max) {
+              max *= 1000 * 1000;
+            }
+            break;
+        }
+
+
         return new Brackets((q): unknown => {
-          if (typeof (query as MaxRatingSearch).value === 'undefined') {
-            throw new Error(
-              'Invalid search query: Rating Query should contain  max value'
-            );
-          }
 
-          const relation = (query as TextSearch).negate ? '>' : '<=';
 
-          if (typeof (query as MaxRatingSearch).value !== 'undefined') {
-            const textParam: { [key: string]: unknown } = {};
-            textParam['max' + queryId] = (query as MaxRatingSearch).value;
+          const textParam: { [key: string]: unknown } = {};
+          if (min === max) {
+            textParam['eql' + queryId] = min;
             q.where(
-              `media.metadata.rating ${relation}  :max${queryId}`,
+              `${field} ${timeOffset} = :eql${queryId}`,
+              textParam
+            );
+            return q;
+          }
+          const minRelation = (query as NegatableSearchQuery).negate ? '<' : '>=';
+          const maxRelation = (query as NegatableSearchQuery).negate ? '>' : '<=';
+
+          if (typeof min !== 'undefined') {
+            textParam['min' + queryId] = min;
+            q.where(
+              `${field} ${timeOffset} ${minRelation} :min${queryId}`,
               textParam
             );
           }
-          return q;
-        });
-
-      case SearchQueryTypes.min_person_count:
-        if (directoryOnly) {
-          throw new Error('not supported in directoryOnly mode');
-        }
-        return new Brackets((q): unknown => {
-          if (typeof (query as MinPersonCountSearch).value === 'undefined') {
-            throw new Error(
-              'Invalid search query: Person count Query should contain minvalue'
-            );
-          }
-
-          const relation = (query as TextSearch).negate ? '<' : '>=';
-
-          const textParam: { [key: string]: unknown } = {};
-          textParam['min' + queryId] = (query as MinPersonCountSearch).value;
-          q.where(
-            `media.metadata.personsLength ${relation}  :min${queryId}`,
-            textParam
-          );
-
-          return q;
-        });
-      case SearchQueryTypes.max_person_count:
-        if (directoryOnly) {
-          throw new Error('not supported in directoryOnly mode');
-        }
-        return new Brackets((q): unknown => {
-          if (typeof (query as MaxPersonCountSearch).value === 'undefined') {
-            throw new Error(
-              'Invalid search query: Person count Query should contain max value'
-            );
-          }
-
-          const relation = (query as TextSearch).negate ? '>' : '<=';
-
-          if (typeof (query as MaxRatingSearch).value !== 'undefined') {
-            const textParam: { [key: string]: unknown } = {};
-            textParam['max' + queryId] = (query as MaxPersonCountSearch).value;
-            q.where(
-              `media.metadata.personsLength ${relation}  :max${queryId}`,
+          if (typeof max !== 'undefined') {
+            textParam['max' + queryId] = max;
+            q.andWhere(
+              `${field} ${timeOffset} ${maxRelation} :max${queryId}`,
               textParam
             );
           }
-          return q;
-        });
-
-      case SearchQueryTypes.min_resolution:
-        if (directoryOnly) {
-          throw new Error('not supported in directoryOnly mode');
-        }
-        return new Brackets((q): unknown => {
-          if (typeof (query as MinResolutionSearch).value === 'undefined') {
-            throw new Error(
-              'Invalid search query: Resolution Query should contain min value'
-            );
-          }
-
-          const relation = (query as TextSearch).negate ? '<' : '>=';
-
-          const textParam: { [key: string]: unknown } = {};
-          textParam['min' + queryId] =
-            (query as MinResolutionSearch).value * 1000 * 1000;
-          q.where(
-            `media.metadata.size.width * media.metadata.size.height ${relation} :min${queryId}`,
-            textParam
-          );
-
-          return q;
-        });
-
-      case SearchQueryTypes.max_resolution:
-        if (directoryOnly) {
-          throw new Error('not supported in directoryOnly mode');
-        }
-        return new Brackets((q): unknown => {
-          if (typeof (query as MaxResolutionSearch).value === 'undefined') {
-            throw new Error(
-              'Invalid search query: Rating Query should contain min or max value'
-            );
-          }
-
-          const relation = (query as TextSearch).negate ? '>' : '<=';
-
-          const textParam: { [key: string]: unknown } = {};
-          textParam['max' + queryId] =
-            (query as MaxResolutionSearch).value * 1000 * 1000;
-          q.where(
-            `media.metadata.size.width * media.metadata.size.height ${relation} :max${queryId}`,
-            textParam
-          );
 
           return q;
         });
