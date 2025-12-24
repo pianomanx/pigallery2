@@ -635,7 +635,7 @@ export class SearchManager {
 
         switch (query.type) {
           case SearchQueryTypes.date:
-            timeOffset = Config.Gallery.ignoreTimestampOffset === true ? '+ (coalesce(media.metadata.creationDateOffset,0) * 60000))' : '';
+            timeOffset = Config.Gallery.ignoreTimestampOffset === true ? ' + (coalesce(media.metadata.creationDateOffset,0) * 60000)' : '';
             field = 'media.metadata.creationDate';
             break;
 
@@ -658,12 +658,13 @@ export class SearchManager {
             break;
         }
 
+
         return new Brackets((q): unknown => {
 
 
           const textParam: { [key: string]: unknown } = {};
-          if ((query as RangeSearch).min === (query as RangeSearch).max) {
-            textParam['eql' + queryId] = (query as RangeSearch).min;
+          if (min === max) {
+            textParam['eql' + queryId] = min;
             q.where(
               `${field} ${timeOffset} = :eql${queryId}`,
               textParam
@@ -673,15 +674,15 @@ export class SearchManager {
           const minRelation = (query as NegatableSearchQuery).negate ? '<' : '>=';
           const maxRelation = (query as NegatableSearchQuery).negate ? '>' : '<=';
 
-          if ((query as DateSearch).min) {
-            textParam['min' + queryId] = (query as RangeSearch).min;
+          if (typeof min !== 'undefined') {
+            textParam['min' + queryId] = min;
             q.where(
               `${field} ${timeOffset} ${minRelation} :min${queryId}`,
               textParam
             );
           }
-          if ((query as DateSearch).max) {
-            textParam['max' + queryId] = (query as RangeSearch).max;
+          if (typeof max !== 'undefined') {
+            textParam['max' + queryId] = max;
             q.andWhere(
               `${field} ${timeOffset} ${maxRelation} :max${queryId}`,
               textParam
