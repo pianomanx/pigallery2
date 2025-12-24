@@ -1,7 +1,7 @@
 import {
   ANDSearchQuery,
   DatePatternFrequency,
-  DatePatternSearch, DateSearch,
+  DatePatternSearch,
   DistanceSearch,
   NegatableSearchQuery,
   OrientationSearch,
@@ -103,7 +103,7 @@ export class SearchQueryParser {
   }
 
   public static stringifyDate(time: number): string {
-    if(!time){
+    if (!time) {
       return null;
     }
     const date = new Date(time);
