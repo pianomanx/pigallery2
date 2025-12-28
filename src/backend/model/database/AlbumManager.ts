@@ -7,6 +7,8 @@ import {Logger} from '../../Logger';
 import {SessionContext} from '../SessionContext';
 import {ProjectedAlbumCacheEntity} from './enitites/album/ProjectedAlbumCacheEntity';
 import {ProjectionAwareManager} from './ProjectionAwareManager';
+import {NotificationManager} from '../NotifocationManager';
+import {Job} from '../jobs/jobs/Job';
 
 const LOG_TAG = '[AlbumManager]';
 
@@ -108,18 +110,28 @@ export class AlbumManager extends ProjectionAwareManager<AlbumBaseEntity> {
       .getMany();
 
     for (const a of albums) {
-      if (a.cache?.valid === true) {
-        continue;
-      }
-      await ObjectManagers.getInstance().ProjectedCacheManager
-        .setAndGetCacheForAlbum(connection, session, {
+      try {
+        if (a.cache?.valid === true) {
+          continue;
+        }
+        await ObjectManagers.getInstance().ProjectedCacheManager
+          .setAndGetCacheForAlbum(connection, session, {
+            id: a.id,
+            searchQuery: a.searchQuery,
+            name: a.name
+          });
+        // giving back the control to the main event loop (Macrotask queue)
+        // https://blog.insiderattack.net/promises-next-ticks-and-immediates-nodejs-event-loop-part-3-9226cbe7a6aa
+        await new Promise(setImmediate);
+      } catch (e) {
+        Logger.error(LOG_TAG, `Could not update album data for album '${a.name}', query: ${JSON.stringify(a.searchQuery)}`, e);
+        NotificationManager.warning(`Could not update album data`, {
           id: a.id,
           searchQuery: a.searchQuery,
-          name:a.name
+          name: a.name,
+          error: e.toString()
         });
-      // giving back the control to the main event loop (Macrotask queue)
-      // https://blog.insiderattack.net/promises-next-ticks-and-immediates-nodejs-event-loop-part-3-9226cbe7a6aa
-      await new Promise(setImmediate);
+      }
     }
     this.resetMemoryCache();
   }
