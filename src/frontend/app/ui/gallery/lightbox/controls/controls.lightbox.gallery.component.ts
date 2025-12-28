@@ -74,6 +74,10 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
   ) {
     this.controllersDimmed = this.lightboxService.controllersDimmed;
     this.searchEnabled = this.authService.canSearch();
+    if(this.playBackDurations.indexOf(this.lightboxService.slideshowSpeed) === -1) {
+      this.playBackDurations.push(this.lightboxService.slideshowSpeed);
+      this.playBackDurations.sort((a, b) => a - b);
+    }
   }
 
 
