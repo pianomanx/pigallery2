@@ -279,7 +279,7 @@ export class GalleryPhotoComponent implements IRenderable, OnInit, OnDestroy {
   }
 
   public getDimension(): Dimension {
-    if (!this.imageRef) {
+    if (!this.imageRef?.nativeElement?.offsetParent) {
       return {
         top: 0,
         left: 0,

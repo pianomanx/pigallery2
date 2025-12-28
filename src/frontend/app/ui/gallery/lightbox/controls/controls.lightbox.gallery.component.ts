@@ -74,6 +74,10 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
   ) {
     this.controllersDimmed = this.lightboxService.controllersDimmed;
     this.searchEnabled = this.authService.canSearch();
+    if(this.playBackDurations.indexOf(this.lightboxService.slideshowSpeed) === -1) {
+      this.playBackDurations.push(this.lightboxService.slideshowSpeed);
+      this.playBackDurations.sort((a, b) => a - b);
+    }
   }
 
 
@@ -457,8 +461,8 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
       this.pauseClicked();
       return;
     }
-    if (this.mediaElement.imageLoadFinished.this === false ||
-      this.mediaElement.imageLoadFinished.next === false) {
+    if (!this.mediaElement.isRenderedMediaLoaded() ||
+      !this.mediaElement.isNextMediaLoaded()) {
       return;
     }
     // do not skip video if its playing
