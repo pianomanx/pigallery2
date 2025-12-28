@@ -457,8 +457,8 @@ export class ControlsLightboxComponent implements OnDestroy, OnChanges {
       this.pauseClicked();
       return;
     }
-    if (this.mediaElement.imageLoadFinished.this === false ||
-      this.mediaElement.imageLoadFinished.next === false) {
+    if (!this.mediaElement.isRenderedMediaLoaded() ||
+      !this.mediaElement.isNextMediaLoaded()) {
       return;
     }
     // do not skip video if its playing

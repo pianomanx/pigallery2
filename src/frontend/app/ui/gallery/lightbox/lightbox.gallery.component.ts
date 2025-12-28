@@ -180,11 +180,15 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
     this.gridPhotoQL = value;
     this.subscription.photosChange = this.gridPhotoQL.changes.subscribe(
       (): void => {
-        if (
-          this.activePhotoId != null &&
-          this.gridPhotoQL.length > this.activePhotoId
-        ) {
-          this.updateActivePhoto(this.activePhotoId);
+        if (this.activePhoto) {
+          const id = this.queryService.getMediaStringId(this.activePhoto.gridMedia.media);
+          const index = this.gridPhotoQL.toArray().findIndex(p =>
+            this.queryService.getMediaStringId(p.gridMedia.media) === id
+          );
+          if (index !== -1) {
+            this.activePhotoId = index;
+            this.updateActivePhoto(this.activePhotoId);
+          }
         }
         if (this.delayedMediaShow) {
           this.onNavigateTo(this.delayedMediaShow);
@@ -477,7 +481,7 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
         this.piTitleService.setMediaTitle(this.gridPhotoQL.get(photoIndex).gridMedia);
       })
       .catch((err) => {
-        console.error(`Cant navigate to photo ${photoIndex}`, err);
+        console.error(`Can't navigate to photo ${photoIndex}`, err);
       });
   }
 
