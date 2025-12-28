@@ -138,8 +138,7 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
         }
 
         this.delayedMediaShow = null;
-        if (validPhoto
-        ) {
+        if (validPhoto) {
           this.delayedMediaShow = params[QueryParams.gallery.photo];
           // photos are not yet available to show
           if (!this.gridPhotoQL) {
@@ -185,9 +184,15 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
           const index = this.gridPhotoQL.toArray().findIndex(p =>
             this.queryService.getMediaStringId(p.gridMedia.media) === id
           );
+          // make sure that currently shown media has uses the right index.
           if (index !== -1) {
             this.activePhotoId = index;
             this.updateActivePhoto(this.activePhotoId);
+            // if the photo is not available anymore, navigate to the first one.
+          } else if (this.gridPhotoQL.length > 0) {
+            if (this.status === LightboxStates.Open) {
+              this.navigateToPhoto(0);
+            }
           }
         }
         if (this.delayedMediaShow) {
@@ -403,7 +408,7 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
     this.videoSourceError = true;
   }
 
-  private onNavigateTo(photoStringId: string): string {
+  private onNavigateTo(photoStringId: string): void {
     if (
       this.activePhoto &&
       this.queryService.getMediaStringId(this.activePhoto.gridMedia.media) ===
@@ -420,7 +425,8 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
         this.queryService.getMediaStringId(i.gridMedia.media) === photoStringId
     );
     if (!photo) {
-      return (this.delayedMediaShow = photoStringId);
+      this.delayedMediaShow = photoStringId;
+      return;
     }
     if (this.status === LightboxStates.Closed) {
       this.showLigthbox(photo.gridMedia.media);
