@@ -12,7 +12,6 @@ import {
   ANDSearchQuery,
   DatePatternFrequency,
   DatePatternSearch,
-  DateSearch,
   DistanceSearch,
   NegatableSearchQuery,
   OrientationSearch,
@@ -624,7 +623,7 @@ export class SearchManager {
         }
         if (typeof (query as RangeSearch).min === 'undefined' && typeof (query as RangeSearch).max === 'undefined') {
           throw new Error(
-            'Invalid search query: Date Query should contain min or max value'
+            `Invalid search query: ${SearchQueryTypes[query.type]}(type: ${query.type}) query should contain min or max value`
           );
         }
 
