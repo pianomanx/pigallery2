@@ -146,14 +146,12 @@ describe('PersonManager', (sqlHelper: DBTestHelper) => {
       const originalPerson = await pm.get(DBTestHelper.defaultSession, 'Boba Fett');
       expect(originalPerson).to.not.be.undefined;
 
-      const updatedPerson = await pm.updatePerson('Boba Fett', {
+      await pm.updatePerson('Boba Fett', {
         id: originalPerson.id,
         name: 'Updated Boba Fett',
         isFavourite: !originalPerson.isFavourite
       });
 
-      expect(updatedPerson.name).to.equal('Updated Boba Fett');
-      expect(updatedPerson.isFavourite).to.equal(!originalPerson.isFavourite);
 
       // Verify the person was actually updated in the database
       const fetchedPerson = await pm.get(DBTestHelper.defaultSession, 'Updated Boba Fett');
