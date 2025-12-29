@@ -60,7 +60,7 @@ export class AlbumComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    if (this.album.cache.cover) {
+    if (this.album?.cache?.cover) {
       this.thumbnail = this.thumbnailService.getThumbnail(
           new Media(this.album.cache.cover, this.size, this.size)
       );
