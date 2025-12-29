@@ -22,7 +22,7 @@ import {
   SearchQueryTypes,
   SomeOfSearchQuery,
   TextSearch,
-  TextSearchQueryMatchTypes,
+  TextSearchQueryMatchTypes, TextSearchQueryTypes,
 } from '../../../common/entities/SearchQueryDTO';
 import {GalleryManager} from './GalleryManager';
 import {ObjectManagers} from '../ObjectManagers';
@@ -885,6 +885,19 @@ export class SearchManager {
 
       case SearchQueryTypes.SOME_OF:
         throw new Error('Some of not supported');
+    }
+
+
+    if(!TextSearchQueryTypes.includes(query.type)){
+        throw new Error(
+          `Invalid search query: Unknown query type: ${SearchQueryTypes[query.type]}(type: ${query.type})`
+        );
+    }
+
+    if (typeof (query as TextSearch).value === 'undefined') {
+      throw new Error(
+        `Invalid search query: ${SearchQueryTypes[query.type]}(type: ${query.type}) query should contain 'value' property. Query got: ${JSON.stringify(query)}`
+      );
     }
 
     return new Brackets((q: WhereExpression) => {
