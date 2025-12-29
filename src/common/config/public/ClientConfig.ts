@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 import 'reflect-metadata';
-import {GroupByTypes, GroupingMethod, SortByTypes, SortingMethod} from '../../entities/SortingMethods';
+import {FaceSortByTypes, GroupByTypes, GroupingMethod, SortByTypes, SortingMethod} from '../../entities/SortingMethods';
 import {UserRoles} from '../../entities/UserDTO';
 import {ConfigProperty, SubConfigClass} from 'typeconfig/common';
 import {SearchQueryDTO} from '../../entities/SearchQueryDTO';
@@ -709,6 +709,29 @@ export class ClientSortingConfig implements SortingMethod {
   ascending: boolean = true;
 
   constructor(method: number = SortByTypes.Date, ascending: boolean = true) {
+    this.method = method;
+    this.ascending = ascending;
+  }
+}
+
+
+@SubConfigClass<TAGS>({tags: {client: true}, softReadonly: true})
+export class ClientFaceSortingConfig implements SortingMethod {
+  @ConfigProperty({
+    type: FaceSortByTypes,
+    tags: {
+      name: $localize`Method`,
+    },
+  })
+  method: number = FaceSortByTypes.PersonCount;
+  @ConfigProperty({
+    tags: {
+      name: $localize`Ascending`,
+    },
+  })
+  ascending: boolean = true;
+
+  constructor(method: number = FaceSortByTypes.PersonCount, ascending: boolean = true) {
     this.method = method;
     this.ascending = ascending;
   }
@@ -1439,6 +1462,17 @@ export class ClientFacesConfig {
     }
   })
   enabled: boolean = true;
+
+
+  @ConfigProperty({
+    tags: {
+      name: $localize`Default sorting`,
+      priority: ConfigPriority.advanced,
+    } as TAGS,
+    description: $localize`Default sorting on the faces page`
+  })
+  sorting: ClientFaceSortingConfig = new ClientFaceSortingConfig();
+
   @ConfigProperty({
     tags: {
       name: $localize`Override keywords`,
@@ -1566,7 +1600,7 @@ export class ClientUserOIDCConfig {
     tags: {
       name: $localize`Display name`,
       priority: ConfigPriority.advanced,
-      uiOptional:true,
+      uiOptional: true,
       relevant: (c: any) => c.enabled,
       hint: 'Authentik'
     } as TAGS,
@@ -1611,7 +1645,7 @@ export class ClientUserConfig {
       uiIcon: 'ionFingerPrint',
       githubIssue: 1096
     },
-    description:  $localize`Setup SSO with external authentication apps like Authentik or Authelia`,
+    description: $localize`Setup SSO with external authentication apps like Authentik or Authelia`,
   })
   oidc: ClientUserOIDCConfig = new ClientUserOIDCConfig();
 }

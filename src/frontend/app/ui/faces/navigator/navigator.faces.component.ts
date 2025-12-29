@@ -1,27 +1,24 @@
 import {Component} from '@angular/core';
 import {FacesService} from '../faces.service';
 import {SortByDirectionalTypes} from '../../../../../common/entities/SortingMethods';
-import {Utils} from '../../../../../common/Utils';
 import {Config} from '../../../../../common/config/public/Config';
-import { NgIf, NgFor, AsyncPipe } from '@angular/common';
-import { NgIconComponent } from '@ng-icons/core';
-import { SortingMethodIconComponent } from '../../utils/sorting-method-icon/sorting-method-icon.component';
-import { BsDropdownDirective, BsDropdownToggleDirective, BsDropdownMenuDirective } from 'ngx-bootstrap/dropdown';
-import { StringifySortingMethod } from '../../../pipes/StringifySortingMethod';
+import {NgFor} from '@angular/common';
+import {NgIconComponent} from '@ng-icons/core';
+import {SortingMethodIconComponent} from '../../utils/sorting-method-icon/sorting-method-icon.component';
+import {BsDropdownDirective, BsDropdownMenuDirective, BsDropdownToggleDirective} from 'ngx-bootstrap/dropdown';
+import {StringifySortingMethod} from '../../../pipes/StringifySortingMethod';
 
 @Component({
   selector: 'app-faces-navbar',
   styleUrls: ['./navigator.faces.component.css'],
   templateUrl: './navigator.faces.component.html',
   imports: [
-    NgIf,
     NgFor,
     NgIconComponent,
     BsDropdownDirective,
     BsDropdownToggleDirective,
     SortingMethodIconComponent,
     BsDropdownMenuDirective,
-    AsyncPipe,
     StringifySortingMethod,
   ]
 })
@@ -39,8 +36,7 @@ export class FacesNavigatorComponent {
   }
 
   isDefaultSorting(): boolean {
-    return this.facesService.sorting.value.method === SortByDirectionalTypes.Name &&
-      this.facesService.sorting.value.ascending === true;
+    return this.facesService.isDefaultSorting();
   }
 
   setSortingBy(sorting: number): void {

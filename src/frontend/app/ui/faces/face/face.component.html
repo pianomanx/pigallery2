@@ -18,7 +18,7 @@
   <!--Info box -->
   <div class="info rounded-bottom">
     <ng-icon class="star"
-             name="ionStarOutline"
+             [name]="person.isFavourite ? 'ionStar' : 'ionStarOutline'"
              [class.favourite]="person.isFavourite"
              [class.clickable]="CanUpdate"
              (click)="CanUpdate && toggleFavourite($event)"
