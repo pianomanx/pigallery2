@@ -13,6 +13,9 @@ export const QueryParams = {
       type: 'type',
       query: 'qs',
     },
+    map: {
+      show: 'map'
+    },
     photo: 'p',
     sharingKey_query: 'sk',
     sharingKey_params: 'sharingKey',
@@ -22,7 +25,7 @@ export const QueryParams = {
     lightbox: {
       playback: 'play',
       captionAlwaysOn: 'cAO',
-      controllersDimmed:"cd",
+      controllersDimmed: 'cd',
       facesAlwaysOn: 'fAO',
       loopVideos: 'lv',
       loopSlideshow: 'ls',
