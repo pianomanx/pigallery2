@@ -3,6 +3,7 @@ export class PageHelper {
   private static readonly supportPageOffset = window.pageXOffset !== undefined;
   private static readonly isCSS1Compat =
     (document.compatMode || '') === 'CSS1Compat';
+  private static scrollLocks: Record<string, boolean> = {};
 
   public static get ScrollY(): number {
     // use the standard way to get Window scroll if available
@@ -52,7 +53,9 @@ export class PageHelper {
         : document.body.scrollLeft;
   }
 
-  public static showScrollY(): void {
+  public static showScrollY(requester: string): void {
+    delete this.scrollLocks[requester];
+    if(Object.values(this.scrollLocks).length > 0) return;
     PageHelper.body.style.overflowY = 'scroll';
   }
 
@@ -61,7 +64,8 @@ export class PageHelper {
       (!PageHelper.body.style.overflowY && document.documentElement.scrollHeight > document.documentElement.clientHeight);
   }
 
-  public static hideScrollY(): void {
+  public static hideScrollY(requester: string): void {
+    this.scrollLocks[requester] = true;
     PageHelper.body.style.overflowY = 'hidden';
   }
 }

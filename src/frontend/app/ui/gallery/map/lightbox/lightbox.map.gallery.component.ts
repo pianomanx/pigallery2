@@ -321,12 +321,27 @@ export class GalleryMapLightboxComponent implements OnChanges, OnDestroy {
         const setPopUpPhoto = () => {
           const photoPopup =
             `<img style="width: ${width}px; height: ${height}px" ` +
+            `class="clickable" ` +
             `src="${photoTh.Src}" alt="preview">`;
           if (!mkr.getPopup()) {
             mkr.bindPopup(photoPopup, {minWidth: width});
           } else {
             mkr.setPopupContent(photoPopup);
           }
+          mkr.on('popupopen', () => {
+            const popup = mkr.getPopup();
+            const container = popup.getElement();
+            if (container) {
+              const img = container.querySelector('img');
+              if (img) {
+                img.onclick = () => {
+                  this.router.navigate([], {
+                    queryParams: this.queryService.getParams({media: p}),
+                  }).catch(console.error);
+                };
+              }
+            }
+          });
         };
 
         if (photoTh.Available) {
@@ -432,7 +447,7 @@ export class GalleryMapLightboxComponent implements OnChanges, OnDestroy {
         }
         break;
       case 'Escape':
-        this.hide();
+        this.close();
         break;
     }
   }
@@ -494,7 +509,7 @@ export class GalleryMapLightboxComponent implements OnChanges, OnDestroy {
     } as Dimension;
     this.showImages();
     //  this.centerMap();
-    PageHelper.hideScrollY();
+    PageHelper.hideScrollY('map-lightbox');
     await Utils.wait(0);
     this.lightboxDimension = {
       top: 0,
@@ -528,7 +543,7 @@ export class GalleryMapLightboxComponent implements OnChanges, OnDestroy {
 
     this.lightboxDimension = this.parentDimension;
     this.lightboxDimension.top -= PageHelper.ScrollY;
-    PageHelper.showScrollY();
+    PageHelper.showScrollY('map-lightbox');
     this.opacity = 0.0;
     setTimeout((): void => {
       this.visible = false;

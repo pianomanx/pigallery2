@@ -94,7 +94,7 @@ export class GalleryComponent implements OnInit, OnDestroy {
     private mdFilesFilterPipe: MDFilesFilterPipe,
   ) {
     this.mapEnabled = Config.Map.enabled;
-    PageHelper.showScrollY();
+    PageHelper.showScrollY('gallery');
   }
 
   get ContentWrapper(): ContentWrapperWithError {

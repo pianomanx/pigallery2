@@ -266,7 +266,7 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
     this.blackCanvasOpacity = 0;
     this.startPhotoDimension = selectedPhoto.getDimension();
     // disable scroll
-    this.overlayService.showOverlay();
+    this.overlayService.showOverlay('lightbox');
     this.blackCanvasOpacity = 1.0;
     this.showPhoto(this.gridPhotoQL.toArray().indexOf(selectedPhoto), false);
     this.piTitleService.setMediaTitle(selectedPhoto.gridMedia);
@@ -527,7 +527,7 @@ export class GalleryLightboxComponent implements OnDestroy, OnInit {
       this.status = LightboxStates.Closed;
       this.activePhoto = null;
       this.activePhotoId = null;
-      this.overlayService.hideOverlay();
+      this.overlayService.hideOverlay('lightbox');
     });
 
     this.hideInfoPanel(false);

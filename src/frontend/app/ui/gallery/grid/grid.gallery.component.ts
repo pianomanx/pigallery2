@@ -502,7 +502,7 @@ export class GalleryGridComponent
     }
 
     const scrollY = PageHelper.OverflowY;
-    PageHelper.showScrollY();
+    PageHelper.showScrollY('grid');
     // if the width changed a bit or the height changed a lot
     if (
       this.containerWidth !== this.gridContainer.nativeElement.parentElement.clientWidth ||
