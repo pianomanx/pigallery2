@@ -1,0 +1,28 @@
+<div class="upload-overlay" *ngIf="isUploadOver">
+  <div class="upload-overlay-content rounded">
+    <div class="upload-overlay-icon">
+      <ng-icon name="ionCloudUploadOutline" size="4em"></ng-icon>
+    </div>
+    <div class="upload-overlay-text" i18n>Drop files to upload</div>
+  </div>
+</div>
+<div class="upload-progress-container" *ngIf="uploaderService.uploadProgress.length > 0">
+  <div class="card mb-2" *ngFor="let item of uploaderService.uploadProgress">
+    <div *ngIf="item.lastUpdate > Date.now() - 3000" class="card-body p-2">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <small class="text-truncate me-2" [title]="item.name">{{ item.name }}</small>
+        <small *ngIf="!item.error">{{ item.progress }}%</small>
+        <small *ngIf="item.error" class="text-danger" [title]="item.error" i18n>Error</small>
+      </div>
+      <div  *ngIf="item.error" class="d-flex justify-content-between align-items-center mb-1">
+        <small class="text-danger">{{item.error}}</small>
+      </div>
+      <div class="progress" style="height: 5px;">
+        <div class="progress-bar" role="progressbar"
+             [class.bg-danger]="item.error"
+             [class.bg-success]="item.done && !item.error"
+             [ngStyle]="{'width': item.progress + '%'}"></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -34,6 +34,7 @@ import {SearchQueryUtils} from '../../../../common/SearchQueryUtils';
 import {UploaderService} from './uploader.service';
 import {GalleryService} from './gallery.service';
 import {NgIconComponent} from '@ng-icons/core';
+import {UploaderComponent} from './upload-progress/upload-progress.gallery.component';
 
 @Component({
   selector: 'app-gallery',
@@ -43,8 +44,6 @@ import {NgIconComponent} from '@ng-icons/core';
     GalleryLightboxComponent,
     FrameComponent,
     NgIf,
-    NgFor,
-    NgStyle,
     RandomQueryBuilderGalleryComponent,
     PhotoFrameBuilderGalleryComponent,
     GalleryNavigatorComponent,
@@ -55,7 +54,7 @@ import {NgIconComponent} from '@ng-icons/core';
     GPXFilesFilterPipe,
     PhotoFilterPipe,
     MediaButtonModalComponent,
-    NgIconComponent
+    UploaderComponent
   ]
 })
 export class GalleryComponent implements OnInit, OnDestroy {
@@ -77,7 +76,6 @@ export class GalleryComponent implements OnInit, OnDestroy {
   } = null;
   public readonly mapEnabled: boolean;
   public directoryContent: GroupedDirectoryContent;
-  public isOver = false;
   private $counter: Observable<number>;
   private subscription: { [key: string]: Subscription } = {
     content: null,
@@ -85,6 +83,7 @@ export class GalleryComponent implements OnInit, OnDestroy {
     timer: null,
     sorting: null,
   };
+  public isUploadOver = false;
 
   constructor(
     public contentLoader: ContentLoaderService,
@@ -187,36 +186,6 @@ export class GalleryComponent implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('dragover', ['$event'])
-  onDragOver(event: DragEvent): void {
-    if (this.uploaderService.canUpload()) {
-      event.preventDefault();
-      event.stopPropagation();
-      this.isOver = true;
-    }
-  }
-
-  @HostListener('dragleave', ['$event'])
-  onDragLeave(event: DragEvent): void {
-    if (this.uploaderService.canUpload()) {
-      event.preventDefault();
-      event.stopPropagation();
-      this.isOver = false;
-    }
-  }
-
-  @HostListener('drop', ['$event'])
-  onDrop(event: DragEvent): void {
-    if (this.uploaderService.canUpload()) {
-      event.preventDefault();
-      event.stopPropagation();
-      this.isOver = false;
-      const files = event.dataTransfer.files;
-      if (files.length > 0) {
-        this.uploaderService.uploadFiles(files);
-      }
-    }
-  }
 
   private onRoute = async (params: Params): Promise<void> => {
     const searchQuery = SearchQueryUtils.parseURLifiedQuery(params[QueryParams.gallery.search.query]);
@@ -270,5 +239,38 @@ export class GalleryComponent implements OnInit, OnDestroy {
       }
     }
   };
-  protected readonly Date = Date;
+
+
+
+  @HostListener('dragover', ['$event'])
+  onDragOver(event: DragEvent): void {
+    if (this.uploaderService.canUpload()) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.isUploadOver = true;
+    }
+  }
+
+  @HostListener('dragleave', ['$event'])
+  onDragLeave(event: DragEvent): void {
+    if (this.uploaderService.canUpload()) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.isUploadOver = false;
+    }
+  }
+
+  @HostListener('drop', ['$event'])
+  onDrop(event: DragEvent): void {
+    if (this.uploaderService.canUpload()) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.isUploadOver = false;
+      const files = event.dataTransfer.files;
+      if (files.length > 0) {
+        this.uploaderService.uploadFiles(files);
+      }
+    }
+  }
+
 }
