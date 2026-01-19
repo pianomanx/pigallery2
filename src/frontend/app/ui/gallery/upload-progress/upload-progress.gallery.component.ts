@@ -17,8 +17,21 @@ import {UploaderService} from '../uploader.service';
 export class UploaderComponent {
   public readonly Date = Date;
   @Input() isUploadOver: boolean;
+  public showDetails = false;
 
   constructor(public uploaderService: UploaderService) {
+  }
+
+  toggleDetails(): void {
+    this.showDetails = !this.showDetails;
+  }
+
+  getOverallProgress(): number {
+    if (this.uploaderService.uploadProgress.length === 0) {
+      return 0;
+    }
+    const sum = this.uploaderService.uploadProgress.reduce((a, b) => a + b.progress, 0);
+    return Math.round(sum / this.uploaderService.uploadProgress.length);
   }
 
 }
