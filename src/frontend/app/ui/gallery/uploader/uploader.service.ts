@@ -14,8 +14,15 @@ export interface UploadProgress {
   progress: number;
   error?: string;
   done: boolean;
+  status?: 'queued' | 'uploading' | 'done' | 'error';
   lastUpdate: number;
   count?: number; // Added for consolidated items
+}
+
+interface QueuedUpload {
+  file: File;
+  directory: string;
+  progressItem: UploadProgress;
 }
 
 @Injectable({
@@ -23,6 +30,14 @@ export interface UploadProgress {
 })
 export class UploaderService {
   public uploadProgress: UploadProgress[] = [];
+  private uploadQueue: QueuedUpload[] = [];
+  private activeUploads = 0;
+  private MAX_CONCURRENT_UPLOADS = 1;
+  private readonly DEFAULT_MAX_CONCURRENT_UPLOADS = 1;
+  private readonly MAX_ALLOWED_CONCURRENT_UPLOADS = 10;
+  private speedTimer: any = null;
+  private lastProgressSum = 0;
+  private lastUpdateTimestamp = 0;
 
   constructor(private http: HttpClient,
               private networkService: NetworkService,
@@ -38,16 +53,14 @@ export class UploaderService {
       !!this.contentLoaderService.content.value.directory;
   }
 
-  public uploadFiles(files: FileList | File[]): void {
-    const f = [];
-    for (let i = 0; i < files.length; i++) {
-      f.push(files[i]);
-    }
-    const dir = this.contentLoaderService.content.value.directory;
-    this._uploadFiles(f, Utils.concatUrls(dir.path, dir.name));
-  }
 
-  private async _uploadFiles(files: File[], directory: string): Promise<void> {
+  public async uploadFiles(filesIn: FileList | File[]): Promise<void> {
+    const files = [];
+    for (let i = 0; i < filesIn.length; i++) {
+      files.push(filesIn[i]);
+    }
+    const dirDto = this.contentLoaderService.content.value.directory;
+    const directory = Utils.concatUrls(dirDto.path, dirDto.name);
     const supportedFiles = files.filter(f => {
       const ext = f.name.split('.').pop().toLowerCase();
       return SupportedFormats.Photos.includes(ext) ||
@@ -80,12 +93,18 @@ export class UploaderService {
       if (fileExists) {
         existingFiles.push(f);
       } else {
-        supportedFilesToUpload.push(f);
-        progressItems.push({
+        const progressItem: UploadProgress = {
           name: f.name,
           progress: 0,
           done: false,
+          status: 'queued',
           lastUpdate: Date.now()
+        };
+        progressItems.push(progressItem);
+        this.uploadQueue.push({
+          file: f,
+          directory,
+          progressItem
         });
       }
     }
@@ -95,6 +114,7 @@ export class UploaderService {
         name: existingFiles.length === 1 ? existingFiles[0].name : $localize`${existingFiles.length} files already exist`,
         progress: 100,
         done: true,
+        status: 'error',
         lastUpdate: Date.now(),
         error: $localize`File already exists`,
         count: existingFiles.length
@@ -103,14 +123,67 @@ export class UploaderService {
       this._cleanupProgress([existingItem]);
     }
 
-    if (supportedFilesToUpload.length === 0) {
+    if (progressItems.length === 0) {
       return;
     }
 
     this.uploadProgress.push(...progressItems);
+    this.startSpeedTracking();
+    this.processQueue();
+  }
+
+  private startSpeedTracking(): void {
+    if (this.speedTimer) {
+      return;
+    }
+    this.lastProgressSum = this.uploadProgress.reduce((a, b) => a + (b.status === 'uploading' ? b.progress : 0), 0);
+    this.lastUpdateTimestamp = Date.now();
+    this.speedTimer = setInterval(() => {
+      const currentProgressSum = this.uploadProgress.reduce((a, b) => a + (b.status === 'uploading' ? b.progress : 0), 0);
+      const now = Date.now();
+      const timeDiff = (now - this.lastUpdateTimestamp) / 1000; // in seconds
+
+      if (timeDiff >= 1 && this.activeUploads > 0) {
+        const speed = (currentProgressSum - this.lastProgressSum) / timeDiff; // % per second
+
+        if (speed > 30 && this.MAX_CONCURRENT_UPLOADS < this.MAX_ALLOWED_CONCURRENT_UPLOADS) {
+          this.MAX_CONCURRENT_UPLOADS++;
+          this.processQueue();
+        } else if (speed < 30 && this.MAX_CONCURRENT_UPLOADS > this.DEFAULT_MAX_CONCURRENT_UPLOADS) {
+          this.MAX_CONCURRENT_UPLOADS--;
+        }
+
+        this.lastProgressSum = currentProgressSum;
+        this.lastUpdateTimestamp = now;
+      }
+
+      if (this.activeUploads === 0 && this.uploadQueue.length === 0) {
+        this.stopSpeedTracking();
+      }
+    }, 1000);
+  }
+
+  private stopSpeedTracking(): void {
+    if (this.speedTimer) {
+      clearInterval(this.speedTimer);
+      this.speedTimer = null;
+    }
+  }
+
+  private processQueue(): void {
+    while (this.activeUploads < this.MAX_CONCURRENT_UPLOADS && this.uploadQueue.length > 0) {
+      const upload = this.uploadQueue.shift();
+      this.activeUploads++;
+      this._uploadFile(upload);
+    }
+  }
+
+  private _uploadFile(upload: QueuedUpload): void {
+    const {file, directory, progressItem} = upload;
+    progressItem.status = 'uploading';
 
     const formData = new FormData();
-    supportedFilesToUpload.forEach(f => formData.append('files', f));
+    formData.append('files', file);
 
     const url = Utils.concatUrls(this.networkService.apiBaseUrl, '/upload/', directory || '');
 
@@ -120,51 +193,48 @@ export class UploaderService {
     }).subscribe({
       next: (event) => {
         if (event.type === HttpEventType.UploadProgress) {
-          const progress = Math.round((100 * event.loaded) / event.total);
-          progressItems.forEach(item => {
-            if (!item.done) {
-              item.progress = progress;
-              item.lastUpdate = Date.now();
-            }
-          });
+          progressItem.progress = Math.round((100 * event.loaded) / event.total);
+          progressItem.lastUpdate = Date.now();
         } else if (event.type === HttpEventType.Response) {
           const response = event.body as any;
           const serverErrors = (response && response.result) ? response.result : [];
 
-          progressItems.forEach(item => {
-            if (item.done) {
-              return;
-            }
-            const serverError = serverErrors.find((e: any) => e.filename === item.name);
-            if (serverError) {
-              item.error = serverError.error;
-            } else {
-              item.progress = 100;
-              item.lastUpdate = Date.now();
-            }
-            item.done = true;
-          });
-
-          if (serverErrors.length > 0) {
-            this.notificationService.warning($localize`Upload completed with some errors.`);
+          const serverError = serverErrors.find((e: any) => e.filename === progressItem.name);
+          if (serverError) {
+            progressItem.error = serverError.error;
+            progressItem.status = 'error';
           } else {
-            this.notificationService.success($localize`Upload completed: ` + supportedFilesToUpload.length + $localize` files.`);
+            progressItem.progress = 100;
+            progressItem.lastUpdate = Date.now();
+            progressItem.status = 'done';
           }
+          progressItem.done = true;
 
-          this.contentLoaderService.reloadCurrentContent().catch(console.error);
-          this._cleanupProgress(progressItems);
+          this.activeUploads--;
+          this.processQueue();
+
+          if (this.activeUploads === 0 && this.uploadQueue.length === 0) {
+            this.notificationService.success($localize`Upload completed.`);
+            this.contentLoaderService.reloadCurrentContent().catch(console.error);
+            this.MAX_CONCURRENT_UPLOADS = this.DEFAULT_MAX_CONCURRENT_UPLOADS; // Reset for next batch
+          }
+          this._cleanupProgress([progressItem]);
         }
       },
       error: (err) => {
-        progressItems.forEach(item => {
-          if (!item.done) {
-            item.error = err.message || err;
-            item.done = true;
-            item.lastUpdate = Date.now();
-          }
-        });
-        this.notificationService.error($localize`Upload failed: ` + (err.message || err));
-        this._cleanupProgress(progressItems);
+        progressItem.error = err.message || err;
+        progressItem.done = true;
+        progressItem.status = 'error';
+        progressItem.lastUpdate = Date.now();
+
+        this.activeUploads--;
+        this.processQueue();
+
+        if (this.activeUploads === 0 && this.uploadQueue.length === 0) {
+          this.notificationService.error($localize`Upload failed.`);
+          this.MAX_CONCURRENT_UPLOADS = this.DEFAULT_MAX_CONCURRENT_UPLOADS; // Reset for next batch
+        }
+        this._cleanupProgress([progressItem]);
       }
     });
   }
@@ -173,6 +243,11 @@ export class UploaderService {
     // Remove from list after some time
     items.forEach(item => {
       setTimeout(() => {
+        if (!item.done && item.status !== 'error') {
+          // If for some reason it's not done yet, retry later
+          this._cleanupProgress([item]);
+          return;
+        }
         const idx = this.uploadProgress.indexOf(item);
         if (idx !== -1) {
           this.uploadProgress.splice(idx, 1);

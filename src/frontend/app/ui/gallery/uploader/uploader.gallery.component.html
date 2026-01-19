@@ -33,28 +33,31 @@
         </div>
       </div>
     </div>
-    <div class="card mb-2 upload-progress-item"
-         [class.fading]="item.done && item.lastUpdate < Date.now() - 4500"
-         *ngFor="let item of uploaderService.uploadProgress">
-      <div *ngIf="item.lastUpdate > Date.now() - 5000" class="card-body p-2">
-        <div class="d-flex justify-content-between align-items-center mb-1">
-          <small class="text-truncate me-2" [title]="item.name">{{ item.name }}</small>
-          <small *ngIf="!item.error">{{ item.progress }}%</small>
-          <small *ngIf="item.error" class="text-danger" [title]="item.error">
-            <ng-container *ngIf="item.count" i18n>Already exists</ng-container>
-            <ng-container *ngIf="!item.count" i18n>Error</ng-container>
-          </small>
-        </div>
-        <div *ngIf="item.error && !item.count" class="d-flex justify-content-between align-items-center mb-1">
-          <small class="text-danger">{{item.error}}</small>
-        </div>
-        <div class="progress" style="height: 5px;">
-          <div class="progress-bar" role="progressbar"
-               [class.bg-danger]="item.error"
-               [class.bg-success]="item.done && !item.error"
-               [ngStyle]="{'width': item.progress + '%'}"></div>
+    <ng-container *ngFor="let item of uploaderService.uploadProgress">
+      <div class="card mb-2 upload-progress-item"
+           [class.fading]="item.done && item.lastUpdate < Date.now() - 4500"
+           *ngIf="item.lastUpdate > Date.now() - 5000 || !item.done">
+        <div class="card-body p-2">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <small class="text-truncate me-2" [title]="item.name">{{ item.name }}</small>
+            <small *ngIf="!item.error && item.status !== 'queued'">{{ item.progress }}%</small>
+            <small *ngIf="item.status === 'queued'" i18n>Queued</small>
+            <small *ngIf="item.error" class="text-danger" [title]="item.error">
+              <ng-container *ngIf="item.count" i18n>Already exists</ng-container>
+              <ng-container *ngIf="!item.count" i18n>Error</ng-container>
+            </small>
+          </div>
+          <div *ngIf="item.error && !item.count" class="d-flex justify-content-between align-items-center mb-1">
+            <small class="text-danger">{{item.error}}</small>
+          </div>
+          <div class="progress" style="height: 5px;">
+            <div class="progress-bar" role="progressbar"
+                 [class.bg-danger]="item.error"
+                 [class.bg-success]="item.done && !item.error"
+                 [ngStyle]="{'width': item.progress + '%'}"></div>
+          </div>
         </div>
       </div>
-    </div>
+    </ng-container>
   </ng-template>
 </div>
