@@ -23,7 +23,7 @@ import {GalleryShareComponent} from '../gallery/share/share.gallery.component';
 import {NgIconComponent} from '@ng-icons/core';
 import {FormsModule} from '@angular/forms';
 import {GalleryService} from '../gallery/gallery.service';
-import {UploaderService} from '../gallery/uploader.service';
+import {UploaderService} from '../gallery/uploader/uploader.service';
 
 @Component({
   selector: 'app-frame',

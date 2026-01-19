@@ -1,13 +1,13 @@
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpEventType} from '@angular/common/http';
-import {NetworkService} from '../../model/network/network.service';
-import {SupportedFormats} from '../../../../common/SupportedFormats';
-import {Utils} from '../../../../common/Utils';
-import {ContentLoaderService} from './contentLoader.service';
-import {Config} from '../../../../common/config/public/Config';
-import {AuthenticationService} from '../../model/network/authentication.service';
-import {UserRoles} from '../../../../common/entities/UserDTO';
-import {NotificationService} from '../../model/notification.service';
+import {NetworkService} from '../../../model/network/network.service';
+import {SupportedFormats} from '../../../../../common/SupportedFormats';
+import {Utils} from '../../../../../common/Utils';
+import {ContentLoaderService} from '../contentLoader.service';
+import {Config} from '../../../../../common/config/public/Config';
+import {AuthenticationService} from '../../../model/network/authentication.service';
+import {UserRoles} from '../../../../../common/entities/UserDTO';
+import {NotificationService} from '../../../model/notification.service';
 
 export interface UploadProgress {
   name: string;

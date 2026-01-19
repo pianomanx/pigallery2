@@ -1,12 +1,12 @@
-import {Component, HostListener, Input} from '@angular/core';
+import {Component, Input} from '@angular/core';
 import {NgFor, NgIf, NgStyle} from '@angular/common';
 import {NgIconComponent} from '@ng-icons/core';
-import {UploaderService} from '../uploader.service';
+import {UploaderService} from './uploader.service';
 
 @Component({
   selector: 'app-gallery-uploader',
-  templateUrl: './upload-progress.gallery.component.html',
-  styleUrls: ['./upload-progress.gallery.component.css'],
+  templateUrl: './uploader.gallery.component.html',
+  styleUrls: ['./uploader.gallery.component.css'],
   imports: [
     NgIf,
     NgFor,
@@ -22,11 +22,11 @@ export class UploaderComponent {
   constructor(public uploaderService: UploaderService) {
   }
 
-  toggleDetails(): void {
+  public toggleDetails(): void {
     this.showDetails = !this.showDetails;
   }
 
-  getOverallProgress(): number {
+  public getOverallProgress(): number {
     if (this.uploaderService.uploadProgress.length === 0) {
       return 0;
     }

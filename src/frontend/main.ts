@@ -144,7 +144,7 @@ import {Marker} from 'leaflet';
 import {MarkerFactory} from './app/ui/gallery/map/MarkerFactory';
 import {DurationPipe} from './app/pipes/DurationPipe';
 import {GalleryService} from './app/ui/gallery/gallery.service';
-import {UploaderService} from './app/ui/gallery/uploader.service';
+import {UploaderService} from './app/ui/gallery/uploader/uploader.service';
 
 if (environment.production) {
   enableProdMode();
