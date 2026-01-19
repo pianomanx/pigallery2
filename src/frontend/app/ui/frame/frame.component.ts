@@ -23,6 +23,7 @@ import {GalleryShareComponent} from '../gallery/share/share.gallery.component';
 import {NgIconComponent} from '@ng-icons/core';
 import {FormsModule} from '@angular/forms';
 import {GalleryService} from '../gallery/gallery.service';
+import {UploaderService} from '../gallery/uploader.service';
 
 @Component({
   selector: 'app-frame',
@@ -85,7 +86,8 @@ export class FrameComponent {
     private router: Router,
     public themeService: ThemeService,
     private deviceService: DeviceDetectorService,
-    public galleryService: GalleryService
+    public galleryService: GalleryService,
+    public uploadService: UploaderService
   ) {
     this.enableScrollUpButton = Config.Gallery.NavBar.showScrollUpButton === ScrollUpModes.always || (Config.Gallery.NavBar.showScrollUpButton === ScrollUpModes.mobileOnly && !this.deviceService.isDesktop());
     this.user = this.authService.user;
