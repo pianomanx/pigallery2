@@ -5,6 +5,7 @@ import {SupportedFormats} from '../../common/SupportedFormats';
 import {FileAlreadyExists} from '../exceptions/FileAlreadyExists';
 import {ObjectManagers} from './ObjectManagers';
 import {DiskManager} from './fileaccess/DiskManager';
+import {Config} from '../../common/config/private/Config';
 
 export interface UploadError {
   filename: string;
@@ -14,6 +15,19 @@ export interface UploadError {
 export class UploadManager {
 
   public async saveFiles(directory: string, files: Express.Multer.File[]): Promise<UploadError[]> {
+    if (Config.Upload.enabled === false) {
+      throw new Error('Upload is disabled');
+    }
+    const relativeDir = directory || '';
+    const fullDirPath = path.join(ProjectPath.ImageFolder, relativeDir);
+
+    if (Config.Upload.enforcedDirectoryConfig === true) {
+      const pg2confPath = path.join(fullDirPath, '.uploader.pg2conf');
+      if (!fs.existsSync(pg2confPath)) {
+        throw new Error('Upload is not enabled in this directory');
+      }
+    }
+
     const errors: UploadError[] = [];
     for (const file of files) {
       try {

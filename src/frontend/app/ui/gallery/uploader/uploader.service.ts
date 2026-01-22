@@ -47,14 +47,29 @@ export class UploaderService {
   }
 
   public canUpload(): boolean {
-    return Config.Users.authenticationRequired &&
-      this.authService.isAuthenticated() &&
-      this.authService.user.value.role >= UserRoles.Admin &&
-      !!this.contentLoaderService.content.value.directory;
+    const dir = this.contentLoaderService.content.value.directory;
+    if (!Config.Upload.enabled ||
+      !this.authService.isAuthenticated() ||
+      this.authService.user.value.role < Config.Upload.minimumRole ||
+      !dir) {
+      return false;
+    }
+
+    if (Config.Upload.enforcedDirectoryConfig === true) {
+      if (!dir.metaFile || !dir.metaFile.some(m => m.name === '.uploader.pg2conf')) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
 
   public async uploadFiles(filesIn: FileList | File[]): Promise<void> {
+    if(this.canUpload() === false) {
+      this.notificationService.error($localize`Upload is not supported for this directory.`);
+      return;
+    }
     const files = [];
     for (let i = 0; i < filesIn.length; i++) {
       files.push(filesIn[i]);
@@ -79,10 +94,9 @@ export class UploaderService {
     // Track each file individually in the progress list
     const progressItems: UploadProgress[] = [];
     const existingFiles: File[] = [];
-    const supportedFilesToUpload: File[] = [];
 
     for (const f of supportedFiles) {
-      // Check if file already exists in the current directory
+      // Check if the file already exists in the current directory
       const dir = this.contentLoaderService.content.value.directory;
       let fileExists = false;
       if (dir) {

@@ -16,7 +16,7 @@ export class UploadRouter {
     app.post(
       [Config.Server.apiPath + '/upload/:directory(*)', Config.Server.apiPath + '/upload/', Config.Server.apiPath + '/upload//'],
       AuthenticationMWs.authenticate,
-      AuthenticationMWs.authorise(UserRoles.Admin),
+      AuthenticationMWs.authorise(Config.Upload.minimumRole),
       AuthenticationMWs.normalizePathParam('directory'),
       VersionMWs.injectGalleryVersion,
 
