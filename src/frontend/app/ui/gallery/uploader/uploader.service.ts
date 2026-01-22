@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpEventType} from '@angular/common/http';
+import {HttpEventType} from '@angular/common/http';
 import {NetworkService} from '../../../model/network/network.service';
 import {SupportedFormats} from '../../../../../common/SupportedFormats';
 import {Utils} from '../../../../../common/Utils';
@@ -39,8 +39,7 @@ export class UploaderService {
   private lastProgressSum = 0;
   private lastUpdateTimestamp = 0;
 
-  constructor(private http: HttpClient,
-              private networkService: NetworkService,
+  constructor(private networkService: NetworkService,
               private notificationService: NotificationService,
               private authService: AuthenticationService,
               private contentLoaderService: ContentLoaderService) {
@@ -199,12 +198,9 @@ export class UploaderService {
     const formData = new FormData();
     formData.append('files', file);
 
-    const url = Utils.concatUrls(this.networkService.apiBaseUrl, '/upload/', directory || '');
+    const url = '/upload/' + (directory || '');
 
-    this.http.post(url, formData, {
-      reportProgress: true,
-      observe: 'events'
-    }).subscribe({
+    this.networkService.postFormData<any>(url, formData).subscribe({
       next: (event) => {
         if (event.type === HttpEventType.UploadProgress) {
           progressItem.progress = Math.round((100 * event.loaded) / event.total);
