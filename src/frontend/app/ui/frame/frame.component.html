@@ -167,14 +167,6 @@
                           <ng-container i18n>Duplicates</ng-container>
                         </a>
                       </li>
-                      <li role="menuitem" *ngIf="uploadService.canUpload()">
-                        <a class="dropdown-item cursor-pointer" (click)="uploadInput.click()">
-                          <ng-icon name="ionCloudUploadOutline"></ng-icon>
-                          <ng-container i18n>Upload</ng-container>
-                          <input #uploadInput type="file" multiple [style.display]="'none'"
-                                 (change)="uploadService.uploadFiles(uploadInput.files); uploadInput.value = ''">
-                        </a>
-                      </li>
                       <li role="menuitem">
                         <div class="dropdown-item d-flex justify-content-between">
                           <span title="key: c" i18n-title i18n>Fix navbar</span>
@@ -213,6 +205,14 @@
                         </div>
                       </li>
                     </ul>
+                  </li>
+                  <li role="menuitem" *ngIf="uploadService.canUpload()">
+                    <a class="dropdown-item cursor-pointer" (click)="uploadInput.click()">
+                      <ng-icon name="ionCloudUploadOutline"></ng-icon>
+                      <ng-container i18n>Upload</ng-container>
+                      <input #uploadInput type="file" multiple [style.display]="'none'"
+                             (change)="uploadService.uploadFiles(uploadInput.files); uploadInput.value = ''">
+                    </a>
                   </li>
                   <li role="menuitem" *ngIf="isAdmin()">
                     <a class="dropdown-item" [routerLink]="['/admin']">
