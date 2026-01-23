@@ -4,12 +4,16 @@ Welcome to the official documentation for PiGallery2!
 
 PiGallery2 is a **fast** directory-first photo gallery website, optimized for running on low-resource servers (especially on Raspberry Pi).
 
+[Try our live demo!](https://pigallery2.onrender.com/) (First load may take up to 60s while the server boots up)
 ![PiGallery2 Demo](assets/demo.gif)
 
 ## 🧭 Navigation
 
 ### ✨ [Features](features.md)
 Check out the full list of features and see what PiGallery2 can do for you.
+
+### ❓ [FAQ](faq.md)
+Answers to frequently asked questions about the project's philosophy and releases.
 
 ### 🏁 [Getting Started](setup/docker.md)
 Learn how to install PiGallery2 using Docker (recommended) or via a native installation.

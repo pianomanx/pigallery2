@@ -11,27 +11,28 @@ PiGallery2 is a **fast** directory-first photo gallery website, optimized for ru
 - **📁 Directory-first**: Shows your folder structure as it is.
 - **Read-only**: Your photo folder is never modified.
 
-[View full feature list and live demo](http://bpatrik.github.io/pigallery2/)
+[Full documentation here](http://bpatrik.github.io/pigallery2/).
+
+[Try our live demo!](https://pigallery2.onrender.com/) (First load may take up to 60s while the server boots up)
 
 ## 🏁 Getting Started
 The official and recommended way to run PiGallery2 is using **Docker**.
 
-### [Install with Docker (Recommended)](docs/setup/docker.md)
-```bash
-docker-compose up -d
-```
+### [Install with Docker (Recommended)](https://bpatrik.github.io/pigallery2/setup/docker)
 
-### [Native Installation (Unsupported)](docs/setup/direct-install.md)
+
+### [Native Installation (Unsupported)](https://bpatrik.github.io/pigallery2/setup/direct-install)
 Native installation is possible for users familiar with Node.js but is not officially supported.
 
 ## 📖 Documentation
-For more detailed information, please see our [Documentation Website](http://bpatrik.github.io/pigallery2/) or the `docs/` folder:
-- [Configuration Guide](docs/user-guide/configuration.md)
-- [User Rights](docs/user-guide/user-rights.md)
-- [Contribution Guide](docs/development/contributing.md)
+For more detailed information, please see our [Documentation Website](http://bpatrik.github.io/pigallery2) or the `docs/` folder:
+- [FAQ (Frequently Asked Questions)](https://bpatrik.github.io/pigallery2/faq)
+- [Configuration Guide](https://bpatrik.github.io/pigallery2/user-guide/configuration)
+- [User Rights](https://bpatrik.github.io/pigallery2/user-guide/user-rights)
+- [Contribution Guide](https://bpatrik.github.io/pigallery2/development/contributing)
 
 ## 🤝 Contributing
-Contributions are welcome! Please read our [Contribution Guide](docs/development/contributing.md) to get started.
+Contributions are welcome! Please read our [Contribution Guide](https://bpatrik.github.io/pigallery2/development/contributing) to get started.
 
 ## ⭐ Star History
 [![Star History Chart](https://api.star-history.com/svg?repos=bpatrik/pigallery2&type=date&legend=top-left)](https://www.star-history.com/#bpatrik/pigallery2&type=date&legend=top-left)
