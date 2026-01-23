@@ -127,7 +127,7 @@ Recommended usage with a [Kiosk app](https://www.fully-kiosk.com/).
 Search for `(person:John or person:Kate) and last-7-days:every-year`, then Menu -> Tools -> Photo Frame.
 
 ### Extension support
-Build your own extensions. Mostly server-side changes are supported with minimal UI modifications. You can add your own button to the photos and do whatever on the server side.
+Build your own extensions. Mostly server-side changes are supported with minimal UI modifications. You can add your own button to the photos and do whatever on the server side.  See: [Extension Development](development/extensions.md)
 ![Extension](assets/extension.png)
 ---
 

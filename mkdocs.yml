@@ -1,9 +1,13 @@
 site_name: PiGallery2 Documentation
 site_url: https://bpatrik.github.io/pigallery2/
+repo_url: https://github.com/bpatrik/pigallery2
+repo_name: bpatrik/pigallery2
 
 
 theme:
   name: material
+  icon:
+    repo: fontawesome/brands/github # Shows the GitHub icon in the header
   palette:
     primary: indigo
     accent: indigo
