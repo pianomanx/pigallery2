@@ -6,7 +6,6 @@ import {Utils} from '../../../../../common/Utils';
 import {ContentLoaderService} from '../contentLoader.service';
 import {Config} from '../../../../../common/config/public/Config';
 import {AuthenticationService} from '../../../model/network/authentication.service';
-import {UserRoles} from '../../../../../common/entities/UserDTO';
 import {NotificationService} from '../../../model/notification.service';
 
 export interface UploadProgress {
@@ -65,7 +64,7 @@ export class UploaderService {
 
 
   public async uploadFiles(filesIn: FileList | File[]): Promise<void> {
-    if(this.canUpload() === false) {
+    if (this.canUpload() === false) {
       this.notificationService.error($localize`Upload is not supported for this directory.`);
       return;
     }
@@ -124,7 +123,7 @@ export class UploaderService {
 
     if (existingFiles.length > 0) {
       const existingItem: UploadProgress = {
-        name: existingFiles.length === 1 ? existingFiles[0].name : $localize`${existingFiles.length} files already exist`,
+        name: existingFiles.length === 1 ? existingFiles[0].name : existingFiles.length + ' ' + $localize`files already exist`,
         progress: 100,
         done: true,
         status: 'error',
