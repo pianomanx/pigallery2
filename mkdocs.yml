@@ -10,10 +10,7 @@ plugins:
   - glightbox
 
 markdown_extensions:
-  - pymdownx.magiclink:
-      repo_url_shorthand: true
-      user_map:
-        github: bpatrik
+  - pymdownx.magiclink
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
