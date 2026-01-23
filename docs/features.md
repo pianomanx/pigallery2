@@ -126,6 +126,9 @@ Generate a photo frame link for the given directory or search result to automati
 Recommended usage with a [Kiosk app](https://www.fully-kiosk.com/).
 Search for `(person:John or person:Kate) and last-7-days:every-year`, then Menu -> Tools -> Photo Frame.
 
+### Extension support
+Build your own extensions. Mostly server-side changes are supported with minimal UI modifications. You can add your own button to the photos and do whatever on the server side.
+![Extension](assets/extension.png)
 ---
 
 ## Detailed Feature List
@@ -162,6 +165,7 @@ Search for `(person:John or person:Kate) and last-7-days:every-year`, then Menu 
     - Support for any tile URL provider.
 - **Photo Frame**:
     - Automatically show and loop through photos of a given directory or search result. [#1060](https://github.com/bpatrik/pigallery2/issues/1060)
+- **Extensions**: Build your own extensions. See: [Extension Development](development/extensions.md)
 - **Upload support**: Drag and drop allowed with per-directory whitelist. [#1118](https://github.com/bpatrik/pigallery2/issues/1118) 
 - **Snappy Experience**: Indexes gallery to DB (MySQL and SQLite support).
 - **Faces (Persons)**: Reads Adobe's XMP Face region metadata.
