@@ -359,7 +359,8 @@ Environmental variables:
 ```
 
  ### `config.json` sample:
-```json
+
+``` json
 {
     "Server": {
         "applicationTitle": "PiGallery 2",
@@ -1151,4 +1152,5 @@ Environmental variables:
             }
         ]
     }
-}```
+}
+```
