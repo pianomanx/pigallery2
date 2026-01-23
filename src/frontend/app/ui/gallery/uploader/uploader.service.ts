@@ -158,10 +158,10 @@ export class UploaderService {
       if (timeDiff >= 1 && this.activeUploads > 0) {
         const speed = (currentProgressSum - this.lastProgressSum) / timeDiff; // % per second
 
-        if (speed > 30 && this.MAX_CONCURRENT_UPLOADS < this.MAX_ALLOWED_CONCURRENT_UPLOADS) {
+        if (speed > 20 && this.MAX_CONCURRENT_UPLOADS < this.MAX_ALLOWED_CONCURRENT_UPLOADS) {
           this.MAX_CONCURRENT_UPLOADS++;
           this.processQueue();
-        } else if (speed < 30 && this.MAX_CONCURRENT_UPLOADS > this.DEFAULT_MAX_CONCURRENT_UPLOADS) {
+        } else if (speed < 20 && this.MAX_CONCURRENT_UPLOADS > this.DEFAULT_MAX_CONCURRENT_UPLOADS) {
           this.MAX_CONCURRENT_UPLOADS--;
         }
 
