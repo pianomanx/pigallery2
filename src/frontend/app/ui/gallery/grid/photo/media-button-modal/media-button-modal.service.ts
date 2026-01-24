@@ -18,6 +18,7 @@ export interface MediaButtonModalData {
 })
 export class MediaButtonModalService {
   private modalData$ = new BehaviorSubject<MediaButtonModalData | null>(null);
+  private savedModalValues: Record<string, string | number | boolean> = {};
 
   constructor(
     private notificationService: NotificationService,
@@ -83,5 +84,13 @@ export class MediaButtonModalService {
       window.location.reload();
     }
 
+  }
+
+  getValue(id: string): string | number | boolean {
+    return this.savedModalValues[id];
+  }
+
+  setValue(id: string, value: string | number | boolean): void {
+    this.savedModalValues[id] = value;
   }
 }

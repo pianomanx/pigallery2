@@ -34,6 +34,10 @@ export interface IClientMediaButtonPopupFields {
    */
   defaultValue?: string | number | boolean;
   /**
+   * Keep value across popups. Use this if you would like to use the same value on multiple popups (e.g.: like adding the same keyword to multiple photos).
+   */
+  keepValue?: boolean;
+  /**
    * If true, the field will be required.
    * If boolean, the field will be required to be true to click the button.
    */
@@ -63,8 +67,16 @@ export interface IClientMediaButtonPopupConfig {
   customFields?: IClientMediaButtonPopupFields[];
 }
 
-
+/**
+ * Data that will be sent to the server side when the media button is clicked.
+ * The data will be sent as a JSON object.
+ * The keys of the object will be the field names.
+ * The values will be the field values.
+ */
 export interface IMediaRequestBodyData {
+  /**
+   * Existing metadata fields of a media.
+   */
   fields?: {
     title?: string,
     caption?: string,
