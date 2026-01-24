@@ -98,11 +98,13 @@ export class MediaButtonModalComponent implements OnInit, OnDestroy {
   executeAction(): void {
     if (this.modalData && this.isFormValid()) {
       // save value to reuse in the next modal
-      this.modalData.button.popup.customFields.forEach(field => {
-        if (field.keepValue) {
-          this.modalService.setValue(field.id, this.formData.customFields[field.id]);
-        }
-      });
+      if (this.modalData?.button?.popup?.customFields) {
+        this.modalData.button.popup.customFields.forEach(field => {
+          if (field.keepValue) {
+            this.modalService.setValue(field.id, this.formData.customFields[field.id]);
+          }
+        });
+      }
       this.modalService.executeButtonAction(
         this.modalData.button,
         this.modalData.media,
@@ -152,6 +154,7 @@ export class MediaButtonModalComponent implements OnInit, OnDestroy {
     if (this.modalData?.button?.popup?.customFields) {
       this.formData.customFields = {};
       this.modalData.button.popup.customFields.forEach(field => {
+        // load last value if we should keep it
         if (field.keepValue && this.modalService.getValue(field.id) !== undefined) {
           this.formData.customFields[field.id] = this.modalService.getValue(field.id);
           return;
