@@ -42,7 +42,10 @@ export class MediaButtonModalService {
     this.modalData$.next(null);
   }
 
-  async executeButtonAction(button: IClientMediaButtonConfigWithBaseApiPath, media: GridMedia, formData?: any): Promise<void> {
+  async executeButtonAction(button: IClientMediaButtonConfigWithBaseApiPath, media: GridMedia, formData?: {
+    fields?: Record<string, any>,
+    customFields?: Record<string, any>
+  }): Promise<void> {
     try {
       if (!button.apiPath) {
         return; // this is a fake button, nothing to call

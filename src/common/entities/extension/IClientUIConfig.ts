@@ -2,7 +2,7 @@ import {UserRoles} from '../UserDTO';
 
 
 export type IClientMediaFields = 'title' | 'caption' | 'cameraData' | 'positionData' |
-  'faces' | 'size' | 'creationDate' | 'creationDateOffset' | 'bitRate' |
+  'faces' | 'keywords' | 'size' | 'creationDate' | 'creationDateOffset' | 'bitRate' |
   'duration' | 'fileSize' | 'fps';
 
 export interface IClientSVGIconConfig {
@@ -62,6 +62,27 @@ export interface IClientMediaButtonPopupConfig {
    */
   customFields?: IClientMediaButtonPopupFields[];
 }
+
+
+export interface IMediaRequestBodyData {
+  fields?: {
+    title?: string,
+    caption?: string,
+    cameraData?: string,
+    positionData?: string,
+    faces?: string,
+    size?: string,
+    creationDate?: string,
+    creationDateOffset?: string,
+    bitRate?: string,
+    duration?: string,
+    fileSize?: string,
+    fps?: string,
+    keywords?: string
+  };
+  customFields?: Record<string, any>;
+}
+
 
 export interface IClientMediaButtonConfig {
   /**
