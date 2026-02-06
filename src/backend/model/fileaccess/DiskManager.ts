@@ -296,7 +296,7 @@ export class DiskManager {
     directory.cache.mediaCount = directory.media.length;
     // TODO: cache is now calculated purely though DB after indexing of the directory is done.
     // Delete is with caution (double check if it still indeed not used)
-    if (!directory.isPartial) {
+    if (!directory.isPartial && !settings.noMetadata) {
       directory.cache.youngestMedia = Number.MAX_SAFE_INTEGER;
       directory.cache.oldestMedia = Number.MIN_SAFE_INTEGER;
 
