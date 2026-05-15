@@ -1,0 +1,88 @@
+
+================================================================================
+
+  (Run Starting)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Cypress:        14.5.3                                                                         │
+  │ Browser:        Electron 130 (headless)                                                        │
+  │ Node Version:   v22.22.3 (/home/patrik/.nvm/versions/node/v22.22.3/bin/node)                   │
+  │ Specs:          1 found (share.cy.ts)                                                          │
+  │ Searched:       test/cypress/e2e/share.cy.ts                                                   │
+  │ Experiments:    experimentalStudio=true                                                        │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  share.cy.ts                                                                     (1 of 1)
+
+
+  Share
+    1) Open password protected sharing
+    ✓ Open password protected sharing with logged in user (1531ms)
+    2) Open no password sharing
+
+
+  1 passing (14s)
+  2 failing
+
+  1) Share
+       Open password protected sharing:
+     AssertionError: Timed out retrying after 4000ms: Expected to find element: `.mb-0 > :nth-child(1) > .nav-link`, but never found it.
+      at Context.eval (webpack://pigallery2/./test/cypress/e2e/share.cy.ts:47:11)
+      at getRet (http://localhost:8080/__cypress/runner/cypress_runner.js:120949:20)
+      at tryCatcher (http://localhost:8080/__cypress/runner/cypress_runner.js:1777:23)
+      at Promise.attempt.Promise.try (http://localhost:8080/__cypress/runner/cypress_runner.js:4285:29)
+      at Context.thenFn (http://localhost:8080/__cypress/runner/cypress_runner.js:120960:66)
+      at Context.then (http://localhost:8080/__cypress/runner/cypress_runner.js:121211:21)
+      at wrapped (http://localhost:8080/__cypress/runner/cypress_runner.js:141532:19)
+
+  2) Share
+       Open no password sharing:
+     AssertionError: Timed out retrying after 4000ms: Expected to find element: `.mb-0 > :nth-child(1) > .nav-link`, but never found it.
+      at Context.eval (webpack://pigallery2/./test/cypress/e2e/share.cy.ts:126:11)
+      at getRet (http://localhost:8080/__cypress/runner/cypress_runner.js:120949:20)
+      at tryCatcher (http://localhost:8080/__cypress/runner/cypress_runner.js:1777:23)
+      at Promise.attempt.Promise.try (http://localhost:8080/__cypress/runner/cypress_runner.js:4285:29)
+      at Context.thenFn (http://localhost:8080/__cypress/runner/cypress_runner.js:120960:66)
+      at Context.then (http://localhost:8080/__cypress/runner/cypress_runner.js:121211:21)
+      at wrapped (http://localhost:8080/__cypress/runner/cypress_runner.js:141532:19)
+
+
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        3                                                                                │
+  │ Passing:      1                                                                                │
+  │ Failing:      2                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  2                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     14 seconds                                                                       │
+  │ Spec Ran:     share.cy.ts                                                                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  /home/patrik/pigallery2/test/cypress/screenshots/share.cy.ts/Share -- Open passw     (1280x720)
+     ord protected sharing (failed).png                                                             
+  -  /home/patrik/pigallery2/test/cypress/screenshots/share.cy.ts/Share -- Open no pa     (1280x720)
+     ssword sharing (failed).png                                                                    
+
+
+================================================================================
+
+  (Run Finished)
+
+
+       Spec                                              Tests  Passing  Failing  Pending  Skipped  
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ✖  share.cy.ts                              00:14        3        1        2        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ✖  1 of 1 failed (100%)                     00:14        3        1        2        -        -  
+
