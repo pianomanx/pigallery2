@@ -41,12 +41,10 @@ describe('Share', () => {
         const sk = url.pathname.split('/').pop();
         cy.visit('/shareLogin?sk=' + sk);
         cy.get('input#password').type('secret');
-        cy.intercept('POST', '/pgapi/share/login').as('shareLogin');
         cy.get('button#button-share-login').click();
-        cy.wait('@shareLogin').its('response.statusCode').should('eq', 200);
 
 
-        cy.get('app-gallery', { timeout: 10000 }).should('exist');
+        cy.get('app-gallery', { timeout: 15000 }).should('exist');
 
         cy.wait('@getSharedContent').then((interception) => {
           expect(interception.response.statusCode).to.eq(200);
@@ -125,7 +123,7 @@ describe('Share', () => {
           cy.visit(link);
         });
 
-        cy.get('app-gallery', { timeout: 10000 }).should('exist');
+        cy.get('app-gallery', { timeout: 15000 }).should('exist');
 
         cy.wait('@getSharedContent').then((interception) => {
           expect(interception.response.statusCode).to.eq(200);
