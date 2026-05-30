@@ -404,7 +404,7 @@ export class MetadataLoader {
       }
     }
     metadata.creationDate = Utils.timestampToMS(ts, offset) || metadata.creationDate;
-    metadata.creationDateOffset = normalizeOffset(offset || metadata.creationDateOffset);
+    metadata.creationDateOffset = offset || metadata.creationDateOffset;
     //---- End of mapTimestampAndOffset logic ----
 
     //---- Helper functions for mapTimestampAndOffset ----
@@ -439,11 +439,6 @@ export class MetadataLoader {
         }
       }
       return [ts, offset];
-    }
-
-    //Pads hours and minutes with leading zeroes if needed
-    function normalizeOffset(o: string): string {
-      return o.replace(/^([+-]?)(\d):/, "$10$2:");
     }
 
 
