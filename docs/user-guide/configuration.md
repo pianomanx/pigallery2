@@ -1232,3 +1232,23 @@ Environmental variables:
     }
 }
 ```
+
+## Supported Directory Configuration (`.pg2conf`) Files
+
+The following files can be placed in gallery directories to customize behavior (such as sorting, file upload permissions, and saved searches):
+
+| File Name | Processing Side | Description |
+| --- | --- | --- |
+| `.order_ascending_date.pg2conf` | Client | Forces the directory contents to be sorted by date in ascending order. |
+| `.order_ascending_filesize.pg2conf` | Client | Forces the directory contents to be sorted by filesize in ascending order. |
+| `.order_ascending_name.pg2conf` | Client | Forces the directory contents to be sorted by name in ascending order. |
+| `.order_ascending_personcount.pg2conf` | Client | Forces the directory contents to be sorted by personcount in ascending order. |
+| `.order_ascending_rating.pg2conf` | Client | Forces the directory contents to be sorted by rating in ascending order. |
+| `.order_descending_date.pg2conf` | Client | Forces the directory contents to be sorted by date in descending order. |
+| `.order_descending_filesize.pg2conf` | Client | Forces the directory contents to be sorted by filesize in descending order. |
+| `.order_descending_name.pg2conf` | Client | Forces the directory contents to be sorted by name in descending order. |
+| `.order_descending_personcount.pg2conf` | Client | Forces the directory contents to be sorted by personcount in descending order. |
+| `.order_descending_rating.pg2conf` | Client | Forces the directory contents to be sorted by rating in descending order. |
+| `.order_random.pg2conf` | Client | Forces the directory contents to be sorted in a random order. |
+| `.uploader.pg2conf` | Client | Whitelists the directory for file uploads. When enforced, users can only upload files to directories containing this file. |
+| `.saved_searches.pg2conf` | Server | Stores saved searches (logical albums) at the directory level. These searches survive database resets and are loaded during directory indexing. |
