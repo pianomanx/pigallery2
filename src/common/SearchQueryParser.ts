@@ -96,6 +96,12 @@ export class SearchQueryParser {
     if (matchType === TextSearchQueryMatchTypes.exact_match) {
       return '"' + text + '"';
     }
+    if (matchType === TextSearchQueryMatchTypes.globMatch) {
+      if (text.indexOf(' ') !== -1) {
+        return '"' + text + '"';
+      }
+      return text;
+    }
     if (text.indexOf(' ') !== -1) {
       return '(' + text + ')';
     }
@@ -485,6 +491,16 @@ export class SearchQueryParser {
         key: (this.keywords as never)[SearchQueryTypes[type]] + '!:',
         queryTemplate: {type, value: '', negate: true} as TextSearch,
       }))
+    ).concat(
+      TextSearchQueryTypes.map((type) => ({
+        key: (this.keywords as never)[SearchQueryTypes[type]] + '~:',
+        queryTemplate: {type, value: '', matchType: TextSearchQueryMatchTypes.globMatch} as TextSearch,
+      }))
+    ).concat(
+      TextSearchQueryTypes.map((type) => ({
+        key: (this.keywords as never)[SearchQueryTypes[type]] + '!~:',
+        queryTemplate: {type, value: '', negate: true, matchType: TextSearchQueryMatchTypes.globMatch} as TextSearch,
+      }))
     );
     for (const typeTmp of tmp) {
       if (str.startsWith(typeTmp.key)) {
@@ -495,12 +511,17 @@ export class SearchQueryParser {
           str.charAt(str.length - 1) === '"'
         ) {
           ret.value = str.slice(typeTmp.key.length + 1, str.length - 1);
-          ret.matchType = TextSearchQueryMatchTypes.exact_match;
+          if (ret.matchType !== TextSearchQueryMatchTypes.globMatch) {
+            ret.matchType = TextSearchQueryMatchTypes.exact_match;
+          }
           // like match
         } else if (
           str.charAt(typeTmp.key.length) === '(' &&
           str.charAt(str.length - 1) === ')'
         ) {
+          if (ret.matchType === TextSearchQueryMatchTypes.globMatch) {
+            throw new Error('Parentheses groups are not supported for globMatch');
+          }
           ret.value = str.slice(typeTmp.key.length + 1, str.length - 1);
         } else {
           ret.value = str.slice(typeTmp.key.length);
@@ -526,6 +547,8 @@ export class SearchQueryParser {
     }
     const negateSign = (query as NegatableSearchQuery).negate === true ? '!' : '';
     const colon = negateSign + ':';
+    const isGlob = TextSearchQueryTypes.includes(query.type) && (query as TextSearch).matchType === TextSearchQueryMatchTypes.globMatch;
+    const op = negateSign + (isGlob ? '~:' : ':');
     switch (query.type) {
       case SearchQueryTypes.AND:
         return (
@@ -692,7 +715,10 @@ export class SearchQueryParser {
         return strBuilder;
       }
       case SearchQueryTypes.any_text:
-        if (!(query as TextSearch).negate) {
+        if (!(query as TextSearch).negate &&
+          (typeof (query as TextSearch).matchType === 'undefined' ||
+            (query as TextSearch).matchType === TextSearchQueryMatchTypes.like) &&
+          !/\s/.test((query as TextSearch).value)) {
           return SearchQueryParser.stringifyText(
             (query as TextSearch).value,
             (query as TextSearch).matchType
@@ -700,7 +726,7 @@ export class SearchQueryParser {
         } else {
           return (
             (this.keywords as never)[SearchQueryTypes[query.type]] +
-            colon +
+            op +
             SearchQueryParser.stringifyText(
               (query as TextSearch).value,
               (query as TextSearch).matchType
@@ -719,7 +745,7 @@ export class SearchQueryParser {
         }
         return (
           (this.keywords as never)[SearchQueryTypes[query.type]] +
-          colon +
+          op +
           SearchQueryParser.stringifyText(
             (query as TextSearch).value,
             (query as TextSearch).matchType
