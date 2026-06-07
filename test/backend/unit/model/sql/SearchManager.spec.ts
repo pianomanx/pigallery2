@@ -6,10 +6,14 @@ import {DBTestHelper} from '../../../DBTestHelper';
 import {
   ANDSearchQuery,
   DatePatternFrequency,
-  DatePatternSearch, DateSearch,
+  DatePatternSearch,
+  DateSearch,
   DistanceSearch,
   OrientationSearch,
-  ORSearchQuery, PersonCountSearch, RatingSearch, ResolutionSearch,
+  ORSearchQuery,
+  PersonCountSearch,
+  RatingSearch,
+  ResolutionSearch,
   SearchListQuery,
   SearchQueryDTO,
   SearchQueryTypes,
@@ -87,9 +91,11 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     p = TestHelper.getPhotoEntry1(directory);
     p.metadata.creationDate = Date.now();
     p.metadata.creationDateOffset = '+02:00';
+    p.metadata.keywords.push('question mark?');
     p2 = TestHelper.getPhotoEntry2(directory);
     p2.metadata.creationDate = Date.now() - 60 * 60 * 24 * 1000;
     p2.metadata.creationDateOffset = '+02:00';
+    p2.metadata.keywords.push('underscore_');
     v = TestHelper.getVideoEntry1(directory);
     v.metadata.creationDate = Date.now() - 60 * 60 * 24 * 7 * 1000;
     v.metadata.creationDateOffset = '+02:00';
@@ -294,7 +300,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
 
 
     describe('autocomplete', () => {
-      beforeEach(()=>Config.loadSync());
+      beforeEach(() => Config.loadSync());
 
       it('autocomplete should respect projectionQuery', async () => {
         const sm = new SearchManager();
@@ -1091,7 +1097,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
     });
 
     /**
-     * flattenSameOfQueries  converts some-of queries to AND and OR queries
+     * flattenSameOfQueries converts some-of queries to AND and OR queries
      * E.g.:
      * 2-of:(A B C) to (A and (B or C)) or (B and C)
      * this tests makes sure that all queries has at least 2 constraints
@@ -1618,15 +1624,47 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           matchType: TextSearchQueryMatchTypes.globMatch
         } as TextSearch;
 
-        const res = await sm.search(DBTestHelper.defaultSession, query);
 
-        expect(Utils.clone(res)).to.deep.equalInAnyOrder(removeDir({
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
           searchQuery: query,
           directories: [],
           media: [p, p2, pFaceLess, v, p4],
           metaFile: [],
           resultOverflow: false
-        } as SearchResultDTO));
+        } as SearchResultDTO), (new SearchQueryParser()).stringify(query));
+
+        //  Match wildcard with keyword
+        query = {
+          value: '*\\?',
+          type: SearchQueryTypes.keyword,
+          matchType: TextSearchQueryMatchTypes.globMatch
+        } as TextSearch;
+
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO), (new SearchQueryParser()).stringify(query));
+
+
+        //  Match underscore (sql wildcard) with keyword
+        query = {
+          value: '*_',
+          type: SearchQueryTypes.keyword,
+          matchType: TextSearchQueryMatchTypes.globMatch
+        } as TextSearch;
+
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p2],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO), (new SearchQueryParser()).stringify(query));
 
         // Test 2: Match filenames ending with .jpg
         query = {
@@ -1641,7 +1679,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           media: [p, p2, pFaceLess, p4],
           metaFile: [],
           resultOverflow: false
-        } as SearchResultDTO));
+        } as SearchResultDTO), (new SearchQueryParser()).stringify(query));
 
         // Test 3: Match Mos Eis* city under position
         query = {
@@ -1656,7 +1694,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           media: [p],
           metaFile: [],
           resultOverflow: false
-        } as SearchResultDTO));
+        } as SearchResultDTO), (new SearchQueryParser()).stringify(query));
 
         // Test 4: Negated glob match (no jpg)
         query = {
@@ -1672,7 +1710,7 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           media: [v],
           metaFile: [],
           resultOverflow: false
-        } as SearchResultDTO));
+        } as SearchResultDTO), (new SearchQueryParser()).stringify(query));
 
         // Test 5: Exact match using glob (no wildcards)
         query = {

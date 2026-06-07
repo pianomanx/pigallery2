@@ -33,6 +33,7 @@ import {FileEntity} from './enitites/FileEntity';
 import {SQL_COLLATE} from './enitites/EntityUtils';
 import {GroupSortByTypes, SortByTypes, SortingMethod} from '../../../common/entities/SortingMethods';
 import {SessionContext} from '../SessionContext';
+import {DiskManager} from '../fileaccess/DiskManager';
 
 export class SearchManager {
   private DIRECTORY_SELECT = [
@@ -496,6 +497,7 @@ export class SearchManager {
     let query: SearchQueryDTO = this.assignQueryIDs(Utils.clone(queryIN)); // assign local ids before flattening SOME_OF queries
     query = this.flattenSameOfQueries(query);
     query = await this.getGPSData(query);
+    query = this.convertMatchTypeToGlob(query);
     return query;
   }
 
@@ -892,11 +894,20 @@ export class SearchManager {
     }
 
 
+    // this should be a text search from here on
     if (!TextSearchQueryTypes.includes(query.type)) {
       throw new Error(
         `Invalid search query: Unknown query type: ${SearchQueryTypes[query.type]}(type: ${query.type})`
       );
     }
+    if ((query as TextSearch).matchType !== TextSearchQueryMatchTypes.globMatch) {
+
+      throw new Error(
+        `Invalid text search query match type: ${TextSearchQueryMatchTypes[(query as TextSearch).matchType]}, it should be glob`
+      );
+    }
+
+    // it should be only glob-matched text searches
 
     if (typeof (query as TextSearch).value === 'undefined') {
       throw new Error(
@@ -909,50 +920,44 @@ export class SearchManager {
         // Match either an escaped character \\(.) or any unescaped SQL/glob special character
         return str.replace(/\\(.)|([*?%_])/g, (_, escaped, special) => {
           if (escaped) {
-            if (escaped === '*' || escaped === '?') return escaped; // \* -> *, \? -> ?
-            if (escaped === '\\') return '\\\\';                  // \\ -> \\
+            if (escaped === '*' || escaped === '?') {
+              return escaped;
+            } // \* -> *, \? -> ?
+            if (escaped === '\\') {
+              return '\\\\';
+            }                  // \\ -> \\
             return '\\' + escaped;                                 // e.g., \% -> \%
           }
 
           // Handle unescaped special characters
-          if (special === '*') return '%';
-          if (special === '?') return '_';
+          if (special === '*') {
+            return '%';
+          }
+          if (special === '?') {
+            return '_';
+          }
           return '\\' + special;                                   // % -> \%, _ -> \_
         });
       };
 
       const createMatchString = (str: string): string => {
-        if (
-          (query as TextSearch).matchType ===
-          TextSearchQueryMatchTypes.exact_match
-        ) {
-          return str;
-        }
-        if (
-          (query as TextSearch).matchType ===
-          TextSearchQueryMatchTypes.globMatch
-        ) {
-          return convertGlobToLike(str);
-        }
+        return convertGlobToLike(str);
         // MySQL uses C escape syntax in strings, details:
         // https://stackoverflow.com/questions/14926386/how-to-search-for-slash-in-mysql-and-why-escaping-not-required-for-wher
+        /*
         if (Config.Database.type === DatabaseType.mysql) {
           /// this reqExp replaces the "\\" to "\\\\\"
           return '%' + str.replace(new RegExp('\\\\', 'g'), '\\\\') + '%';
         }
-        return `%${str}%`;
+        return `%${str}%`;*/
       };
 
-      const isGlob = (query as TextSearch).matchType === TextSearchQueryMatchTypes.globMatch;
       // if the expression is negated, we use AND instead of OR as nowhere should that match
       const whereFN = (query as TextSearch).negate ? 'andWhere' : 'orWhere';
       const whereFNRev = (query as TextSearch).negate ? 'orWhere' : 'andWhere';
 
       const getLikeExpr = (fieldName: string, paramName: string): string => {
         const op = (query as TextSearch).negate ? 'NOT LIKE' : 'LIKE';
-        if (isGlob) {
-          return `${fieldName} ${op} :${paramName}${queryId} ESCAPE '\\' COLLATE ${SQL_COLLATE}`;
-        }
         return `${fieldName} ${op} :${paramName}${queryId} COLLATE ${SQL_COLLATE}`;
       };
 
@@ -970,7 +975,7 @@ export class SearchManager {
           '/'
         );
         const alias = aliases['directory'] ?? 'directory';
-        textParam['fullPath' + queryId] = createMatchString(dirPathStr);
+        textParam['fullPath' + queryId] = createMatchString(DiskManager.normalizeDirPath(dirPathStr));
         q[whereFN](
           getLikeExpr(`${alias}.path`, 'fullPath'),
           textParam
@@ -998,6 +1003,7 @@ export class SearchManager {
             return dq;
           })
         );
+        console.log(textParam);
       }
 
       if (
@@ -1040,44 +1046,36 @@ export class SearchManager {
       const matchArrayField = (fieldName: string): void => {
         q[whereFN](
           new Brackets((qbr): void => {
-            const isExact = (query as TextSearch).matchType === TextSearchQueryMatchTypes.exact_match;
 
-            if (!isExact && !isGlob) {
-              qbr[whereFN](
-                getLikeExpr(fieldName, 'text'),
-                textParam
-              );
-            } else {
-              qbr[whereFN](
-                new Brackets((qb): void => {
-                  const globPattern = isGlob ? convertGlobToLike((query as TextSearch).value) : (query as TextSearch).value;
-                  const esc = isGlob ? " ESCAPE '\\'" : "";
-                  const op = (query as TextSearch).negate ? 'NOT LIKE' : 'LIKE';
+            qbr[whereFN](
+              new Brackets((qb): void => {
+                const globPattern = convertGlobToLike((query as TextSearch).value);
+                const esc = ' ESCAPE \'\\\'';
+                const op = (query as TextSearch).negate ? 'NOT LIKE' : 'LIKE';
 
-                  textParam['CtextC' + queryId] = `%,${globPattern},%`;
-                  textParam['Ctext' + queryId] = `%,${globPattern}`;
-                  textParam['textC' + queryId] = `${globPattern},%`;
-                  textParam['text_exact' + queryId] = `${globPattern}`;
+                textParam['CtextC' + queryId] = `%,${globPattern},%`;
+                textParam['Ctext' + queryId] = `%,${globPattern}`;
+                textParam['textC' + queryId] = `${globPattern},%`;
+                textParam['text_exact' + queryId] = `${globPattern}`;
 
-                  qb[whereFN](
-                    `${fieldName} ${op} :CtextC${queryId}${esc} COLLATE ${SQL_COLLATE}`,
-                    textParam
-                  );
-                  qb[whereFN](
-                    `${fieldName} ${op} :Ctext${queryId}${esc} COLLATE ${SQL_COLLATE}`,
-                    textParam
-                  );
-                  qb[whereFN](
-                    `${fieldName} ${op} :textC${queryId}${esc} COLLATE ${SQL_COLLATE}`,
-                    textParam
-                  );
-                  qb[whereFN](
-                    `${fieldName} ${op} :text_exact${queryId}${esc} COLLATE ${SQL_COLLATE}`,
-                    textParam
-                  );
-                })
-              );
-            }
+                qb[whereFN](
+                  `${fieldName} ${op} :CtextC${queryId}${esc} COLLATE ${SQL_COLLATE}`,
+                  textParam
+                );
+                qb[whereFN](
+                  `${fieldName} ${op} :Ctext${queryId}${esc} COLLATE ${SQL_COLLATE}`,
+                  textParam
+                );
+                qb[whereFN](
+                  `${fieldName} ${op} :textC${queryId}${esc} COLLATE ${SQL_COLLATE}`,
+                  textParam
+                );
+                qb[whereFN](
+                  `${fieldName} ${op} :text_exact${queryId}${esc} COLLATE ${SQL_COLLATE}`,
+                  textParam
+                );
+              })
+            );
             if ((query as TextSearch).negate) {
               qbr.orWhere(`${fieldName} IS NULL`);
             }
@@ -1200,6 +1198,33 @@ export class SearchManager {
             (query as SearchListQuery).list
           ),
         } as ORSearchQuery);
+    }
+    return query;
+  }
+
+
+  protected convertMatchTypeToGlob(query: SearchQueryDTO): SearchQueryDTO {
+    if ((query as ANDSearchQuery | ORSearchQuery).list) {
+      for (
+        let i = 0;
+        i < (query as ANDSearchQuery | ORSearchQuery).list.length;
+        ++i
+      ) {
+        (query as ANDSearchQuery | ORSearchQuery).list[i] =
+          this.convertMatchTypeToGlob(
+            (query as ANDSearchQuery | ORSearchQuery).list[i]
+          );
+      }
+    }
+    if (
+      TextSearchQueryTypes.includes(query.type) &&
+      (query as TextSearch).matchType !== TextSearchQueryMatchTypes.globMatch
+    ) {
+      (query as TextSearch).value = (query as TextSearch).value.replace(/([*?])/g, '\\$1');
+      if ((query as TextSearch).matchType != TextSearchQueryMatchTypes.exact_match) {
+        (query as TextSearch).value = `*${(query as TextSearch).value}*`;
+      }
+      (query as TextSearch).matchType = TextSearchQueryMatchTypes.globMatch;
     }
     return query;
   }
