@@ -1003,7 +1003,6 @@ export class SearchManager {
             return dq;
           })
         );
-        console.log(textParam);
       }
 
       if (
