@@ -11,6 +11,10 @@ export class SharingEntity implements BaseSharingDTO {
   @Column()
   sharingKey: string;
 
+  /*
+  * This query determines what is available for the user through sharing
+  * Basically it's an allow-list of photos.
+  * */
   @Column({
     type: 'text',
     nullable: false,
@@ -24,6 +28,28 @@ export class SharingEntity implements BaseSharingDTO {
     },
   })
   searchQuery: SearchQueryDTO;
+
+  /**
+   * Only of the defaults should be set at most. If none is set the defaultSearchView will be searchQuery
+   */
+  @Column({
+    type: 'text',
+    nullable: true
+  })
+  defaultDirectoryView: string;
+  @Column({
+    type: 'text',
+    nullable: true,
+    transformer: {
+      from: (val: string) => {
+        return val ? JSON.parse(val) : null;
+      },
+      to: (val: object) => {
+        return val ? JSON.stringify(val) : null;
+      },
+    },
+  })
+  defaultSearchView: SearchQueryDTO;
 
   @Column({type: 'text', nullable: true})
   password: string;

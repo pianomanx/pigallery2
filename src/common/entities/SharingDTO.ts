@@ -7,6 +7,8 @@ export interface SharingDTOKey {
 
 export interface BaseSharingDTO extends SharingDTOKey {
   id: number;
+  defaultSearchView?: SearchQueryDTO;
+  defaultDirectoryView?: string;
   searchQuery: SearchQueryDTO;
   sharingKey: string;
   expires: number;
@@ -17,6 +19,8 @@ export interface BaseSharingDTO extends SharingDTOKey {
 
 export interface ResponseSharingDTO extends BaseSharingDTO {
   id: number;
+  defaultSearchView?: SearchQueryDTO;
+  defaultDirectoryView?: string;
   searchQuery: SearchQueryDTO;
   sharingKey: string;
   expires: number;
@@ -27,6 +31,8 @@ export interface ResponseSharingDTO extends BaseSharingDTO {
 
 export interface UpdateSharingDTO extends BaseSharingDTO {
   id: number;
+  defaultSearchView?: SearchQueryDTO;
+  defaultDirectoryView?: string;
   searchQuery: SearchQueryDTO;
   sharingKey: string;
   password?: string;
@@ -39,5 +45,7 @@ export interface CreateSharingDTO {
   id?: number;
   password: string;
   valid: number;
+  defaultSearchView?: SearchQueryDTO;
+  defaultDirectoryView?: string;
   searchQuery: SearchQueryDTO;
 }

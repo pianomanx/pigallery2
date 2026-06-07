@@ -1,5 +1,5 @@
 import {NextFunction, Request, Response} from 'express';
-import {CreateSharingDTO,  SharingDTOKey, UpdateSharingDTO} from '../../common/entities/SharingDTO';
+import {CreateSharingDTO, SharingDTOKey, UpdateSharingDTO} from '../../common/entities/SharingDTO';
 import {ObjectManagers} from '../model/ObjectManagers';
 import {ErrorCodes, ErrorDTO} from '../../common/entities/Error';
 import {Config} from '../../common/config/private/Config';
@@ -116,6 +116,8 @@ export class SharingMWs {
         sharingKey,
         searchQuery,
         password: createSharing.password,
+        defaultSearchView: null,
+        defaultDirectoryView: null,
         creator: req.session.context?.user as UserEntity, // only the user id is used
         expires:
           createSharing.valid >= 0 // if === -1 it's forever
@@ -123,6 +125,13 @@ export class SharingMWs {
             : new Date(9999, 0, 1).getTime(), // never expire
         timeStamp: Date.now(),
       };
+
+      if (createSharing.defaultDirectoryView) {
+        sharing.defaultDirectoryView = createSharing.defaultDirectoryView;
+      }
+      if (createSharing.defaultSearchView) {
+        sharing.defaultSearchView = createSharing.defaultSearchView;
+      }
 
       req.resultPipe =
         await ObjectManagers.getInstance().SharingManager.createSharing(
@@ -183,6 +192,15 @@ export class SharingMWs {
             : new Date(9999, 0, 1).getTime(), // never expire
         timeStamp: Date.now(),
       };
+
+
+      if (updateSharing.defaultDirectoryView) {
+        sharing.defaultDirectoryView = updateSharing.defaultDirectoryView;
+      }
+      if (updateSharing.defaultSearchView) {
+        sharing.defaultSearchView = updateSharing.defaultSearchView;
+      }
+
 
       const forceUpdate = req.session.context.user.role >= UserRoles.Admin;
       req.resultPipe =

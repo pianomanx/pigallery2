@@ -72,6 +72,10 @@ export class SharingManager {
       SearchQueryUtils.validateSearchQuery(sharing.searchQuery);
       sharing.searchQuery = SearchQueryUtils.sortQuery(sharing.searchQuery);
     }
+    if(sharing.defaultSearchView){
+      SearchQueryUtils.validateSearchQuery(sharing.defaultSearchView);
+      sharing.searchQuery = SearchQueryUtils.sortQuery(sharing.defaultSearchView);
+    }
     return connection.getRepository(SharingEntity).save(sharing);
   }
 
@@ -99,6 +103,13 @@ export class SharingManager {
     }
     // allow updating searchQuery and canonicalize it
     sharing.searchQuery = SearchQueryUtils.sortQuery(inSharing.searchQuery);
+    if(inSharing.defaultSearchView){
+      SearchQueryUtils.validateSearchQuery(inSharing.defaultSearchView);
+      sharing.searchQuery = SearchQueryUtils.sortQuery(inSharing.defaultSearchView);
+    }
+    if(inSharing.defaultDirectoryView){
+      sharing.defaultDirectoryView = inSharing.defaultDirectoryView;
+    }
     sharing.expires = inSharing.expires;
 
     return connection.getRepository(SharingEntity).save(sharing);
