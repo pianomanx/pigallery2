@@ -149,12 +149,6 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
   it('should get autocomplete', async () => {
     const sm = new SearchManager();
 
-    const cmp = (a: AutoCompleteItem, b: AutoCompleteItem) => {
-      if (a.value === b.value) {
-        return a.type - b.type;
-      }
-      return a.value.localeCompare(b.value);
-    };
 
     expect((await sm.autocomplete(DBTestHelper.defaultSession, 'tat', SearchQueryTypes.any_text))).to.deep.equalInAnyOrder([
       new AutoCompleteItem('Tatooine', SearchQueryTypes.position)]);
@@ -1612,6 +1606,118 @@ describe('SearchManager', (sqlHelper: DBTestHelper) => {
           resultOverflow: false
         } as SearchResultDTO));
 
+      });
+
+      it('with globMatch', async () => {
+        const sm = new SearchManager();
+
+        // Test 1: Match filenames starting with sw
+        let query = {
+          value: 'sw*',
+          type: SearchQueryTypes.file_name,
+          matchType: TextSearchQueryMatchTypes.globMatch
+        } as TextSearch;
+
+        const res = await sm.search(DBTestHelper.defaultSession, query);
+
+        expect(Utils.clone(res)).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, pFaceLess, v, p4],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        // Test 2: Match filenames ending with .jpg
+        query = {
+          value: '*.jpg',
+          type: SearchQueryTypes.file_name,
+          matchType: TextSearchQueryMatchTypes.globMatch
+        } as TextSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, pFaceLess, p4],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        // Test 3: Match Mos Eis* city under position
+        query = {
+          value: 'Mos Eis*',
+          type: SearchQueryTypes.position,
+          matchType: TextSearchQueryMatchTypes.globMatch
+        } as TextSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        // Test 4: Negated glob match (no jpg)
+        query = {
+          value: '*.jpg',
+          type: SearchQueryTypes.file_name,
+          negate: true,
+          matchType: TextSearchQueryMatchTypes.globMatch
+        } as TextSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [v],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        // Test 5: Exact match using glob (no wildcards)
+        query = {
+          value: 'sw1.jpg',
+          type: SearchQueryTypes.file_name,
+          matchType: TextSearchQueryMatchTypes.globMatch
+        } as TextSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        // Test 6: Wildcard ? (single character)
+        query = {
+          value: 'sw?.jpg',
+          type: SearchQueryTypes.file_name,
+          matchType: TextSearchQueryMatchTypes.globMatch
+        } as TextSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [p, p2, pFaceLess, p4],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
+
+        // Test 7: Escaped wildcard (should not act as wildcard)
+        query = {
+          value: 'sw\\*.jpg',
+          type: SearchQueryTypes.file_name,
+          matchType: TextSearchQueryMatchTypes.globMatch
+        } as TextSearch;
+
+        expect(Utils.clone(await sm.search(DBTestHelper.defaultSession, query))).to.deep.equalInAnyOrder(removeDir({
+          searchQuery: query,
+          directories: [],
+          media: [],
+          metaFile: [],
+          resultOverflow: false
+        } as SearchResultDTO));
       });
 
     });

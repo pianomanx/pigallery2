@@ -905,12 +905,34 @@ export class SearchManager {
     }
 
     return new Brackets((q: WhereExpression) => {
+      const convertGlobToLike = (str: string): string => {
+        // Match either an escaped character \\(.) or any unescaped SQL/glob special character
+        return str.replace(/\\(.)|([*?%_])/g, (_, escaped, special) => {
+          if (escaped) {
+            if (escaped === '*' || escaped === '?') return escaped; // \* -> *, \? -> ?
+            if (escaped === '\\') return '\\\\';                  // \\ -> \\
+            return '\\' + escaped;                                 // e.g., \% -> \%
+          }
+
+          // Handle unescaped special characters
+          if (special === '*') return '%';
+          if (special === '?') return '_';
+          return '\\' + special;                                   // % -> \%, _ -> \_
+        });
+      };
+
       const createMatchString = (str: string): string => {
         if (
           (query as TextSearch).matchType ===
           TextSearchQueryMatchTypes.exact_match
         ) {
           return str;
+        }
+        if (
+          (query as TextSearch).matchType ===
+          TextSearchQueryMatchTypes.globMatch
+        ) {
+          return convertGlobToLike(str);
         }
         // MySQL uses C escape syntax in strings, details:
         // https://stackoverflow.com/questions/14926386/how-to-search-for-slash-in-mysql-and-why-escaping-not-required-for-wher
@@ -921,10 +943,18 @@ export class SearchManager {
         return `%${str}%`;
       };
 
-      const LIKE = (query as TextSearch).negate ? 'NOT LIKE' : 'LIKE';
+      const isGlob = (query as TextSearch).matchType === TextSearchQueryMatchTypes.globMatch;
       // if the expression is negated, we use AND instead of OR as nowhere should that match
       const whereFN = (query as TextSearch).negate ? 'andWhere' : 'orWhere';
       const whereFNRev = (query as TextSearch).negate ? 'orWhere' : 'andWhere';
+
+      const getLikeExpr = (fieldName: string, paramName: string): string => {
+        const op = (query as TextSearch).negate ? 'NOT LIKE' : 'LIKE';
+        if (isGlob) {
+          return `${fieldName} ${op} :${paramName}${queryId} ESCAPE '\\' COLLATE ${SQL_COLLATE}`;
+        }
+        return `${fieldName} ${op} :${paramName}${queryId} COLLATE ${SQL_COLLATE}`;
+      };
 
       const textParam: { [key: string]: unknown } = {};
       textParam['text' + queryId] = createMatchString(
@@ -942,7 +972,7 @@ export class SearchManager {
         const alias = aliases['directory'] ?? 'directory';
         textParam['fullPath' + queryId] = createMatchString(dirPathStr);
         q[whereFN](
-          `${alias}.path ${LIKE} :fullPath${queryId} COLLATE ` + SQL_COLLATE,
+          getLikeExpr(`${alias}.path`, 'fullPath'),
           textParam
         );
 
@@ -953,7 +983,7 @@ export class SearchManager {
               directoryPath.name
             );
             dq[whereFNRev](
-              `${alias}.name ${LIKE} :dirName${queryId} COLLATE ${SQL_COLLATE}`,
+              getLikeExpr(`${alias}.name`, 'dirName'),
               textParam
             );
             if (dirPathStr.includes('/')) {
@@ -961,7 +991,7 @@ export class SearchManager {
                 directoryPath.parent
               );
               dq[whereFNRev](
-                `${alias}.path ${LIKE} :parentName${queryId} COLLATE ${SQL_COLLATE}`,
+                getLikeExpr(`${alias}.path`, 'parentName'),
                 textParam
               );
             }
@@ -975,7 +1005,7 @@ export class SearchManager {
         query.type === SearchQueryTypes.file_name
       ) {
         q[whereFN](
-          `media.name ${LIKE} :text${queryId} COLLATE ${SQL_COLLATE}`,
+          getLikeExpr('media.name', 'text'),
           textParam
         );
       }
@@ -985,7 +1015,7 @@ export class SearchManager {
         query.type === SearchQueryTypes.caption
       ) {
         q[whereFN](
-          `media.metadata.caption ${LIKE} :text${queryId} COLLATE ${SQL_COLLATE}`,
+          getLikeExpr('media.metadata.caption', 'text'),
           textParam
         );
       }
@@ -995,13 +1025,13 @@ export class SearchManager {
         query.type === SearchQueryTypes.position
       ) {
         q[whereFN](
-          `media.metadata.positionData.country ${LIKE} :text${queryId} COLLATE ${SQL_COLLATE}`,
+          getLikeExpr('media.metadata.positionData.country', 'text'),
           textParam
         )[whereFN](
-          `media.metadata.positionData.state ${LIKE} :text${queryId} COLLATE ${SQL_COLLATE}`,
+          getLikeExpr('media.metadata.positionData.state', 'text'),
           textParam
         )[whereFN](
-          `media.metadata.positionData.city ${LIKE} :text${queryId} COLLATE ${SQL_COLLATE}`,
+          getLikeExpr('media.metadata.positionData.city', 'text'),
           textParam
         );
       }
@@ -1010,44 +1040,39 @@ export class SearchManager {
       const matchArrayField = (fieldName: string): void => {
         q[whereFN](
           new Brackets((qbr): void => {
-            if (
-              (query as TextSearch).matchType !==
-              TextSearchQueryMatchTypes.exact_match
-            ) {
+            const isExact = (query as TextSearch).matchType === TextSearchQueryMatchTypes.exact_match;
+
+            if (!isExact && !isGlob) {
               qbr[whereFN](
-                `${fieldName} ${LIKE} :text${queryId} COLLATE ${SQL_COLLATE}`,
+                getLikeExpr(fieldName, 'text'),
                 textParam
               );
             } else {
               qbr[whereFN](
                 new Brackets((qb): void => {
-                  textParam['CtextC' + queryId] = `%,${
-                    (query as TextSearch).value
-                  },%`;
-                  textParam['Ctext' + queryId] = `%,${
-                    (query as TextSearch).value
-                  }`;
-                  textParam['textC' + queryId] = `${
-                    (query as TextSearch).value
-                  },%`;
-                  textParam['text_exact' + queryId] = `${
-                    (query as TextSearch).value
-                  }`;
+                  const globPattern = isGlob ? convertGlobToLike((query as TextSearch).value) : (query as TextSearch).value;
+                  const esc = isGlob ? " ESCAPE '\\'" : "";
+                  const op = (query as TextSearch).negate ? 'NOT LIKE' : 'LIKE';
+
+                  textParam['CtextC' + queryId] = `%,${globPattern},%`;
+                  textParam['Ctext' + queryId] = `%,${globPattern}`;
+                  textParam['textC' + queryId] = `${globPattern},%`;
+                  textParam['text_exact' + queryId] = `${globPattern}`;
 
                   qb[whereFN](
-                    `${fieldName} ${LIKE} :CtextC${queryId} COLLATE ${SQL_COLLATE}`,
+                    `${fieldName} ${op} :CtextC${queryId}${esc} COLLATE ${SQL_COLLATE}`,
                     textParam
                   );
                   qb[whereFN](
-                    `${fieldName} ${LIKE} :Ctext${queryId} COLLATE ${SQL_COLLATE}`,
+                    `${fieldName} ${op} :Ctext${queryId}${esc} COLLATE ${SQL_COLLATE}`,
                     textParam
                   );
                   qb[whereFN](
-                    `${fieldName} ${LIKE} :textC${queryId} COLLATE ${SQL_COLLATE}`,
+                    `${fieldName} ${op} :textC${queryId}${esc} COLLATE ${SQL_COLLATE}`,
                     textParam
                   );
                   qb[whereFN](
-                    `${fieldName} ${LIKE} :text_exact${queryId} COLLATE ${SQL_COLLATE}`,
+                    `${fieldName} ${op} :text_exact${queryId}${esc} COLLATE ${SQL_COLLATE}`,
                     textParam
                   );
                 })
